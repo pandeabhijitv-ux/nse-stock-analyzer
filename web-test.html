@@ -348,14 +348,17 @@
             TITAN: 'Titan Company'
         };
 
-        // Seeded random function for consistent data
+        // Seeded random function for consistent data (LCG algorithm)
         function seededRandom(symbol, index = 0) {
-            let hash = 0;
-            for (let i = 0; i < symbol.length; i++) {
-                hash = ((hash << 5) - hash) + symbol.charCodeAt(i) + index;
-                hash = hash & hash;
+            let seed = 0;
+            const str = symbol + index;
+            for (let i = 0; i < str.length; i++) {
+                seed = ((seed << 5) - seed) + str.charCodeAt(i);
+                seed = seed & 0x7FFFFFFF; // Keep it positive 32-bit
             }
-            return Math.abs(Math.sin(hash)) * 10000 % 1;
+            // Linear Congruential Generator
+            seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF;
+            return seed / 0x7FFFFFFF; // Return 0-1
         }
 
         // Generate mock stock data for Indian stocks
