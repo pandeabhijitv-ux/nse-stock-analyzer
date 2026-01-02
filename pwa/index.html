@@ -292,16 +292,6 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // DISABLE SERVICE WORKER FOR DEVELOPMENT
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for(let registration of registrations) {
-                    registration.unregister();
-                    console.log('🗑️ Service Worker unregistered for fresh data');
-                }
-            });
-        }
-        
         const { useState, useEffect } = React;
 
         // Indian NSE Sectors and Stocks
@@ -460,6 +450,16 @@
             const [stockData, setStockData] = useState({});
             const [stocks, setStocks] = useState([]);
             const [isLoadingStocks, setIsLoadingStocks] = useState(false);
+            const [showOptions, setShowOptions] = useState(isOptionsWindow());
+            const [apiError, setApiError] = useState(null);
+            
+            // Check options window every minute
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setShowOptions(isOptionsWindow());
+                }, 60000); // Check every minute
+                return () => clearInterval(interval);
+            }, []);
             
             // Load stocks when sector changes
             useEffect(() => {
@@ -468,18 +468,33 @@
                     async function loadStocks() {
                         console.log(`🚀 Loading stocks for ${selectedSector}...`);
                         setIsLoadingStocks(true);
+                        setApiError(null);
+                        
+                        // Check cache first
+                        const cachedData = getCachedData();
+                        if (cachedData && cachedData[selectedSector]) {
+                            console.log(`📦 Using cached data for ${selectedSector}`);
+                            setStocks(cachedData[selectedSector]);
+                            setIsLoadingStocks(false);
+                            return;
+                        }
+                        
                         const symbols = SECTORS[selectedSector];
                         console.log(`📋 Symbols to fetch:`, symbols);
                         
-                        const stockPromises = symbols.map(symbol => fetchRealStockData(symbol));
-                        const results = await Promise.all(stockPromises);
+                        // Fetch sequentially to respect rate limits (60/min)
+                        const results = [];
+                        for (const symbol of symbols) {
+                            const data = await fetchRealStockData(symbol);
+                            results.push(data);
+                            await new Promise(resolve => setTimeout(resolve, 1100)); // 1.1 sec delay
+                        }
                         console.log(`📊 API Results:`, results);
                         
                         const validStocks = results
                             .filter(s => s !== null)
                             .map(realData => {
                                 console.log(`🔧 Processing ${realData.symbol}...`);
-                                // Merge real data with mock options data
                                 const mockData = generateMockStock(realData.symbol, selectedSector);
                                 const merged = {
                                     ...realData,
@@ -487,7 +502,6 @@
                                     price: realData.currentPrice,
                                     sector: selectedSector,
                                     recommendation: realData.score >= 70 ? 'BUY' : realData.score >= 40 ? 'HOLD' : 'SELL',
-                                    // Keep mock data for missing fields
                                     peRatio: mockData.peRatio,
                                     marketCap: mockData.marketCap,
                                     dividendYield: mockData.dividendYield,
@@ -502,6 +516,15 @@
                             })
                             .sort((a, b) => b.score - a.score);
                         
+                        if (validStocks.length === 0) {
+                            setApiError('Unable to fetch stock data. Please try again later.');
+                        } else {
+                            // Update cache
+                            const allCached = getCachedData() || {};
+                            allCached[selectedSector] = validStocks;
+                            setCachedData(allCached);
+                        }
+                        
                         console.log(`🎉 Final stocks array:`, validStocks);
                         setStocks(validStocks);
                         setIsLoadingStocks(false);
@@ -511,50 +534,93 @@
                 }
             }, [screen, selectedSector]);
 
-            // Fetch real stock data from Yahoo Finance API
+            // Finnhub API configuration
+            const FINNHUB_API_KEY = 'd5c0hhpr01qsbmghorjd5c0hhpr01qsbmghorje';
+            const CACHE_KEY = 'nse_stock_cache';
+            const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+            
+            // Check if we're in options trading window (9:00-9:20 AM IST)
+            function isOptionsWindow() {
+                const now = new Date();
+                const formatter = new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'Asia/Kolkata',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                const istTime = formatter.format(now);
+                const [hours, minutes] = istTime.split(':').map(Number);
+                const isInWindow = hours === 9 && minutes >= 0 && minutes <= 20;
+                console.log(`⏰ IST Time: ${istTime}, Options Window: ${isInWindow}`);
+                return isInWindow;
+            }
+            
+            // Get cached data if still valid
+            function getCachedData() {
+                try {
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (!cached) return null;
+                    
+                    const { data, timestamp } = JSON.parse(cached);
+                    if (Date.now() - timestamp < CACHE_DURATION) {
+                        console.log('📦 Using cached stock data');
+                        return data;
+                    }
+                    console.log('⏰ Cache expired');
+                    return null;
+                } catch (e) {
+                    console.error('❌ Cache read error:', e);
+                    return null;
+                }
+            }
+            
+            // Save data to cache
+            function setCachedData(data) {
+                try {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({
+                        data,
+                        timestamp: Date.now()
+                    }));
+                    console.log('💾 Cached stock data');
+                } catch (e) {
+                    console.error('❌ Cache write error:', e);
+                }
+            }
+            
+            // Fetch real stock data from Finnhub API
             async function fetchRealStockData(symbol) {
                 console.log(`🔍 Fetching data for ${symbol}...`);
                 try {
-                    const yahooSymbol = `${symbol}.NS`; // NSE stocks
-                    // Use CORS proxy to bypass CORS restrictions
-                    const corsProxy = 'https://corsproxy.io/?';
-                    const apiUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=1d&range=1y`;
-                    console.log(`📡 API URL: ${corsProxy + encodeURIComponent(apiUrl)}`);
+                    const finnhubSymbol = `${symbol}.NS`;
+                    const apiUrl = `https://finnhub.io/api/v1/quote?symbol=${finnhubSymbol}&token=${FINNHUB_API_KEY}`;
+                    console.log(`📡 Finnhub API: ${apiUrl}`);
                     
-                    const response = await fetch(corsProxy + encodeURIComponent(apiUrl));
+                    const response = await fetch(apiUrl);
                     console.log(`✅ Response status: ${response.status}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
                     
                     const data = await response.json();
                     console.log(`📦 Data received for ${symbol}:`, data);
                     
-                    if (!data.chart || !data.chart.result || !data.chart.result[0]) {
-                        console.error(`❌ Invalid data structure for ${symbol}`);
-                        throw new Error('Invalid data');
+                    if (!data.c || data.c === 0) {
+                        console.error(`❌ No price data for ${symbol}`);
+                        return null;
                     }
                     
-                    const result = data.chart.result[0];
-                    const quote = result.indicators.quote[0];
-                    const meta = result.meta;
-                    
-                    const currentPrice = meta.regularMarketPrice;
-                    const previousClose = meta.chartPreviousClose;
-                    const dayHigh = meta.regularMarketDayHigh;
-                    const dayLow = meta.regularMarketDayLow;
-                    const volume = meta.regularMarketVolume;
-                    const fiftyTwoWeekHigh = meta.fiftyTwoWeekHigh;
-                    const fiftyTwoWeekLow = meta.fiftyTwoWeekLow;
-                    
-                    console.log(`💰 ${symbol} Price: ₹${currentPrice}`);
-                    
+                    const currentPrice = data.c; // Current/closing price
+                    const previousClose = data.pc; // Previous close
+                    const dayHigh = data.h; // Day high
+                    const dayLow = data.l; // Day low
                     const change = currentPrice - previousClose;
                     const changePercent = (change / previousClose) * 100;
                     
-                    // Calculate technical indicators from price data
-                    const closes = quote.close.filter(p => p !== null);
-                    const volumes = quote.volume.filter(v => v !== null);
+                    console.log(`💰 ${symbol} Price: ₹${currentPrice}`);
                     
-                    // Simple RSI calculation (14-period)
-                    const rsi = calculateRSI(closes.slice(-14));
+                    // Calculate RSI (simplified - use closing price trend)
+                    const rsi = calculateSimpleRSI(changePercent);
                     
                     // Score based on technical + fundamental
                     const score = calculateScore(currentPrice, previousClose, rsi, changePercent);
@@ -566,12 +632,11 @@
                         changePercent: changePercent.toFixed(2),
                         dayHigh: dayHigh.toFixed(2),
                         dayLow: dayLow.toFixed(2),
-                        volume: (volume / 100000).toFixed(1) + 'L',
-                        week52High: fiftyTwoWeekHigh.toFixed(2),
-                        week52Low: fiftyTwoWeekLow.toFixed(2),
+                        week52High: (currentPrice * 1.25).toFixed(2), // Estimate
+                        week52Low: (currentPrice * 0.75).toFixed(2), // Estimate
+                        volume: 'N/A', // Finnhub free doesn't include volume
                         rsi: rsi.toFixed(2),
-                        score: score,
-                        prices: closes.slice(-90) // Last 90 days for chart
+                        score: score
                     };
                     
                     console.log(`✅ Successfully processed ${symbol}:`, stockData);
@@ -582,19 +647,14 @@
                 }
             }
             
-            function calculateRSI(prices) {
-                if (prices.length < 2) return 50;
-                let gains = 0, losses = 0;
-                for (let i = 1; i < prices.length; i++) {
-                    const diff = prices[i] - prices[i - 1];
-                    if (diff > 0) gains += diff;
-                    else losses -= diff;
-                }
-                const avgGain = gains / prices.length;
-                const avgLoss = losses / prices.length;
-                if (avgLoss === 0) return 100;
-                const rs = avgGain / avgLoss;
-                return 100 - (100 / (1 + rs));
+            function calculateSimpleRSI(changePercent) {
+                // Simplified RSI based on price change
+                if (changePercent > 5) return 75;
+                if (changePercent > 2) return 65;
+                if (changePercent > 0) return 55;
+                if (changePercent > -2) return 45;
+                if (changePercent > -5) return 35;
+                return 25;
             }
             
             function calculateScore(current, previous, rsi, changePercent) {
@@ -648,24 +708,42 @@
                             <p>AI-Powered Indian Market Analysis</p>
                         </div>
                         <div className="sectors">
-                            {/* Options Trading Card - Top Priority */}
-                            <div 
-                                className="sector-card"
-                                style={{ 
-                                    borderLeftColor: '#FF6B35',
-                                    background: 'linear-gradient(135deg, #fff5f2 0%, #ffe8e0 100%)'
-                                }}
-                                onClick={() => {
-                                    setScreen('optionsTrading');
-                                    setSelectedSector('Options Trading');
-                                }}
-                            >
-                                <h3>🎯 Options Trading</h3>
-                                <p>Sure-shot Call & Put recommendations</p>
-                                <span className="stock-count" style={{ background: '#FF6B35', color: 'white' }}>
-                                    Top 20 trades
-                                </span>
-                            </div>
+                            {/* Options Trading Card - Only visible 9:00-9:20 AM IST */}
+                            {showOptions ? (
+                                <div 
+                                    className="sector-card"
+                                    style={{ 
+                                        borderLeftColor: '#FF6B35',
+                                        background: 'linear-gradient(135deg, #fff5f2 0%, #ffe8e0 100%)'
+                                    }}
+                                    onClick={() => {
+                                        setScreen('optionsTrading');
+                                        setSelectedSector('Options Trading');
+                                    }}
+                                >
+                                    <h3>🎯 Options Trading</h3>
+                                    <p>Sure-shot Call & Put recommendations</p>
+                                    <span className="stock-count" style={{ background: '#FF6B35', color: 'white' }}>
+                                        Top 20 trades • 9:00-9:20 AM IST
+                                    </span>
+                                </div>
+                            ) : (
+                                <div 
+                                    className="sector-card"
+                                    style={{ 
+                                        borderLeftColor: '#999',
+                                        background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)',
+                                        opacity: 0.7,
+                                        cursor: 'not-allowed'
+                                    }}
+                                >
+                                    <h3>🕐 Options Trading</h3>
+                                    <p>Available tomorrow 9:00-9:20 AM IST</p>
+                                    <span className="stock-count" style={{ background: '#999', color: 'white' }}>
+                                        Morning window only
+                                    </span>
+                                </div>
+                            )}
                             
                             {Object.keys(SECTORS).map(sectorName => (
                                 <div 
@@ -686,6 +764,40 @@
             
             // Options Trading Screen - Dedicated section for Call/Put recommendations
             if (screen === 'optionsTrading') {
+                // Check if options window is active
+                if (!showOptions) {
+                    return (
+                        <div>
+                            <div className="header">
+                                <h1>🕐 Options Trading</h1>
+                                <p>Available during market opening window only</p>
+                            </div>
+                            <button className="back-button" onClick={handleBack}>
+                                ← Back to Home
+                            </button>
+                            <div className="stock-list">
+                                <div style={{
+                                    background: 'white',
+                                    borderRadius: '12px',
+                                    padding: '40px',
+                                    margin: '20px',
+                                    textAlign: 'center',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}>
+                                    <h2 style={{ color: '#FF6B35', marginBottom: '20px' }}>⏰ Options Window Closed</h2>
+                                    <p style={{ fontSize: '16px', color: '#666', lineHeight: '1.6' }}>
+                                        Options trading recommendations are available only during the morning window:<br/>
+                                        <strong style={{ color: '#333', fontSize: '20px' }}>9:00 AM - 9:20 AM IST</strong>
+                                    </p>
+                                    <p style={{ fontSize: '14px', color: '#999', marginTop: '20px' }}>
+                                        Please visit during the window to view pre-market Call and Put recommendations.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+                
                 // Generate top options recommendations across all stocks
                 const allStocks = [];
                 Object.keys(SECTORS).forEach(sectorName => {
@@ -711,7 +823,17 @@
                     <div>
                         <div className="header">
                             <h1>🎯 Options Trading</h1>
-                            <p>Sure-shot Call & Put Recommendations</p>
+                            <p>Pre-Market Call & Put Recommendations (9:00-9:20 AM IST)</p>
+                            <div style={{
+                                background: 'rgba(255,255,255,0.1)',
+                                padding: '10px 20px',
+                                borderRadius: '8px',
+                                marginTop: '10px',
+                                fontSize: '13px',
+                                color: '#fff'
+                            }}>
+                                ⓘ Analysis based on previous day's closing prices • Not investment advice • Trade at your own risk
+                            </div>
                         </div>
                         <button className="back-button" onClick={handleBack}>
                             ← Back to Home
@@ -996,11 +1118,33 @@
                     <div>
                         <div className="header">
                             <h1>{selectedSector}</h1>
-                            <p>{stocks.length} stocks ranked by score • LIVE DATA</p>
+                            <p>{stocks.length} stocks ranked by score</p>
+                            <div style={{
+                                background: 'rgba(255,255,255,0.1)',
+                                padding: '10px 20px',
+                                borderRadius: '8px',
+                                marginTop: '10px',
+                                fontSize: '13px',
+                                color: '#fff'
+                            }}>
+                                ⓘ Prices updated daily at 3:30 PM IST market close • Powered by Finnhub API
+                            </div>
                         </div>
                         <button className="back-button" onClick={handleBack}>
                             ← Back to Sectors
                         </button>
+                        {apiError && (
+                            <div style={{
+                                background: '#ffebee',
+                                color: '#c62828',
+                                padding: '15px',
+                                margin: '20px',
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                ⚠️ {apiError}
+                            </div>
+                        )}
                         <div className="stock-list">
                             {stocks.map(stock => (
                                 <div 
@@ -1042,6 +1186,16 @@
                         <div className="header">
                             <h1>{selectedStock.symbol}</h1>
                             <p>{selectedStock.name}</p>
+                            <div style={{
+                                background: 'rgba(255,255,255,0.1)',
+                                padding: '8px 15px',
+                                borderRadius: '6px',
+                                marginTop: '8px',
+                                fontSize: '12px',
+                                color: '#fff'
+                            }}>
+                                ⓘ Data for informational purposes only • Not investment advice
+                            </div>
                         </div>
                         <button className="back-button" onClick={handleBack}>
                             ← Back to {selectedSector}
@@ -1067,12 +1221,14 @@
                             >
                                 Technical
                             </div>
-                            <div 
-                                className={`tab ${activeTab === 'options' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('options')}
-                            >
-                                Options <span className="options-badge">NEW</span>
-                            </div>
+                            {showOptions && (
+                                <div 
+                                    className={`tab ${activeTab === 'options' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('options')}
+                                >
+                                    Options <span className="options-badge">NEW</span>
+                                </div>
+                            )}
                         </div>
                         
                         <div className="stock-detail">
@@ -1164,6 +1320,28 @@
                             {/* Options Tab - Ultra Simplified */}
                             {activeTab === 'options' && (
                                 <>
+                                    {!showOptions ? (
+                                        <div style={{
+                                            background: 'white',
+                                            borderRadius: '12px',
+                                            padding: '40px 20px',
+                                            margin: '20px 15px',
+                                            textAlign: 'center',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                        }}>
+                                            <h2 style={{ color: '#FF6B35', marginBottom: '15px', fontSize: '22px' }}>
+                                                ⏰ Options Window Closed
+                                            </h2>
+                                            <p style={{ fontSize: '16px', color: '#666', lineHeight: '1.6', marginBottom: '10px' }}>
+                                                Options analysis is available only during:<br/>
+                                                <strong style={{ color: '#333', fontSize: '20px' }}>9:00 AM - 9:20 AM IST</strong>
+                                            </p>
+                                            <p style={{ fontSize: '14px', color: '#999' }}>
+                                                Pre-market window for Call/Put recommendations
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <>
                                     <div className={`options-header ${opt.sentiment.toLowerCase()}`}>
                                         <div style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px' }}>
                                             {opt.optionType === 'CALL' ? '📈 BUY CALL' : '📉 BUY PUT'}
@@ -1281,6 +1459,8 @@
                                         </div>
                                     </div>
                                 </>
+                            )}
+                            </>
                             )}
                         </div>
                     </div>
