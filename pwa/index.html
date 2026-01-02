@@ -605,21 +605,28 @@
             }
 
             const handleSectorClick = (sectorName) => {
+                console.log(`🏢 Sector clicked: ${sectorName}`);
                 setSelectedSector(sectorName);
                 setScreen('stockList');
+                setStocks([]); // Clear previous stocks
             };
 
             const handleStockClick = (stock) => {
+                console.log(`📈 Stock clicked:`, stock);
                 setSelectedStock(stock);
                 setScreen('stockDetail');
+                setActiveTab('overview'); // Reset to overview tab
             };
 
             const handleBack = () => {
+                console.log(`⬅️ Back button clicked from screen: ${screen}`);
                 if (screen === 'stockDetail') {
                     setScreen('stockList');
+                    setActiveTab('overview');
                 } else {
                     setScreen('home');
                     setSelectedSector(null);
+                    setStocks([]);
                 }
             };
 
