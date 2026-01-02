@@ -448,6 +448,49 @@
             const [activeTab, setActiveTab] = useState('overview');
             const [loading, setLoading] = useState(false);
             const [stockData, setStockData] = useState({});
+            const [stocks, setStocks] = useState([]);
+            const [isLoadingStocks, setIsLoadingStocks] = useState(false);
+            
+            // Load stocks when sector changes
+            useEffect(() => {
+                if (screen === 'stockList' && selectedSector) {
+                    async function loadStocks() {
+                        setIsLoadingStocks(true);
+                        const symbols = SECTORS[selectedSector];
+                        const stockPromises = symbols.map(symbol => fetchRealStockData(symbol));
+                        const results = await Promise.all(stockPromises);
+                        
+                        const validStocks = results
+                            .filter(s => s !== null)
+                            .map(realData => {
+                                // Merge real data with mock options data
+                                const mockData = generateMockStock(realData.symbol, selectedSector);
+                                return {
+                                    ...realData,
+                                    name: STOCK_NAMES[realData.symbol] || `${realData.symbol} Ltd`,
+                                    price: realData.currentPrice,
+                                    sector: selectedSector,
+                                    recommendation: realData.score >= 70 ? 'BUY' : realData.score >= 40 ? 'HOLD' : 'SELL',
+                                    // Keep mock data for missing fields
+                                    peRatio: mockData.peRatio,
+                                    marketCap: mockData.marketCap,
+                                    dividendYield: mockData.dividendYield,
+                                    bookValue: mockData.bookValue,
+                                    macd: mockData.macd,
+                                    ema50: mockData.ema50,
+                                    ema200: mockData.ema200,
+                                    options: mockData.options
+                                };
+                            })
+                            .sort((a, b) => b.score - a.score);
+                        
+                        setStocks(validStocks);
+                        setIsLoadingStocks(false);
+                    }
+                    
+                    loadStocks();
+                }
+            }, [screen, selectedSector]);
 
             // Fetch real stock data from Yahoo Finance API
             async function fetchRealStockData(symbol) {
@@ -892,48 +935,7 @@
             }
 
             if (screen === 'stockList') {
-                const [stocks, setStocks] = useState([]);
-                const [isLoading, setIsLoading] = useState(true);
-                
-                useEffect(() => {
-                    async function loadStocks() {
-                        setIsLoading(true);
-                        const symbols = SECTORS[selectedSector];
-                        const stockPromises = symbols.map(symbol => fetchRealStockData(symbol));
-                        const results = await Promise.all(stockPromises);
-                        
-                        const validStocks = results
-                            .filter(s => s !== null)
-                            .map(realData => {
-                                // Merge real data with mock options data
-                                const mockData = generateMockStock(realData.symbol, selectedSector);
-                                return {
-                                    ...realData,
-                                    name: STOCK_NAMES[realData.symbol] || `${realData.symbol} Ltd`,
-                                    price: realData.currentPrice,
-                                    sector: selectedSector,
-                                    recommendation: realData.score >= 70 ? 'BUY' : realData.score >= 40 ? 'HOLD' : 'SELL',
-                                    // Keep mock data for missing fields
-                                    peRatio: mockData.peRatio,
-                                    marketCap: mockData.marketCap,
-                                    dividendYield: mockData.dividendYield,
-                                    bookValue: mockData.bookValue,
-                                    macd: mockData.macd,
-                                    ema50: mockData.ema50,
-                                    ema200: mockData.ema200,
-                                    options: mockData.options
-                                };
-                            })
-                            .sort((a, b) => b.score - a.score);
-                        
-                        setStocks(validStocks);
-                        setIsLoading(false);
-                    }
-                    
-                    loadStocks();
-                }, [selectedSector]);
-                
-                if (isLoading) {
+                if (isLoadingStocks) {
                     return (
                         <div>
                             <div className="header">
