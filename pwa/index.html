@@ -460,6 +460,25 @@
                             <p>AI-Powered Indian Market Analysis</p>
                         </div>
                         <div className="sectors">
+                            {/* Options Trading Card - Top Priority */}
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#FF6B35',
+                                    background: 'linear-gradient(135deg, #fff5f2 0%, #ffe8e0 100%)'
+                                }}
+                                onClick={() => {
+                                    setScreen('optionsTrading');
+                                    setSelectedSector('Options Trading');
+                                }}
+                            >
+                                <h3>🎯 Options Trading</h3>
+                                <p>Sure-shot Call & Put recommendations</p>
+                                <span className="stock-count" style={{ background: '#FF6B35', color: 'white' }}>
+                                    Top 20 trades
+                                </span>
+                            </div>
+                            
                             {Object.keys(SECTORS).map(sectorName => (
                                 <div 
                                     key={sectorName}
@@ -472,6 +491,294 @@
                                     <span className="stock-count">{SECTORS[sectorName].length} stocks</span>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                );
+            }
+            
+            // Options Trading Screen - Dedicated section for Call/Put recommendations
+            if (screen === 'optionsTrading') {
+                // Generate top options recommendations across all stocks
+                const allStocks = [];
+                Object.keys(SECTORS).forEach(sectorName => {
+                    SECTORS[sectorName].forEach(symbol => {
+                        const stock = generateMockStock(symbol, sectorName);
+                        allStocks.push(stock);
+                    });
+                });
+                
+                // Filter and rank best Call options (BULLISH sentiment)
+                const topCalls = allStocks
+                    .filter(s => s.options.optionType === 'CALL')
+                    .sort((a, b) => b.options.confidence - a.options.confidence)
+                    .slice(0, 10);
+                
+                // Filter and rank best Put options (BEARISH sentiment)
+                const topPuts = allStocks
+                    .filter(s => s.options.optionType === 'PUT')
+                    .sort((a, b) => b.options.confidence - a.options.confidence)
+                    .slice(0, 10);
+                
+                return (
+                    <div>
+                        <div className="header">
+                            <h1>🎯 Options Trading</h1>
+                            <p>Sure-shot Call & Put Recommendations</p>
+                        </div>
+                        <button className="back-button" onClick={handleBack}>
+                            ← Back to Home
+                        </button>
+                        
+                        <div className="stock-list">
+                            {/* Call Options Section */}
+                            <div style={{ 
+                                background: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)',
+                                padding: '15px',
+                                borderRadius: '12px',
+                                marginBottom: '20px',
+                                border: '2px solid #4CAF50'
+                            }}>
+                                <h2 style={{ 
+                                    fontSize: '20px', 
+                                    color: '#2e7d32', 
+                                    marginBottom: '5px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}>
+                                    🟢 Top Call Options
+                                </h2>
+                                <p style={{ fontSize: '13px', color: '#558b2f', marginBottom: '15px' }}>
+                                    Buy when expecting price to go UP
+                                </p>
+                                
+                                {topCalls.map((stock, index) => (
+                                    <div 
+                                        key={stock.symbol}
+                                        className="options-trade-card"
+                                        style={{ 
+                                            background: 'white',
+                                            borderRadius: '10px',
+                                            padding: '15px',
+                                            marginBottom: '12px',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                            borderLeft: '4px solid #4CAF50'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
+                                            <div>
+                                                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+                                                    {stock.symbol}
+                                                </div>
+                                                <div style={{ fontSize: '13px', color: '#666' }}>
+                                                    {stock.name}
+                                                </div>
+                                            </div>
+                                            <div style={{ 
+                                                background: '#4CAF50',
+                                                color: 'white',
+                                                padding: '6px 12px',
+                                                borderRadius: '20px',
+                                                fontSize: '13px',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {stock.options.confidence}% Sure
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ 
+                                            display: 'grid',
+                                            gridTemplateColumns: '1fr 1fr',
+                                            gap: '10px',
+                                            marginBottom: '12px'
+                                        }}>
+                                            <div>
+                                                <div style={{ fontSize: '12px', color: '#666' }}>Current Price</div>
+                                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
+                                                    ₹{stock.price}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '12px', color: '#666' }}>Strike Price</div>
+                                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
+                                                    ₹{stock.options.strikes.recommended}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ 
+                                            background: '#f8f9fa',
+                                            padding: '12px',
+                                            borderRadius: '8px',
+                                            marginBottom: '10px'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Entry (Premium):</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#2e7d32' }}>
+                                                    ₹{stock.options.strikes.recommended === stock.options.strikes.otm 
+                                                        ? stock.options.premiums.call_otm
+                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
+                                                        ? stock.options.premiums.call_atm
+                                                        : stock.options.premiums.call_itm}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Target (2x):</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#4CAF50' }}>
+                                                    ₹{(parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
+                                                        ? stock.options.premiums.call_otm
+                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
+                                                        ? stock.options.premiums.call_atm
+                                                        : stock.options.premiums.call_itm) * 2).toFixed(2)}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Stop Loss (50%):</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#d32f2f' }}>
+                                                    ₹{(parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
+                                                        ? stock.options.premiums.call_otm
+                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
+                                                        ? stock.options.premiums.call_atm
+                                                        : stock.options.premiums.call_itm) * 0.5).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
+                                            📅 Expiry: {stock.options.expiry.recommended} | VIX: {stock.options.vix}
+                                        </div>
+                                        
+                                        <div style={{ fontSize: '13px', color: '#2e7d32', fontWeight: '600' }}>
+                                            💡 {stock.options.strategy}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* Put Options Section */}
+                            <div style={{ 
+                                background: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
+                                padding: '15px',
+                                borderRadius: '12px',
+                                marginBottom: '20px',
+                                border: '2px solid #f44336'
+                            }}>
+                                <h2 style={{ 
+                                    fontSize: '20px', 
+                                    color: '#c62828', 
+                                    marginBottom: '5px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}>
+                                    🔴 Top Put Options
+                                </h2>
+                                <p style={{ fontSize: '13px', color: '#d32f2f', marginBottom: '15px' }}>
+                                    Buy when expecting price to go DOWN
+                                </p>
+                                
+                                {topPuts.map((stock, index) => (
+                                    <div 
+                                        key={stock.symbol}
+                                        className="options-trade-card"
+                                        style={{ 
+                                            background: 'white',
+                                            borderRadius: '10px',
+                                            padding: '15px',
+                                            marginBottom: '12px',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                            borderLeft: '4px solid #f44336'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
+                                            <div>
+                                                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+                                                    {stock.symbol}
+                                                </div>
+                                                <div style={{ fontSize: '13px', color: '#666' }}>
+                                                    {stock.name}
+                                                </div>
+                                            </div>
+                                            <div style={{ 
+                                                background: '#f44336',
+                                                color: 'white',
+                                                padding: '6px 12px',
+                                                borderRadius: '20px',
+                                                fontSize: '13px',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {stock.options.confidence}% Sure
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ 
+                                            display: 'grid',
+                                            gridTemplateColumns: '1fr 1fr',
+                                            gap: '10px',
+                                            marginBottom: '12px'
+                                        }}>
+                                            <div>
+                                                <div style={{ fontSize: '12px', color: '#666' }}>Current Price</div>
+                                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
+                                                    ₹{stock.price}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '12px', color: '#666' }}>Strike Price</div>
+                                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
+                                                    ₹{stock.options.strikes.recommended}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ 
+                                            background: '#f8f9fa',
+                                            padding: '12px',
+                                            borderRadius: '8px',
+                                            marginBottom: '10px'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Entry (Premium):</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#c62828' }}>
+                                                    ₹{stock.options.strikes.recommended === stock.options.strikes.otm 
+                                                        ? stock.options.premiums.put_otm
+                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
+                                                        ? stock.options.premiums.put_atm
+                                                        : stock.options.premiums.put_itm}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Target (2x):</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#4CAF50' }}>
+                                                    ₹{(parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
+                                                        ? stock.options.premiums.put_otm
+                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
+                                                        ? stock.options.premiums.put_atm
+                                                        : stock.options.premiums.put_itm) * 2).toFixed(2)}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Stop Loss (50%):</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#d32f2f' }}>
+                                                    ₹{(parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
+                                                        ? stock.options.premiums.put_otm
+                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
+                                                        ? stock.options.premiums.put_atm
+                                                        : stock.options.premiums.put_itm) * 0.5).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
+                                            📅 Expiry: {stock.options.expiry.recommended} | VIX: {stock.options.vix}
+                                        </div>
+                                        
+                                        <div style={{ fontSize: '13px', color: '#c62828', fontWeight: '600' }}>
+                                            💡 {stock.options.strategy}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 );
