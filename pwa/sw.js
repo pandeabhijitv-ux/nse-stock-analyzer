@@ -1,5 +1,5 @@
 // Service Worker for NSE Stock Analyzer PWA
-const CACHE_NAME = 'nse-stock-analyzer-v1';
+const CACHE_NAME = 'nse-stock-analyzer-v2-live-api'; // Changed version to force update
 const urlsToCache = [
   '/',
   '/index.html',
