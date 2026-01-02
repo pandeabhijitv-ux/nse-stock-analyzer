@@ -958,139 +958,156 @@
                                 </div>
                             )}
                             
-                            {/* Options Tab */}
+                            {/* Options Tab - Simplified Trading View */}
                             {activeTab === 'options' && (
                                 <>
                                     <div className={`options-header ${opt.sentiment.toLowerCase()}`}>
                                         <div style={{ fontSize: '24px', marginBottom: '5px' }}>{opt.sentiment}</div>
-                                        <div style={{ fontSize: '16px', opacity: 0.9 }}>Buy {opt.optionType} Options</div>
+                                        <div style={{ fontSize: '16px', opacity: 0.9 }}>
+                                            {opt.optionType === 'CALL' ? '📈 BUY CALL' : opt.optionType === 'PUT' ? '📉 BUY PUT' : '🔀 STRADDLE'}
+                                        </div>
                                         <div style={{ fontSize: '13px', marginTop: '8px', opacity: 0.8 }}>
                                             Confidence: {opt.confidence}%
                                         </div>
                                     </div>
                                     
-                                    <div className="options-card">
-                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>Strategy Recommendation</h3>
-                                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#667eea', marginBottom: '8px' }}>
-                                            {opt.strategy}
+                                    {/* Trading Plan Card */}
+                                    <div className="options-card" style={{ 
+                                        background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                                        border: '2px solid #667eea'
+                                    }}>
+                                        <h3 style={{ marginBottom: '15px', color: '#333', fontSize: '18px' }}>
+                                            💰 Trading Plan
+                                        </h3>
+                                        
+                                        <div style={{ marginBottom: '15px' }}>
+                                            <div style={{ fontSize: '13px', color: '#666', marginBottom: '5px' }}>
+                                                Strike Price (Recommended)
+                                            </div>
+                                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#667eea' }}>
+                                                ₹{opt.strikes.recommended}
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#666', marginTop: '3px' }}>
+                                                {opt.strikes.recommended === opt.strikes.otm ? 'OTM (Out-Of-The-Money)' : 
+                                                 opt.strikes.recommended === opt.strikes.atm ? 'ATM (At-The-Money)' : 
+                                                 'ITM (In-The-Money)'}
+                                            </div>
                                         </div>
-                                        <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
-                                            {opt.sentiment === 'BULLISH' 
-                                                ? 'Buy OTM call for maximum leverage with limited risk'
-                                                : opt.sentiment === 'BEARISH'
-                                                ? 'Buy OTM put to profit from expected decline'
-                                                : 'Buy ATM call and put to profit from big move in either direction'}
+                                        
+                                        <div style={{ 
+                                            display: 'grid', 
+                                            gridTemplateColumns: '1fr 1fr 1fr',
+                                            gap: '12px',
+                                            marginBottom: '15px'
+                                        }}>
+                                            <div style={{ 
+                                                background: 'white',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                textAlign: 'center',
+                                                border: '2px solid #2196F3'
+                                            }}>
+                                                <div style={{ fontSize: '11px', color: '#666', marginBottom: '5px' }}>
+                                                    💳 ENTRY
+                                                </div>
+                                                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2196F3' }}>
+                                                    ₹{opt.optionType === 'CALL' 
+                                                        ? (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.call_otm :
+                                                           opt.strikes.recommended === opt.strikes.atm ? opt.premiums.call_atm :
+                                                           opt.premiums.call_itm)
+                                                        : (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.put_otm :
+                                                           opt.strikes.recommended === opt.strikes.atm ? opt.premiums.put_atm :
+                                                           opt.premiums.put_itm)}
+                                                </div>
+                                                <div style={{ fontSize: '10px', color: '#999', marginTop: '3px' }}>
+                                                    Premium
+                                                </div>
+                                            </div>
+                                            
+                                            <div style={{ 
+                                                background: 'white',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                textAlign: 'center',
+                                                border: '2px solid #4CAF50'
+                                            }}>
+                                                <div style={{ fontSize: '11px', color: '#666', marginBottom: '5px' }}>
+                                                    🎯 TARGET
+                                                </div>
+                                                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#4CAF50' }}>
+                                                    ₹{(parseFloat(opt.optionType === 'CALL' 
+                                                        ? (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.call_otm :
+                                                           opt.strikes.recommended === opt.strikes.atm ? opt.premiums.call_atm :
+                                                           opt.premiums.call_itm)
+                                                        : (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.put_otm :
+                                                           opt.strikes.recommended === opt.strikes.atm ? opt.premiums.put_atm :
+                                                           opt.premiums.put_itm)) * 2).toFixed(2)}
+                                                </div>
+                                                <div style={{ fontSize: '10px', color: '#999', marginTop: '3px' }}>
+                                                    2x (100%)
+                                                </div>
+                                            </div>
+                                            
+                                            <div style={{ 
+                                                background: 'white',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                textAlign: 'center',
+                                                border: '2px solid #f44336'
+                                            }}>
+                                                <div style={{ fontSize: '11px', color: '#666', marginBottom: '5px' }}>
+                                                    🛑 STOP LOSS
+                                                </div>
+                                                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#f44336' }}>
+                                                    ₹{(parseFloat(opt.optionType === 'CALL' 
+                                                        ? (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.call_otm :
+                                                           opt.strikes.recommended === opt.strikes.atm ? opt.premiums.call_atm :
+                                                           opt.premiums.call_itm)
+                                                        : (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.put_otm :
+                                                           opt.strikes.recommended === opt.strikes.atm ? opt.premiums.put_atm :
+                                                           opt.premiums.put_itm)) * 0.5).toFixed(2)}
+                                                </div>
+                                                <div style={{ fontSize: '10px', color: '#999', marginTop: '3px' }}>
+                                                    -50%
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="metric-row">
-                                            <span className="metric-label">India VIX:</span>
-                                            <span className="metric-value">{opt.vix} ({opt.vixLevel})</span>
-                                        </div>
-                                        <div className="metric-row">
-                                            <span className="metric-label">Recommended Expiry:</span>
-                                            <span className="metric-value">{opt.expiry.recommended}</span>
+                                        
+                                        <div style={{ 
+                                            background: 'white',
+                                            padding: '12px',
+                                            borderRadius: '8px',
+                                            marginBottom: '10px'
+                                        }}>
+                                            <div style={{ fontSize: '13px', fontWeight: '600', color: '#333', marginBottom: '8px' }}>
+                                                💡 Strategy: {opt.strategy}
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#666' }}>
+                                                📅 Expiry: {opt.expiry.recommended} | 📊 VIX: {opt.vix} ({opt.vixLevel})
+                                            </div>
                                         </div>
                                     </div>
                                     
-                                    <div className="options-card">
-                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>Strike Prices & Premiums</h3>
-                                        
-                                        <div className="strike-option">
-                                            <div className="strike-header">
-                                                <span className="strike-label">ITM (In-The-Money)</span>
-                                                <span className="strike-price">₹{opt.strikes.itm}</span>
-                                            </div>
-                                            <div className="premium-row">
-                                                <span>Call Premium:</span>
-                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.call_itm}</span>
-                                            </div>
-                                            <div className="premium-row">
-                                                <span>Put Premium:</span>
-                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.put_itm}</span>
-                                            </div>
+                                    {/* Quick Explanation */}
+                                    <div className="options-card" style={{ background: '#e3f2fd', borderLeft: '4px solid #2196F3' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1976d2', marginBottom: '8px' }}>
+                                            📚 How to Trade:
                                         </div>
-                                        
-                                        <div className={`strike-option ${opt.strikes.recommended === opt.strikes.atm ? 'recommended' : ''}`}>
-                                            <div className="strike-header">
-                                                <span className="strike-label">
-                                                    ATM (At-The-Money)
-                                                    {opt.strikes.recommended === opt.strikes.atm && ' ✓'}
-                                                </span>
-                                                <span className="strike-price">₹{opt.strikes.atm}</span>
-                                            </div>
-                                            <div className="premium-row">
-                                                <span>Call Premium:</span>
-                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.call_atm}</span>
-                                            </div>
-                                            <div className="premium-row">
-                                                <span>Put Premium:</span>
-                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.put_atm}</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className={`strike-option ${opt.strikes.recommended === opt.strikes.otm ? 'recommended' : ''}`}>
-                                            <div className="strike-header">
-                                                <span className="strike-label">
-                                                    OTM (Out-Of-The-Money)
-                                                    {opt.strikes.recommended === opt.strikes.otm && ' ✓'}
-                                                </span>
-                                                <span className="strike-price">₹{opt.strikes.otm}</span>
-                                            </div>
-                                            <div className="premium-row">
-                                                <span>Call Premium:</span>
-                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.call_otm}</span>
-                                            </div>
-                                            <div className="premium-row">
-                                                <span>Put Premium:</span>
-                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.put_otm}</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div style={{ fontSize: '12px', color: '#666', marginTop: '12px', lineHeight: '1.5' }}>
-                                            {opt.optionType === 'CALL' 
-                                                ? 'ITM: Higher premium, more intrinsic value. ATM: Balanced risk-reward. OTM: Lower premium, higher potential return.'
-                                                : 'ITM: Higher premium, more intrinsic value. ATM: Balanced risk-reward. OTM: Lower premium, higher leverage.'}
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="options-card">
-                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>Option Greeks</h3>
-                                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
-                                            For Strike: ₹{opt.strikes.recommended}
-                                        </div>
-                                        
-                                        <div className="greek-item">
-                                            <div className="greek-name">Delta (Δ)</div>
-                                            <div className="greek-value">{opt.greeks.delta}</div>
-                                            <div className="greek-desc">Price sensitivity to underlying movement</div>
-                                        </div>
-                                        
-                                        <div className="greek-item">
-                                            <div className="greek-name">Gamma (Γ)</div>
-                                            <div className="greek-value">{opt.greeks.gamma}</div>
-                                            <div className="greek-desc">Rate of change of Delta</div>
-                                        </div>
-                                        
-                                        <div className="greek-item">
-                                            <div className="greek-name">Theta (Θ)</div>
-                                            <div className="greek-value">{opt.greeks.theta}</div>
-                                            <div className="greek-desc">Time decay per day (losing ₹{Math.abs(opt.greeks.theta)} daily)</div>
-                                        </div>
-                                        
-                                        <div className="greek-item">
-                                            <div className="greek-name">Vega (ν)</div>
-                                            <div className="greek-value">{opt.greeks.vega}</div>
-                                            <div className="greek-desc">Sensitivity to volatility changes</div>
+                                        <div style={{ fontSize: '12px', color: '#1565c0', lineHeight: '1.6' }}>
+                                            1. Buy {opt.optionType} option at Strike ₹{opt.strikes.recommended} for premium shown above<br/>
+                                            2. Exit at Target price for 100% profit<br/>
+                                            3. Cut loss at Stop Loss price to limit damage<br/>
+                                            4. Trade only with risk capital you can afford to lose
                                         </div>
                                     </div>
                                     
                                     <div className="options-card" style={{ background: '#fff3cd', borderLeft: '4px solid #856404' }}>
-                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#856404', marginBottom: '8px' }}>
-                                            ⚠️ Risk Disclaimer
+                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#856404', marginBottom: '6px' }}>
+                                            ⚠️ Risk Warning
                                         </div>
-                                        <div style={{ fontSize: '12px', color: '#856404', lineHeight: '1.6' }}>
-                                            Options trading involves significant risk and is not suitable for all investors. 
-                                            Maximum loss is limited to premium paid. This analysis is for educational purposes only. 
-                                            Always consult a qualified financial advisor before trading options.
+                                        <div style={{ fontSize: '11px', color: '#856404', lineHeight: '1.5' }}>
+                                            Options trading is high-risk. Maximum loss = Premium paid. Not financial advice. 
+                                            Consult advisor before trading.
                                         </div>
                                     </div>
                                 </>
