@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from './src/screens/HomeScreen';
 import StockListScreen from './src/screens/StockListScreen';
 import StockDetailScreen from './src/screens/StockDetailScreen';
+import OptionsScreen from './src/screens/OptionsScreen';
 import WatchlistScreen from './src/screens/WatchlistScreen';
 import ScreenerScreen from './src/screens/ScreenerScreen';
 
@@ -30,6 +31,11 @@ function HomeStack() {
         name="StockDetail" 
         component={StockDetailScreen}
         options={{ title: 'Stock Analysis' }}
+      />
+      <Stack.Screen 
+        name="Options" 
+        component={OptionsScreen}
+        options={{ title: 'Options Analysis' }}
       />
     </Stack.Navigator>
   );

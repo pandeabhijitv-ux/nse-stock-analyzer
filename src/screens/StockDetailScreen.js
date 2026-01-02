@@ -14,9 +14,9 @@ import { generateRecommendation } from '../services/analysisEngine';
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function StockDetailScreen({ route }) {
+export default function StockDetailScreen({ route, navigation }) {
   const { stock } = route.params;
-  const [activeTab, setActiveTab] = useState('overview'); // overview, fundamental, technical
+  const [activeTab, setActiveTab] = useState('overview'); // overview, fundamental, technical, options
 
   const recommendation = generateRecommendation(
     stock.overallScore,
@@ -346,6 +346,13 @@ export default function StockDetailScreen({ route }) {
             Technical
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.optionsButton}
+          onPress={() => navigation.navigate('Options', { stock })}
+        >
+          <Ionicons name="trending-up" size={16} color="#fff" />
+          <Text style={styles.optionsButtonText}>Options</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Content */}
@@ -598,5 +605,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     marginTop: 50,
+  },
+  optionsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#667eea',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginLeft: 'auto',
+    gap: 6,
+  },
+  optionsButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

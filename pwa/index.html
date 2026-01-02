@@ -3,14 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI-Powered NSE Stock Analysis App for Indian Market">
-    <meta name="theme-color" content="#667eea">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="NSE Stocks">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icon-192.png">
-    <link rel="apple-touch-icon" href="icon-192.png">
     <title>NSE Stock Analyzer - Indian Market</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -186,6 +178,114 @@
             font-weight: 600;
             font-size: 14px;
         }
+        .tabs {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 4px;
+            margin: 15px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .options-badge {
+            display: inline-block;
+            background: #22c55e;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .options-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .options-header {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            color: white;
+            font-weight: bold;
+        }
+        .options-header.bullish {
+            background: #22c55e;
+        }
+        .options-header.bearish {
+            background: #ef4444;
+        }
+        .options-header.neutral {
+            background: #f59e0b;
+        }
+        .strike-option {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .strike-option.recommended {
+            border: 2px solid #22c55e;
+            background: #f0fdf4;
+        }
+        .strike-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .strike-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+        .strike-price {
+            font-size: 16px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .premium-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+        .greek-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .greek-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+        }
+        .greek-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 5px 0;
+        }
+        .greek-desc {
+            font-size: 11px;
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -252,6 +352,21 @@
         function generateMockStock(symbol, sectorName) {
             const basePrice = Math.random() * 3000 + 100; // Indian stock price range
             const score = Math.floor(Math.random() * 100);
+            const rsi = Math.random() * 100;
+            const vix = Math.random() * 30 + 10; // India VIX 10-40
+            
+            // Determine options recommendation
+            const isBullish = score >= 60 || rsi < 35;
+            const isBearish = score <= 40 || rsi > 65;
+            const optionType = isBullish ? 'CALL' : isBearish ? 'PUT' : 'STRADDLE';
+            const optionSentiment = isBullish ? 'BULLISH' : isBearish ? 'BEARISH' : 'NEUTRAL';
+            const confidence = Math.floor(Math.random() * 30 + 60); // 60-90%
+            
+            // Calculate strike prices
+            const roundToStrike = (price) => Math.round(price / 50) * 50;
+            const atm = roundToStrike(basePrice);
+            const itm = optionType === 'CALL' ? roundToStrike(basePrice * 0.97) : roundToStrike(basePrice * 1.03);
+            const otm = optionType === 'CALL' ? roundToStrike(basePrice * 1.03) : roundToStrike(basePrice * 0.97);
             
             return {
                 symbol,
@@ -265,7 +380,7 @@
                 marketCap: `₹${(Math.random() * 500 + 50).toFixed(0)}K Cr`,
                 volume: `${(Math.random() * 50 + 5).toFixed(1)}L`,
                 recommendation: score >= 70 ? 'BUY' : score >= 40 ? 'HOLD' : 'SELL',
-                rsi: (Math.random() * 100).toFixed(2),
+                rsi: rsi.toFixed(2),
                 macd: (Math.random() * 10 - 5).toFixed(2),
                 ema50: (basePrice * (1 + (Math.random() * 0.1 - 0.05))).toFixed(2),
                 ema200: (basePrice * (1 + (Math.random() * 0.2 - 0.1))).toFixed(2),
@@ -274,7 +389,41 @@
                 week52High: (basePrice * 1.25).toFixed(2),
                 week52Low: (basePrice * 0.75).toFixed(2),
                 dividendYield: (Math.random() * 3).toFixed(2) + '%',
-                bookValue: (basePrice * 0.8).toFixed(2)
+                bookValue: (basePrice * 0.8).toFixed(2),
+                // Options data
+                options: {
+                    sentiment: optionSentiment,
+                    optionType: optionType,
+                    confidence: confidence,
+                    vix: vix.toFixed(2),
+                    vixLevel: vix < 15 ? 'Low' : vix < 25 ? 'Normal' : vix < 35 ? 'High' : 'Very High',
+                    strikes: {
+                        itm: itm,
+                        atm: atm,
+                        otm: otm,
+                        recommended: confidence > 70 ? otm : atm
+                    },
+                    premiums: {
+                        call_itm: Math.round(basePrice * 0.05),
+                        call_atm: Math.round(basePrice * 0.03),
+                        call_otm: Math.round(basePrice * 0.015),
+                        put_itm: Math.round(basePrice * 0.05),
+                        put_atm: Math.round(basePrice * 0.03),
+                        put_otm: Math.round(basePrice * 0.015)
+                    },
+                    greeks: {
+                        delta: (Math.random() * 0.4 + 0.4).toFixed(2),
+                        gamma: (Math.random() * 0.05).toFixed(3),
+                        theta: -(Math.random() * 0.05).toFixed(2),
+                        vega: (Math.random() * 50 + 20).toFixed(2)
+                    },
+                    expiry: {
+                        nearTerm: '30 Jan 2026',
+                        monthly: '27 Feb 2026',
+                        recommended: vix > 25 ? 'Near Term' : 'Monthly'
+                    },
+                    strategy: isBullish ? 'Long Call' : isBearish ? 'Long Put' : 'Long Straddle'
+                }
             };
         }
 
@@ -282,6 +431,7 @@
             const [screen, setScreen] = useState('home');
             const [selectedSector, setSelectedSector] = useState(null);
             const [selectedStock, setSelectedStock] = useState(null);
+            const [activeTab, setActiveTab] = useState('overview');
 
             const handleSectorClick = (sectorName) => {
                 setSelectedSector(sectorName);
@@ -375,6 +525,8 @@
             }
 
             if (screen === 'stockDetail') {
+                const opt = selectedStock.options;
+                
                 return (
                     <div>
                         <div className="header">
@@ -384,82 +536,258 @@
                         <button className="back-button" onClick={handleBack}>
                             ← Back to {selectedSector}
                         </button>
+                        
+                        {/* Tabs */}
+                        <div className="tabs">
+                            <div 
+                                className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('overview')}
+                            >
+                                Overview
+                            </div>
+                            <div 
+                                className={`tab ${activeTab === 'fundamentals' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('fundamentals')}
+                            >
+                                Fundamentals
+                            </div>
+                            <div 
+                                className={`tab ${activeTab === 'technical' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('technical')}
+                            >
+                                Technical
+                            </div>
+                            <div 
+                                className={`tab ${activeTab === 'options' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('options')}
+                            >
+                                Options <span className="options-badge">NEW</span>
+                            </div>
+                        </div>
+                        
                         <div className="stock-detail">
                             <div className={`recommendation ${selectedStock.recommendation.toLowerCase()}`}>
                                 {selectedStock.recommendation}
                             </div>
                             
-                            <div className="detail-card">
-                                <h3 style={{ marginBottom: '15px', color: '#333' }}>Overview</h3>
-                                <div className="metric-row">
-                                    <span className="metric-label">Current Price</span>
-                                    <span className="metric-value">₹{selectedStock.price}</span>
+                            {/* Overview Tab */}
+                            {activeTab === 'overview' && (
+                                <div className="detail-card">
+                                    <h3 style={{ marginBottom: '15px', color: '#333' }}>Overview</h3>
+                                    <div className="metric-row">
+                                        <span className="metric-label">Current Price</span>
+                                        <span className="metric-value">₹{selectedStock.price}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">Overall Score</span>
+                                        <span className="metric-value">{selectedStock.score}/100</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">Market Cap</span>
+                                        <span className="metric-value">{selectedStock.marketCap}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">Volume</span>
+                                        <span className="metric-value">{selectedStock.volume}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">Day High</span>
+                                        <span className="metric-value">₹{selectedStock.dayHigh}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">Day Low</span>
+                                        <span className="metric-value">₹{selectedStock.dayLow}</span>
+                                    </div>
                                 </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">Overall Score</span>
-                                    <span className="metric-value">{selectedStock.score}/100</span>
+                            )}
+                            
+                            {/* Fundamentals Tab */}
+                            {activeTab === 'fundamentals' && (
+                                <div className="detail-card">
+                                    <h3 style={{ marginBottom: '15px', color: '#333' }}>Fundamentals</h3>
+                                    <div className="metric-row">
+                                        <span className="metric-label">P/E Ratio</span>
+                                        <span className="metric-value">{selectedStock.peRatio}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">Book Value</span>
+                                        <span className="metric-value">₹{selectedStock.bookValue}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">Dividend Yield</span>
+                                        <span className="metric-value">{selectedStock.dividendYield}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">52W High</span>
+                                        <span className="metric-value">₹{selectedStock.week52High}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">52W Low</span>
+                                        <span className="metric-value">₹{selectedStock.week52Low}</span>
+                                    </div>
                                 </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">Market Cap</span>
-                                    <span className="metric-value">{selectedStock.marketCap}</span>
-                                </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">Volume</span>
-                                    <span className="metric-value">{selectedStock.volume}</span>
-                                </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">Day High</span>
-                                    <span className="metric-value">₹{selectedStock.dayHigh}</span>
-                                </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">Day Low</span>
-                                    <span className="metric-value">₹{selectedStock.dayLow}</span>
-                                </div>
-                            </div>
+                            )}
 
-                            <div className="detail-card">
-                                <h3 style={{ marginBottom: '15px', color: '#333' }}>Fundamentals</h3>
-                                <div className="metric-row">
-                                    <span className="metric-label">P/E Ratio</span>
-                                    <span className="metric-value">{selectedStock.peRatio}</span>
+                            {/* Technical Tab */}
+                            {activeTab === 'technical' && (
+                                <div className="detail-card">
+                                    <h3 style={{ marginBottom: '15px', color: '#333' }}>Technical Indicators</h3>
+                                    <div className="metric-row">
+                                        <span className="metric-label">RSI</span>
+                                        <span className="metric-value">{selectedStock.rsi}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">MACD</span>
+                                        <span className="metric-value">{selectedStock.macd}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">EMA (50)</span>
+                                        <span className="metric-value">₹{selectedStock.ema50}</span>
+                                    </div>
+                                    <div className="metric-row">
+                                        <span className="metric-label">EMA (200)</span>
+                                        <span className="metric-value">₹{selectedStock.ema200}</span>
+                                    </div>
                                 </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">Book Value</span>
-                                    <span className="metric-value">₹{selectedStock.bookValue}</span>
-                                </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">Dividend Yield</span>
-                                    <span className="metric-value">{selectedStock.dividendYield}</span>
-                                </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">52W High</span>
-                                    <span className="metric-value">₹{selectedStock.week52High}</span>
-                                </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">52W Low</span>
-                                    <span className="metric-value">₹{selectedStock.week52Low}</span>
-                                </div>
-                            </div>
-
-                            <div className="detail-card">
-                                <h3 style={{ marginBottom: '15px', color: '#333' }}>Technical Indicators</h3>
-                                <div className="metric-row">
-                                    <span className="metric-label">RSI</span>
-                                    <span className="metric-value">{selectedStock.rsi}</span>
-                                </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">MACD</span>
-                                    <span className="metric-value">{selectedStock.macd}</span>
-                                </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">EMA (50)</span>
-                                    <span className="metric-value">₹{selectedStock.ema50}</span>
-                                </div>
-                                <div className="metric-row">
-                                    <span className="metric-label">EMA (200)</span>
-                                    <span className="metric-value">₹{selectedStock.ema200}</span>
-                                </div>
-                            </div>
+                            )}
+                            
+                            {/* Options Tab */}
+                            {activeTab === 'options' && (
+                                <>
+                                    <div className={`options-header ${opt.sentiment.toLowerCase()}`}>
+                                        <div style={{ fontSize: '24px', marginBottom: '5px' }}>{opt.sentiment}</div>
+                                        <div style={{ fontSize: '16px', opacity: 0.9 }}>Buy {opt.optionType} Options</div>
+                                        <div style={{ fontSize: '13px', marginTop: '8px', opacity: 0.8 }}>
+                                            Confidence: {opt.confidence}%
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="options-card">
+                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>Strategy Recommendation</h3>
+                                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#667eea', marginBottom: '8px' }}>
+                                            {opt.strategy}
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
+                                            {opt.sentiment === 'BULLISH' 
+                                                ? 'Buy OTM call for maximum leverage with limited risk'
+                                                : opt.sentiment === 'BEARISH'
+                                                ? 'Buy OTM put to profit from expected decline'
+                                                : 'Buy ATM call and put to profit from big move in either direction'}
+                                        </div>
+                                        <div className="metric-row">
+                                            <span className="metric-label">India VIX:</span>
+                                            <span className="metric-value">{opt.vix} ({opt.vixLevel})</span>
+                                        </div>
+                                        <div className="metric-row">
+                                            <span className="metric-label">Recommended Expiry:</span>
+                                            <span className="metric-value">{opt.expiry.recommended}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="options-card">
+                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>Strike Prices & Premiums</h3>
+                                        
+                                        <div className="strike-option">
+                                            <div className="strike-header">
+                                                <span className="strike-label">ITM (In-The-Money)</span>
+                                                <span className="strike-price">₹{opt.strikes.itm}</span>
+                                            </div>
+                                            <div className="premium-row">
+                                                <span>Call Premium:</span>
+                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.call_itm}</span>
+                                            </div>
+                                            <div className="premium-row">
+                                                <span>Put Premium:</span>
+                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.put_itm}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className={`strike-option ${opt.strikes.recommended === opt.strikes.atm ? 'recommended' : ''}`}>
+                                            <div className="strike-header">
+                                                <span className="strike-label">
+                                                    ATM (At-The-Money)
+                                                    {opt.strikes.recommended === opt.strikes.atm && ' ✓'}
+                                                </span>
+                                                <span className="strike-price">₹{opt.strikes.atm}</span>
+                                            </div>
+                                            <div className="premium-row">
+                                                <span>Call Premium:</span>
+                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.call_atm}</span>
+                                            </div>
+                                            <div className="premium-row">
+                                                <span>Put Premium:</span>
+                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.put_atm}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className={`strike-option ${opt.strikes.recommended === opt.strikes.otm ? 'recommended' : ''}`}>
+                                            <div className="strike-header">
+                                                <span className="strike-label">
+                                                    OTM (Out-Of-The-Money)
+                                                    {opt.strikes.recommended === opt.strikes.otm && ' ✓'}
+                                                </span>
+                                                <span className="strike-price">₹{opt.strikes.otm}</span>
+                                            </div>
+                                            <div className="premium-row">
+                                                <span>Call Premium:</span>
+                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.call_otm}</span>
+                                            </div>
+                                            <div className="premium-row">
+                                                <span>Put Premium:</span>
+                                                <span style={{ fontWeight: 600 }}>₹{opt.premiums.put_otm}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ fontSize: '12px', color: '#666', marginTop: '12px', lineHeight: '1.5' }}>
+                                            {opt.optionType === 'CALL' 
+                                                ? 'ITM: Higher premium, more intrinsic value. ATM: Balanced risk-reward. OTM: Lower premium, higher potential return.'
+                                                : 'ITM: Higher premium, more intrinsic value. ATM: Balanced risk-reward. OTM: Lower premium, higher leverage.'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="options-card">
+                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>Option Greeks</h3>
+                                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
+                                            For Strike: ₹{opt.strikes.recommended}
+                                        </div>
+                                        
+                                        <div className="greek-item">
+                                            <div className="greek-name">Delta (Δ)</div>
+                                            <div className="greek-value">{opt.greeks.delta}</div>
+                                            <div className="greek-desc">Price sensitivity to underlying movement</div>
+                                        </div>
+                                        
+                                        <div className="greek-item">
+                                            <div className="greek-name">Gamma (Γ)</div>
+                                            <div className="greek-value">{opt.greeks.gamma}</div>
+                                            <div className="greek-desc">Rate of change of Delta</div>
+                                        </div>
+                                        
+                                        <div className="greek-item">
+                                            <div className="greek-name">Theta (Θ)</div>
+                                            <div className="greek-value">{opt.greeks.theta}</div>
+                                            <div className="greek-desc">Time decay per day (losing ₹{Math.abs(opt.greeks.theta)} daily)</div>
+                                        </div>
+                                        
+                                        <div className="greek-item">
+                                            <div className="greek-name">Vega (ν)</div>
+                                            <div className="greek-value">{opt.greeks.vega}</div>
+                                            <div className="greek-desc">Sensitivity to volatility changes</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="options-card" style={{ background: '#fff3cd', borderLeft: '4px solid #856404' }}>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#856404', marginBottom: '8px' }}>
+                                            ⚠️ Risk Disclaimer
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#856404', lineHeight: '1.6' }}>
+                                            Options trading involves significant risk and is not suitable for all investors. 
+                                            Maximum loss is limited to premium paid. This analysis is for educational purposes only. 
+                                            Always consult a qualified financial advisor before trading options.
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 );
@@ -469,29 +797,6 @@
         }
 
         ReactDOM.render(<App />, document.getElementById('root'));
-    </script>
-
-    <!-- Register Service Worker for PWA -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(registration => {
-                        console.log('SW registered:', registration);
-                    })
-                    .catch(error => {
-                        console.log('SW registration failed:', error);
-                    });
-            });
-        }
-
-        // Install prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // You can show an install button here if desired
-        });
     </script>
 </body>
 </html>
