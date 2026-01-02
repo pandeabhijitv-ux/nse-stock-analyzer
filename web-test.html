@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSE Stock Analyzer - Indian Market</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        #root {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #f5f5f5;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .sectors {
+            padding: 15px;
+        }
+        .sector-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid;
+        }
+        .sector-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .sector-card h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .sector-card p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .stock-count {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #666;
+        }
+        .stock-list {
+            padding: 15px;
+        }
+        .stock-item {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .stock-item:hover {
+            transform: translateX(5px);
+        }
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .stock-symbol {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stock-score {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 8px;
+            color: white;
+        }
+        .score-high { background: #22c55e; }
+        .score-medium { background: #f59e0b; }
+        .score-low { background: #ef4444; }
+        .stock-name {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stock-price {
+            font-size: 14px;
+            color: #333;
+        }
+        .back-button {
+            background: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .back-button:hover {
+            background: #f0f0f0;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+        .stock-detail {
+            padding: 15px;
+        }
+        .detail-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .recommendation {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+        .recommendation.buy { background: #22c55e; }
+        .recommendation.hold { background: #f59e0b; }
+        .recommendation.sell { background: #ef4444; }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            color: #666;
+            font-size: 14px;
+        }
+        .metric-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Indian NSE Sectors and Stocks
+        const SECTORS = {
+            Technology: ['TCS', 'INFY', 'WIPRO', 'HCLTECH', 'TECHM', 'LTI', 'COFORGE', 'MINDTREE', 'MPHASIS', 'PERSISTENT'],
+            Banking: ['HDFCBANK', 'ICICIBANK', 'SBIN', 'KOTAKBANK', 'AXISBANK', 'INDUSINDBK', 'BANKBARODA', 'PNB', 'FEDERALBNK', 'IDFCFIRSTB'],
+            'Financial Services': ['BAJFINANCE', 'BAJAJFINSV', 'HDFCLIFE', 'SBILIFE', 'ICICIGI', 'HDFCAMC', 'MUTHOOTFIN', 'CHOLAFIN', 'M&MFIN', 'PFC'],
+            FMCG: ['HINDUNILVR', 'ITC', 'NESTLEIND', 'BRITANNIA', 'DABUR', 'MARICO', 'GODREJCP', 'COLPAL', 'TATACONSUM', 'EMAMILTD'],
+            Automobile: ['MARUTI', 'TATAMOTORS', 'M&M', 'BAJAJ-AUTO', 'EICHERMOT', 'HEROMOTOCO', 'ASHOKLEY', 'TVSMOTOR', 'BALKRISIND', 'MRF'],
+            Pharma: ['SUNPHARMA', 'DRREDDY', 'CIPLA', 'DIVISLAB', 'AUROPHARMA', 'LUPIN', 'BIOCON', 'TORNTPHARM', 'ALKEM', 'CADILAHC'],
+            Energy: ['RELIANCE', 'ONGC', 'IOC', 'BPCL', 'HINDPETRO', 'GAIL', 'COALINDIA', 'ADANIGREEN', 'ADANIPOWER', 'TATAPOWER'],
+            'Metals & Mining': ['TATASTEEL', 'HINDALCO', 'JSWSTEEL', 'VEDL', 'SAIL', 'JINDALSTEL', 'NMDC', 'HINDZINC', 'NATIONALUM', 'APLAPOLLO'],
+            Infrastructure: ['LT', 'ULTRACEMCO', 'GRASIM', 'ADANIPORTS', 'HINDCOPPER', 'RAMCOCEM', 'SHREECEM', 'AMBUJACEM', 'ACC', 'CONCOR'],
+            'Consumer Durables': ['TITAN', 'HAVELLS', 'VOLTAS', 'WHIRLPOOL', 'CROMPTON', 'BATAINDIA', 'SYMPHONY', 'BLUESTARCO', 'RAJESHEXPO', 'KAJARIACER']
+        };
+
+        const SECTOR_COLORS = {
+            Technology: '#3b82f6',
+            Banking: '#10b981',
+            'Financial Services': '#8b5cf6',
+            FMCG: '#f59e0b',
+            Automobile: '#ef4444',
+            Pharma: '#06b6d4',
+            Energy: '#ec4899',
+            'Metals & Mining': '#14b8a6',
+            Infrastructure: '#f97316',
+            'Consumer Durables': '#6366f1'
+        };
+
+        // Stock name mapping for better display
+        const STOCK_NAMES = {
+            TCS: 'Tata Consultancy Services',
+            INFY: 'Infosys Ltd',
+            WIPRO: 'Wipro Ltd',
+            HCLTECH: 'HCL Technologies',
+            TECHM: 'Tech Mahindra',
+            HDFCBANK: 'HDFC Bank',
+            ICICIBANK: 'ICICI Bank',
+            SBIN: 'State Bank of India',
+            KOTAKBANK: 'Kotak Mahindra Bank',
+            AXISBANK: 'Axis Bank',
+            BAJFINANCE: 'Bajaj Finance',
+            BAJAJFINSV: 'Bajaj Finserv',
+            RELIANCE: 'Reliance Industries',
+            HINDUNILVR: 'Hindustan Unilever',
+            ITC: 'ITC Ltd',
+            MARUTI: 'Maruti Suzuki',
+            TATAMOTORS: 'Tata Motors',
+            'M&M': 'Mahindra & Mahindra',
+            SUNPHARMA: 'Sun Pharma',
+            ONGC: 'Oil & Natural Gas Corp',
+            TATASTEEL: 'Tata Steel',
+            LT: 'Larsen & Toubro',
+            TITAN: 'Titan Company'
+        };
+
+        // Generate mock stock data for Indian stocks
+        function generateMockStock(symbol, sectorName) {
+            const basePrice = Math.random() * 3000 + 100; // Indian stock price range
+            const score = Math.floor(Math.random() * 100);
+            
+            return {
+                symbol,
+                name: STOCK_NAMES[symbol] || `${symbol} Ltd`,
+                price: basePrice.toFixed(2),
+                change: (Math.random() * 50 - 25).toFixed(2),
+                changePercent: ((Math.random() * 10 - 5)).toFixed(2),
+                sector: sectorName,
+                score: score,
+                peRatio: (Math.random() * 50 + 10).toFixed(2),
+                marketCap: `₹${(Math.random() * 500 + 50).toFixed(0)}K Cr`,
+                volume: `${(Math.random() * 50 + 5).toFixed(1)}L`,
+                recommendation: score >= 70 ? 'BUY' : score >= 40 ? 'HOLD' : 'SELL',
+                rsi: (Math.random() * 100).toFixed(2),
+                macd: (Math.random() * 10 - 5).toFixed(2),
+                ema50: (basePrice * (1 + (Math.random() * 0.1 - 0.05))).toFixed(2),
+                ema200: (basePrice * (1 + (Math.random() * 0.2 - 0.1))).toFixed(2),
+                dayHigh: (basePrice * 1.03).toFixed(2),
+                dayLow: (basePrice * 0.97).toFixed(2),
+                week52High: (basePrice * 1.25).toFixed(2),
+                week52Low: (basePrice * 0.75).toFixed(2),
+                dividendYield: (Math.random() * 3).toFixed(2) + '%',
+                bookValue: (basePrice * 0.8).toFixed(2)
+            };
+        }
+
+        function App() {
+            const [screen, setScreen] = useState('home');
+            const [selectedSector, setSelectedSector] = useState(null);
+            const [selectedStock, setSelectedStock] = useState(null);
+
+            const handleSectorClick = (sectorName) => {
+                setSelectedSector(sectorName);
+                setScreen('stockList');
+            };
+
+            const handleStockClick = (stock) => {
+                setSelectedStock(stock);
+                setScreen('stockDetail');
+            };
+
+            const handleBack = () => {
+                if (screen === 'stockDetail') {
+                    setScreen('stockList');
+                } else {
+                    setScreen('home');
+                    setSelectedSector(null);
+                }
+            };
+
+            if (screen === 'home') {
+                return (
+                    <div>
+                        <div className="header">
+                            <h1>📈 NSE Stock Analyzer</h1>
+                            <p>AI-Powered Indian Market Analysis</p>
+                        </div>
+                        <div className="sectors">
+                            {Object.keys(SECTORS).map(sectorName => (
+                                <div 
+                                    key={sectorName}
+                                    className="sector-card"
+                                    style={{ borderLeftColor: SECTOR_COLORS[sectorName] }}
+                                    onClick={() => handleSectorClick(sectorName)}
+                                >
+                                    <h3>{sectorName}</h3>
+                                    <p>View top performing stocks</p>
+                                    <span className="stock-count">{SECTORS[sectorName].length} stocks</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
+
+            if (screen === 'stockList') {
+                const stocks = SECTORS[selectedSector].map(symbol => 
+                    generateMockStock(symbol, selectedSector)
+                ).sort((a, b) => b.score - a.score);
+
+                return (
+                    <div>
+                        <div className="header">
+                            <h1>{selectedSector}</h1>
+                            <p>{stocks.length} stocks ranked by score</p>
+                        </div>
+                        <button className="back-button" onClick={handleBack}>
+                            ← Back to Sectors
+                        </button>
+                        <div className="stock-list">
+                            {stocks.map(stock => (
+                                <div 
+                                    key={stock.symbol}
+                                    className="stock-item"
+                                    onClick={() => handleStockClick(stock)}
+                                >
+                                    <div className="stock-header">
+                                        <span className="stock-symbol">{stock.symbol}</span>
+                                        <span className={`stock-score ${
+                                            stock.score >= 70 ? 'score-high' : 
+                                            stock.score >= 40 ? 'score-medium' : 'score-low'
+                                        }`}>
+                                            {stock.score}
+                                        </span>
+                                    </div>
+                                    <div className="stock-name">{stock.name}</div>
+                                    <div className="stock-price">
+                                        ₹{stock.price} 
+                                        <span style={{ 
+                                            color: stock.change >= 0 ? '#22c55e' : '#ef4444',
+                                            marginLeft: '10px'
+                                        }}>
+                                            {stock.change >= 0 ? '↑' : '↓'} ₹{Math.abs(stock.change)} ({stock.changePercent}%)
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
+
+            if (screen === 'stockDetail') {
+                return (
+                    <div>
+                        <div className="header">
+                            <h1>{selectedStock.symbol}</h1>
+                            <p>{selectedStock.name}</p>
+                        </div>
+                        <button className="back-button" onClick={handleBack}>
+                            ← Back to {selectedSector}
+                        </button>
+                        <div className="stock-detail">
+                            <div className={`recommendation ${selectedStock.recommendation.toLowerCase()}`}>
+                                {selectedStock.recommendation}
+                            </div>
+                            
+                            <div className="detail-card">
+                                <h3 style={{ marginBottom: '15px', color: '#333' }}>Overview</h3>
+                                <div className="metric-row">
+                                    <span className="metric-label">Current Price</span>
+                                    <span className="metric-value">₹{selectedStock.price}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Overall Score</span>
+                                    <span className="metric-value">{selectedStock.score}/100</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Market Cap</span>
+                                    <span className="metric-value">{selectedStock.marketCap}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Volume</span>
+                                    <span className="metric-value">{selectedStock.volume}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Day High</span>
+                                    <span className="metric-value">₹{selectedStock.dayHigh}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Day Low</span>
+                                    <span className="metric-value">₹{selectedStock.dayLow}</span>
+                                </div>
+                            </div>
+
+                            <div className="detail-card">
+                                <h3 style={{ marginBottom: '15px', color: '#333' }}>Fundamentals</h3>
+                                <div className="metric-row">
+                                    <span className="metric-label">P/E Ratio</span>
+                                    <span className="metric-value">{selectedStock.peRatio}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Book Value</span>
+                                    <span className="metric-value">₹{selectedStock.bookValue}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">Dividend Yield</span>
+                                    <span className="metric-value">{selectedStock.dividendYield}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">52W High</span>
+                                    <span className="metric-value">₹{selectedStock.week52High}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">52W Low</span>
+                                    <span className="metric-value">₹{selectedStock.week52Low}</span>
+                                </div>
+                            </div>
+
+                            <div className="detail-card">
+                                <h3 style={{ marginBottom: '15px', color: '#333' }}>Technical Indicators</h3>
+                                <div className="metric-row">
+                                    <span className="metric-label">RSI</span>
+                                    <span className="metric-value">{selectedStock.rsi}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">MACD</span>
+                                    <span className="metric-value">{selectedStock.macd}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">EMA (50)</span>
+                                    <span className="metric-value">₹{selectedStock.ema50}</span>
+                                </div>
+                                <div className="metric-row">
+                                    <span className="metric-label">EMA (200)</span>
+                                    <span className="metric-value">₹{selectedStock.ema200}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return null;
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
