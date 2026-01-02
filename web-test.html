@@ -453,19 +453,25 @@
             
             // Load stocks when sector changes
             useEffect(() => {
+                console.log(`🔄 useEffect triggered - screen: ${screen}, sector: ${selectedSector}`);
                 if (screen === 'stockList' && selectedSector) {
                     async function loadStocks() {
+                        console.log(`🚀 Loading stocks for ${selectedSector}...`);
                         setIsLoadingStocks(true);
                         const symbols = SECTORS[selectedSector];
+                        console.log(`📋 Symbols to fetch:`, symbols);
+                        
                         const stockPromises = symbols.map(symbol => fetchRealStockData(symbol));
                         const results = await Promise.all(stockPromises);
+                        console.log(`📊 API Results:`, results);
                         
                         const validStocks = results
                             .filter(s => s !== null)
                             .map(realData => {
+                                console.log(`🔧 Processing ${realData.symbol}...`);
                                 // Merge real data with mock options data
                                 const mockData = generateMockStock(realData.symbol, selectedSector);
-                                return {
+                                const merged = {
                                     ...realData,
                                     name: STOCK_NAMES[realData.symbol] || `${realData.symbol} Ltd`,
                                     price: realData.currentPrice,
@@ -481,9 +487,12 @@
                                     ema200: mockData.ema200,
                                     options: mockData.options
                                 };
+                                console.log(`✅ Merged data for ${realData.symbol}:`, merged);
+                                return merged;
                             })
                             .sort((a, b) => b.score - a.score);
                         
+                        console.log(`🎉 Final stocks array:`, validStocks);
                         setStocks(validStocks);
                         setIsLoadingStocks(false);
                     }
@@ -494,15 +503,22 @@
 
             // Fetch real stock data from Yahoo Finance API
             async function fetchRealStockData(symbol) {
+                console.log(`🔍 Fetching data for ${symbol}...`);
                 try {
                     const yahooSymbol = `${symbol}.NS`; // NSE stocks
                     // Use CORS proxy to bypass CORS restrictions
                     const corsProxy = 'https://corsproxy.io/?';
                     const apiUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=1d&range=1y`;
+                    console.log(`📡 API URL: ${corsProxy + encodeURIComponent(apiUrl)}`);
+                    
                     const response = await fetch(corsProxy + encodeURIComponent(apiUrl));
+                    console.log(`✅ Response status: ${response.status}`);
+                    
                     const data = await response.json();
+                    console.log(`📦 Data received for ${symbol}:`, data);
                     
                     if (!data.chart || !data.chart.result || !data.chart.result[0]) {
+                        console.error(`❌ Invalid data structure for ${symbol}`);
                         throw new Error('Invalid data');
                     }
                     
@@ -518,6 +534,8 @@
                     const fiftyTwoWeekHigh = meta.fiftyTwoWeekHigh;
                     const fiftyTwoWeekLow = meta.fiftyTwoWeekLow;
                     
+                    console.log(`💰 ${symbol} Price: ₹${currentPrice}`);
+                    
                     const change = currentPrice - previousClose;
                     const changePercent = (change / previousClose) * 100;
                     
@@ -531,7 +549,7 @@
                     // Score based on technical + fundamental
                     const score = calculateScore(currentPrice, previousClose, rsi, changePercent);
                     
-                    return {
+                    const stockData = {
                         symbol,
                         currentPrice: currentPrice.toFixed(2),
                         change: change.toFixed(2),
@@ -545,8 +563,11 @@
                         score: score,
                         prices: closes.slice(-90) // Last 90 days for chart
                     };
+                    
+                    console.log(`✅ Successfully processed ${symbol}:`, stockData);
+                    return stockData;
                 } catch (error) {
-                    console.error(`Error fetching ${symbol}:`, error);
+                    console.error(`❌ Error fetching ${symbol}:`, error);
                     return null;
                 }
             }
