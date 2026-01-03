@@ -1193,36 +1193,6 @@
                             <p>AI-Powered Multi-Strategy Analysis</p>
                         </div>
                         
-                        {/* Search Bar */}
-                        <div style={{ padding: '15px', background: 'white', margin: '0 15px 15px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                            <input 
-                                type="text" 
-                                placeholder="🔍 Search any NSE stock (e.g., ZOMATO, DIXON, IRCTC)"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyPress={(e) => {
-                                    if (e.key === 'Enter' && searchQuery.trim()) {
-                                        handleSearch(searchQuery.trim());
-                                    }
-                                }}
-                                style={{ 
-                                    width: '100%', 
-                                    padding: '12px', 
-                                    border: '2px solid #e0e0e0', 
-                                    borderRadius: '8px',
-                                    fontSize: '15px',
-                                    outline: 'none'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                                onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
-                            />
-                            {isSearching && (
-                                <div style={{ marginTop: '8px', fontSize: '13px', color: '#666', textAlign: 'center' }}>
-                                    Searching...
-                                </div>
-                            )}
-                        </div>
-                        
                         <div className="sectors">
                             {/* Main Strategy Categories */}
                             <div 
@@ -1542,6 +1512,17 @@
                         <div className="header">
                             <h1>🎯 Options Trading</h1>
                             <p>Pre-Market Call & Put Recommendations (9:00-9:20 AM IST)</p>
+                            <div style={{
+                                background: 'rgba(255,255,255,0.2)',
+                                padding: '8px 15px',
+                                borderRadius: '8px',
+                                marginTop: '8px',
+                                fontSize: '12px',
+                                color: '#fff',
+                                fontWeight: '600'
+                            }}>
+                                📅 Data Date: {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </div>
                             <div style={{
                                 background: 'rgba(255,255,255,0.1)',
                                 padding: '10px 20px',
@@ -1957,14 +1938,6 @@
                             >
                                 Technical
                             </div>
-                            {showOptions && (
-                                <div 
-                                    className={`tab ${activeTab === 'options' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('options')}
-                                >
-                                    Options <span className="options-badge">NEW</span>
-                                </div>
-                            )}
                         </div>
                         
                         <div className="stock-detail">
@@ -2067,152 +2040,6 @@
                                         <span className="metric-value">₹{selectedStock.ema200}</span>
                                     </div>
                                 </div>
-                            )}
-                            
-                            {/* Options Tab - Ultra Simplified */}
-                            {activeTab === 'options' && (
-                                <>
-                                    {!showOptions ? (
-                                        <div style={{
-                                            background: 'white',
-                                            borderRadius: '12px',
-                                            padding: '40px 20px',
-                                            margin: '20px 15px',
-                                            textAlign: 'center',
-                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                        }}>
-                                            <h2 style={{ color: '#FF6B35', marginBottom: '15px', fontSize: '22px' }}>
-                                                ⏰ Options Window Closed
-                                            </h2>
-                                            <p style={{ fontSize: '16px', color: '#666', lineHeight: '1.6', marginBottom: '10px' }}>
-                                                Options analysis is available only during:<br/>
-                                                <strong style={{ color: '#333', fontSize: '20px' }}>9:00 AM - 9:20 AM IST</strong>
-                                            </p>
-                                            <p style={{ fontSize: '14px', color: '#999' }}>
-                                                Pre-market window for Call/Put recommendations
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <>
-                                    <div className={`options-header ${opt.sentiment.toLowerCase()}`}>
-                                        <div style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px' }}>
-                                            {opt.optionType === 'CALL' ? '📈 BUY CALL' : '📉 BUY PUT'}
-                                        </div>
-                                        <div style={{ fontSize: '16px', opacity: 0.95 }}>
-                                            Strike: ₹{opt.strikes.recommended}
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Trading Plan - Simple 3 Boxes */}
-                                    <div style={{ 
-                                        display: 'grid', 
-                                        gridTemplateColumns: '1fr 1fr 1fr',
-                                        gap: '10px',
-                                        padding: '15px',
-                                        marginBottom: '10px'
-                                    }}>
-                                        <div style={{ 
-                                            background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)',
-                                            padding: '20px',
-                                            borderRadius: '12px',
-                                            textAlign: 'center',
-                                            boxShadow: '0 4px 10px rgba(33,150,243,0.3)'
-                                        }}>
-                                            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginBottom: '8px', fontWeight: '600' }}>
-                                                💳 ENTRY
-                                            </div>
-                                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
-                                                ₹{opt.optionType === 'CALL' 
-                                                    ? (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.call_otm :
-                                                       opt.strikes.recommended === opt.strikes.atm ? opt.premiums.call_atm :
-                                                       opt.premiums.call_itm)
-                                                    : (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.put_otm :
-                                                       opt.strikes.recommended === opt.strikes.atm ? opt.premiums.put_atm :
-                                                       opt.premiums.put_itm)}
-                                            </div>
-                                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginTop: '5px' }}>
-                                                Premium to pay
-                                            </div>
-                                        </div>
-                                        
-                                        <div style={{ 
-                                            background: 'linear-gradient(135deg, #4CAF50 0%, #388e3c 100%)',
-                                            padding: '20px',
-                                            borderRadius: '12px',
-                                            textAlign: 'center',
-                                            boxShadow: '0 4px 10px rgba(76,175,80,0.3)'
-                                        }}>
-                                            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginBottom: '8px', fontWeight: '600' }}>
-                                                🎯 TARGET
-                                            </div>
-                                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
-                                                ₹{(parseFloat(opt.optionType === 'CALL' 
-                                                    ? (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.call_otm :
-                                                       opt.strikes.recommended === opt.strikes.atm ? opt.premiums.call_atm :
-                                                       opt.premiums.call_itm)
-                                                    : (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.put_otm :
-                                                       opt.strikes.recommended === opt.strikes.atm ? opt.premiums.put_atm :
-                                                       opt.premiums.put_itm)) * 2).toFixed(0)}
-                                            </div>
-                                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginTop: '5px' }}>
-                                                Exit at 2x (100% profit)
-                                            </div>
-                                        </div>
-                                        
-                                        <div style={{ 
-                                            background: 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)',
-                                            padding: '20px',
-                                            borderRadius: '12px',
-                                            textAlign: 'center',
-                                            boxShadow: '0 4px 10px rgba(244,67,54,0.3)'
-                                        }}>
-                                            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', marginBottom: '8px', fontWeight: '600' }}>
-                                                🛑 STOP LOSS
-                                            </div>
-                                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
-                                                ₹{(parseFloat(opt.optionType === 'CALL' 
-                                                    ? (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.call_otm :
-                                                       opt.strikes.recommended === opt.strikes.atm ? opt.premiums.call_atm :
-                                                       opt.premiums.call_itm)
-                                                    : (opt.strikes.recommended === opt.strikes.otm ? opt.premiums.put_otm :
-                                                       opt.strikes.recommended === opt.strikes.atm ? opt.premiums.put_atm :
-                                                       opt.premiums.put_itm)) * 0.5).toFixed(0)}
-                                            </div>
-                                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginTop: '5px' }}>
-                                                Exit if 50% loss
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Expiry Info */}
-                                    <div style={{ 
-                                        background: 'white',
-                                        padding: '15px',
-                                        margin: '0 15px 15px',
-                                        borderRadius: '10px',
-                                        textAlign: 'center',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                                    }}>
-                                        <div style={{ fontSize: '14px', color: '#666', fontWeight: '600' }}>
-                                            📅 Expiry: {opt.expiry.recommended}
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Risk Warning */}
-                                    <div style={{ 
-                                        background: '#fff3cd',
-                                        padding: '12px',
-                                        margin: '0 15px',
-                                        borderRadius: '8px',
-                                        borderLeft: '4px solid #ff9800'
-                                    }}>
-                                        <div style={{ fontSize: '11px', color: '#856404', lineHeight: '1.5', textAlign: 'center' }}>
-                                            ⚠️ High risk. Max loss = Premium paid. Not financial advice.
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                            </>
                             )}
                         </div>
                     </div>
