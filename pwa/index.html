@@ -1305,8 +1305,8 @@
                                         key={stock.symbol} 
                                         className="stock-item"
                                         onClick={() => {
-                                            setSelectedStock(stock);
-                                            setScreen('detail');
+                                            setSelectedStock(sanitizeStockForDisplay(stock));
+                                            setScreen('stockDetail');
                                         }}
                                     >
                                         <div className="stock-header">
@@ -1809,7 +1809,21 @@
             }
 
             if (screen === 'stockDetail') {
-                const opt = selectedStock.options;
+                if (!selectedStock) {
+                    return (
+                        <div>
+                            <div className="header">
+                                <h1>Error</h1>
+                                <p>No stock selected</p>
+                            </div>
+                            <button className="back-button" onClick={handleBack}>
+                                ← Back
+                            </button>
+                        </div>
+                    );
+                }
+                
+                const opt = selectedStock.options || {};
                 
                 return (
                     <div>
@@ -1862,8 +1876,8 @@
                         </div>
                         
                         <div className="stock-detail">
-                            <div className={`recommendation ${selectedStock.recommendation.toLowerCase()}`}>
-                                {selectedStock.recommendation}
+                            <div className={`recommendation ${(selectedStock.recommendation || 'HOLD').toLowerCase()}`}>
+                                {selectedStock.recommendation || 'HOLD'}
                             </div>
                             <div style={{ 
                                 textAlign: 'center', 
