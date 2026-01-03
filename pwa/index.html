@@ -1055,6 +1055,88 @@
                     setStocks([]);
                 }
             };
+            
+            // Load category stocks - useEffect must be at top level, not inside conditional
+            React.useEffect(() => {
+                if (screen !== 'category' || !selectedSector) return;
+                
+                const loadCategoryStocks = async () => {
+                    setIsLoadingStocks(true);
+                    
+                    try {
+                        // Get all stocks with real prices
+                        const allStockSymbols = Object.values(SECTORS).flat();
+                        const categoryStocks = [];
+                        
+                        for (const symbol of allStockSymbols) {
+                            if (REALISTIC_PRICES[symbol]) {
+                                const stock = generateMockStock(symbol, 'Multiple');
+                                
+                                // Add category-specific scoring
+                                if (selectedSector === 'Target Oriented') {
+                                    // Stocks with clear support/resistance levels
+                                    stock.targetScore = stock.score;
+                                    stock.targetPrice = stock.recommendation === 'BUY' ? 
+                                        (parseFloat(stock.price) * 1.15).toFixed(2) : 
+                                        stock.recommendation === 'HOLD' ? 
+                                        (parseFloat(stock.price) * 1.05).toFixed(2) :
+                                        (parseFloat(stock.price) * 0.92).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.95).toFixed(2);
+                                } else if (selectedSector === 'Swing Stocks') {
+                                    // High momentum stocks
+                                    const momentum = parseFloat(stock.changePercent);
+                                    stock.momentumScore = momentum > 3 ? 90 : momentum > 2 ? 80 : momentum > 1 ? 70 : 50;
+                                    stock.targetPrice = (parseFloat(stock.price) * 1.10).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
+                                } else if (selectedSector === 'Fundamentally Strong') {
+                                    // Good P/E, low debt
+                                    const pe = parseFloat(stock.peRatio);
+                                    stock.fundamentalScore = pe < 20 ? 90 : pe < 30 ? 75 : 60;
+                                    stock.targetPrice = (parseFloat(stock.price) * 1.20).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.93).toFixed(2);
+                                } else if (selectedSector === 'Technically Strong') {
+                                    // RSI, MACD signals
+                                    const rsi = parseFloat(stock.rsi);
+                                    stock.technicalScore = (rsi > 40 && rsi < 60) ? 85 : (rsi > 30 && rsi < 70) ? 70 : 50;
+                                    stock.targetPrice = (parseFloat(stock.price) * 1.12).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.96).toFixed(2);
+                                } else if (selectedSector === 'Hot Stocks Today') {
+                                    // Top movers
+                                    stock.dayMoveScore = Math.abs(parseFloat(stock.changePercent)) * 10;
+                                    stock.targetPrice = parseFloat(stock.changePercent) > 0 ?
+                                        (parseFloat(stock.price) * 1.08).toFixed(2) :
+                                        (parseFloat(stock.price) * 0.95).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
+                                }
+                                
+                                categoryStocks.push(stock);
+                            }
+                        }
+                        
+                        // Sort based on category
+                        if (selectedSector === 'Target Oriented') {
+                            categoryStocks.sort((a, b) => (b.targetScore || 0) - (a.targetScore || 0));
+                        } else if (selectedSector === 'Swing Stocks') {
+                            categoryStocks.sort((a, b) => (b.momentumScore || 0) - (a.momentumScore || 0));
+                        } else if (selectedSector === 'Fundamentally Strong') {
+                            categoryStocks.sort((a, b) => (b.fundamentalScore || 0) - (a.fundamentalScore || 0));
+                        } else if (selectedSector === 'Technically Strong') {
+                            categoryStocks.sort((a, b) => (b.technicalScore || 0) - (a.technicalScore || 0));
+                        } else if (selectedSector === 'Hot Stocks Today') {
+                            categoryStocks.sort((a, b) => (b.dayMoveScore || 0) - (a.dayMoveScore || 0));
+                        }
+                        
+                        setStocks(categoryStocks.slice(0, 50).map(sanitizeStockForDisplay).filter(s => s !== null)); // Top 50 stocks
+                    } catch (error) {
+                        console.error('Error loading category stocks:', error);
+                        setStocks([]);
+                    } finally {
+                        setIsLoadingStocks(false);
+                    }
+                };
+                
+                loadCategoryStocks();
+            }, [screen, selectedSector]);
 
             if (screen === 'home') {
                 return (
@@ -1248,87 +1330,6 @@
             
             // Category Screen - Target Oriented, Swing, Fundamental, Technical, Hot Stocks
             if (screen === 'category') {
-                React.useEffect(() => {
-                    if (!selectedSector) return;
-                    
-                    const loadCategoryStocks = async () => {
-                        setIsLoadingStocks(true);
-                        
-                        try {
-                            // Get all stocks with real prices
-                            const allStockSymbols = Object.values(SECTORS).flat();
-                            const categoryStocks = [];
-                            
-                            for (const symbol of allStockSymbols) {
-                                if (REALISTIC_PRICES[symbol]) {
-                                    const stock = generateMockStock(symbol, 'Multiple');
-                                    
-                                    // Add category-specific scoring
-                                    if (selectedSector === 'Target Oriented') {
-                                        // Stocks with clear support/resistance levels
-                                        stock.targetScore = stock.score;
-                                        stock.targetPrice = stock.recommendation === 'BUY' ? 
-                                            (parseFloat(stock.price) * 1.15).toFixed(2) : 
-                                            stock.recommendation === 'HOLD' ? 
-                                            (parseFloat(stock.price) * 1.05).toFixed(2) :
-                                            (parseFloat(stock.price) * 0.92).toFixed(2);
-                                        stock.stopLoss = (parseFloat(stock.price) * 0.95).toFixed(2);
-                                    } else if (selectedSector === 'Swing Stocks') {
-                                        // High momentum stocks
-                                        const momentum = parseFloat(stock.changePercent);
-                                        stock.momentumScore = momentum > 3 ? 90 : momentum > 2 ? 80 : momentum > 1 ? 70 : 50;
-                                        stock.targetPrice = (parseFloat(stock.price) * 1.10).toFixed(2);
-                                        stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
-                                    } else if (selectedSector === 'Fundamentally Strong') {
-                                        // Good P/E, low debt
-                                        const pe = parseFloat(stock.peRatio);
-                                        stock.fundamentalScore = pe < 20 ? 90 : pe < 30 ? 75 : 60;
-                                        stock.targetPrice = (parseFloat(stock.price) * 1.20).toFixed(2);
-                                        stock.stopLoss = (parseFloat(stock.price) * 0.93).toFixed(2);
-                                    } else if (selectedSector === 'Technically Strong') {
-                                        // RSI, MACD signals
-                                        const rsi = parseFloat(stock.rsi);
-                                        stock.technicalScore = (rsi > 40 && rsi < 60) ? 85 : (rsi > 30 && rsi < 70) ? 70 : 50;
-                                        stock.targetPrice = (parseFloat(stock.price) * 1.12).toFixed(2);
-                                        stock.stopLoss = (parseFloat(stock.price) * 0.96).toFixed(2);
-                                    } else if (selectedSector === 'Hot Stocks Today') {
-                                        // Top movers
-                                        stock.dayMoveScore = Math.abs(parseFloat(stock.changePercent)) * 10;
-                                        stock.targetPrice = parseFloat(stock.changePercent) > 0 ?
-                                            (parseFloat(stock.price) * 1.08).toFixed(2) :
-                                            (parseFloat(stock.price) * 0.95).toFixed(2);
-                                        stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
-                                    }
-                                    
-                                    categoryStocks.push(stock);
-                                }
-                            }
-                            
-                            // Sort based on category
-                            if (selectedSector === 'Target Oriented') {
-                                categoryStocks.sort((a, b) => (b.targetScore || 0) - (a.targetScore || 0));
-                            } else if (selectedSector === 'Swing Stocks') {
-                                categoryStocks.sort((a, b) => (b.momentumScore || 0) - (a.momentumScore || 0));
-                            } else if (selectedSector === 'Fundamentally Strong') {
-                                categoryStocks.sort((a, b) => (b.fundamentalScore || 0) - (a.fundamentalScore || 0));
-                            } else if (selectedSector === 'Technically Strong') {
-                                categoryStocks.sort((a, b) => (b.technicalScore || 0) - (a.technicalScore || 0));
-                            } else if (selectedSector === 'Hot Stocks Today') {
-                                categoryStocks.sort((a, b) => (b.dayMoveScore || 0) - (a.dayMoveScore || 0));
-                            }
-                            
-                            setStocks(categoryStocks.slice(0, 50).map(sanitizeStockForDisplay).filter(s => s !== null)); // Top 50 stocks
-                        } catch (error) {
-                            console.error('Error loading category stocks:', error);
-                            setStocks([]);
-                        } finally {
-                            setIsLoadingStocks(false);
-                        }
-                    };
-                    
-                    loadCategoryStocks();
-                }, [selectedSector]);
-                
                 return (
                     <div>
                         <div className="header">
