@@ -305,7 +305,15 @@
             Energy: ['RELIANCE', 'ONGC', 'IOC', 'BPCL', 'HINDPETRO', 'GAIL', 'COALINDIA', 'ADANIGREEN', 'ADANIPOWER', 'TATAPOWER'],
             'Metals & Mining': ['TATASTEEL', 'HINDALCO', 'JSWSTEEL', 'VEDL', 'SAIL', 'JINDALSTEL', 'NMDC', 'HINDZINC', 'NATIONALUM', 'APLAPOLLO'],
             Infrastructure: ['LT', 'ULTRACEMCO', 'GRASIM', 'ADANIPORTS', 'HINDCOPPER', 'RAMCOCEM', 'SHREECEM', 'AMBUJACEM', 'ACC', 'CONCOR'],
-            'Consumer Durables': ['TITAN', 'HAVELLS', 'VOLTAS', 'WHIRLPOOL', 'CROMPTON', 'BATAINDIA', 'SYMPHONY', 'BLUESTARCO', 'RAJESHEXPO', 'KAJARIACER']
+            'Consumer Durables': ['TITAN', 'HAVELLS', 'VOLTAS', 'WHIRLPOOL', 'CROMPTON', 'BATAINDIA', 'SYMPHONY', 'BLUESTARCO', 'RAJESHEXPO', 'KAJARIACER'],
+            Telecom: ['BHARTIARTL', 'IDEA', 'RCOM', 'TTML', 'GTPL', 'HFCL', 'STERLITE', 'INDIACOM', 'ONMOBILE', 'RTNPOWER'],
+            'Real Estate': ['DLF', 'GODREJPROP', 'OBEROIRLTY', 'PRESTIGE', 'PHOENIXLTD', 'SOBHA', 'BRIGADE', 'MAHLIFE', 'SUNTECK', 'IBREALEST'],
+            Chemicals: ['UPL', 'PIDILITIND', 'AARTI', 'DEEPAKNI', 'SRF', 'NAVINFLUOR', 'ATUL', 'BALRAMCHIN', 'TATACHEMICAL', 'GHCL'],
+            Media: ['ZEEL', 'SUNTV', 'TVTODAY', 'TIPS', 'PVR', 'SAREGAMA', 'BALAJITELE', 'NAZARA', 'UTVME', 'EROS'],
+            Hotels: ['INDHOTEL', 'LEMONTREE', 'EIH', 'TAJGVK', 'CHALET', 'ORIENTHOT', 'MAHINDCIE', 'ROYALORCH', 'TRENT', 'WESTLIFE'],
+            Textiles: ['ARVIND', 'TRIDENT', 'WELSPUNIND', 'KPR', 'VARDHMAN', 'ALOKTEXT', 'RAYMOND', 'SPICEJET', 'AHLEAST', 'GOKEX'],
+            Power: ['NTPC', 'POWERGRID', 'REC', 'NHPC', 'SJVN', 'JSPL', 'JSW ENERGY', 'TORNTPOWER', 'CESC', 'ADITYA'],
+            Retail: ['DMART', 'TRENT', 'SHOPERSTOP', 'VEDANT', 'ADITYA BIRLA FASHION', 'VBLSTORE', 'TITAN', 'RELAXO', 'BATA', 'WESTLIFE']
         };
 
         const SECTOR_COLORS = {
@@ -318,7 +326,15 @@
             Energy: '#ec4899',
             'Metals & Mining': '#14b8a6',
             Infrastructure: '#f97316',
-            'Consumer Durables': '#6366f1'
+            'Consumer Durables': '#6366f1',
+            Telecom: '#8b5cf6',
+            'Real Estate': '#fb923c',
+            Chemicals: '#22c55e',
+            Media: '#f43f5e',
+            Hotels: '#06b6d4',
+            Textiles: '#a855f7',
+            Power: '#eab308',
+            Retail: '#ec4899'
         };
 
         // Stock name mapping for better display
@@ -1103,13 +1119,17 @@
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Stop Loss (50%):</span>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Stop Loss (Max 5%):</span>
                                                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#d32f2f' }}>
-                                                    ₹{(parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
-                                                        ? stock.options.premiums.call_otm
-                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
-                                                        ? stock.options.premiums.call_atm
-                                                        : stock.options.premiums.call_itm) * 0.5).toFixed(2)}
+                                                    ₹{(() => {
+                                                        const premium = parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
+                                                            ? stock.options.premiums.call_otm
+                                                            : stock.options.strikes.recommended === stock.options.strikes.atm
+                                                            ? stock.options.premiums.call_atm
+                                                            : stock.options.premiums.call_itm);
+                                                        const maxStopLoss = premium * 0.95;
+                                                        return maxStopLoss.toFixed(2);
+                                                    })()}
                                                 </span>
                                             </div>
                                         </div>
