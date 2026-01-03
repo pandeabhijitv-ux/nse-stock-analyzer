@@ -221,7 +221,8 @@ function updateAppPrices(stockData) {
     let pricesCode = '            const REALISTIC_PRICES = {\n';
     
     for (const [symbol, data] of Object.entries(stockData)) {
-        const key = symbol.includes('&') ? `'${symbol}'` : symbol;
+        // Quote keys that contain special characters
+        const key = symbol.includes('&') || symbol.includes('-') ? `'${symbol}'` : symbol;
         pricesCode += `                ${key}: ${data.price},\n`;
     }
     
