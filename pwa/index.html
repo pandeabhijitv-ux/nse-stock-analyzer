@@ -580,6 +580,7 @@
                 marketCap: `₹${(r(9) * 500 + 50).toFixed(0)}K Cr`,
                 volume: `${(r(10) * 50 + 5).toFixed(1)}L`,
                 recommendation: score >= 70 ? 'BUY' : score >= 40 ? 'HOLD' : 'SELL',
+                targetPrice: score >= 70 ? (currentPrice * 1.15).toFixed(2) : score >= 40 ? (currentPrice * 1.05).toFixed(2) : (currentPrice * 0.92).toFixed(2),
                 rsi: rsi.toFixed(2),
                 macd: (r(11) * 10 - 5).toFixed(2),
                 ema50: (currentPrice * (1 + (r(12) * 0.1 - 0.05))).toFixed(2),
@@ -1416,6 +1417,22 @@
                         <div className="stock-detail">
                             <div className={`recommendation ${selectedStock.recommendation.toLowerCase()}`}>
                                 {selectedStock.recommendation}
+                            </div>
+                            <div style={{ 
+                                textAlign: 'center', 
+                                marginTop: '10px', 
+                                padding: '8px', 
+                                background: '#f8f9fa', 
+                                borderRadius: '8px',
+                                marginBottom: '15px'
+                            }}>
+                                <div style={{ fontSize: '13px', color: '#666', marginBottom: '3px' }}>Target Price</div>
+                                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2e7d32' }}>₹{selectedStock.targetPrice}</div>
+                                <div style={{ fontSize: '12px', color: '#888', marginTop: '3px' }}>
+                                    {selectedStock.recommendation === 'BUY' ? '(+15% upside)' : 
+                                     selectedStock.recommendation === 'HOLD' ? '(+5% upside)' : 
+                                     '(-8% downside)'}
+                                </div>
                             </div>
                             
                             {/* Overview Tab */}
