@@ -4,27 +4,19 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-// NSE stocks to track - Expanded with more sectors and mid-cap stocks
-const NSE_SYMBOLS = {
-    'IT': ['TCS', 'INFY', 'WIPRO', 'HCLTECH', 'TECHM', 'LTIM', 'COFORGE', 'PERSISTENT', 'MPHASIS', 'LTTS'],
-    'Banking': ['HDFCBANK', 'ICICIBANK', 'KOTAKBANK', 'AXISBANK', 'SBIN', 'INDUSINDBK', 'BANKBARODA', 'PNB', 'IDFCFIRSTB', 'FEDERALBNK'],
-    'FMCG': ['HINDUNILVR', 'ITC', 'NESTLEIND', 'BRITANNIA', 'DABUR', 'MARICO', 'GODREJCP', 'COLPAL', 'TATACONSUM', 'EMAMILTD'],
-    'Finance': ['BAJFINANCE', 'BAJAJFINSV', 'HDFCLIFE', 'SBILIFE', 'ICICIGI', 'ICICIPRU', 'LTF', 'CHOLAFIN', 'MUTHOOTFIN', 'MANAPPURAM'],
-    'Automobile': ['MARUTI', 'TATAMOTORS', 'M&M', 'HEROMOTOCO', 'BAJAJ-AUTO', 'EICHERMOT', 'TVSMOTOR', 'ASHOKLEY', 'MOTHERSON', 'MRF'],
-    'Pharma': ['SUNPHARMA', 'DRREDDY', 'CIPLA', 'DIVISLAB', 'APOLLOHOSP', 'BIOCON', 'TORNTPHARM', 'LUPIN', 'ALKEM', 'AUROPHARMA'],
-    'Energy': ['RELIANCE', 'ONGC', 'NTPC', 'POWERGRID', 'BPCL', 'IOC', 'GAIL', 'COALINDIA', 'ADANIGREEN', 'TATAPOWER'],
-    'Metals': ['TATASTEEL', 'JSWSTEEL', 'HINDALCO', 'VEDL', 'NATIONALUM', 'HINDZINC', 'SAIL', 'NMDC', 'JINDALSTEL', 'MOIL'],
-    'Infrastructure': ['LT', 'ADANIPORTS', 'ULTRACEMCO', 'GRASIM', 'DALBHARAT', 'RAMCOCEM', 'JKCEMENT', 'SHREECEM', 'ACC', 'AMBUJACEM'],
-    'Consumer Durables': ['TITAN', 'HAVELLS', 'VOLTAS', 'WHIRLPOOL', 'CROMPTON', 'BLUESTARCO', 'SYMPHONY', 'DIXON', 'AMBER', 'RAJESHEXPO'],
-    'Telecom': ['BHARTIARTL', 'INDUSINDBK', 'TATACOMM', 'TTML', 'GTPL', 'HFCL', 'STERLITE', 'ITI', 'VINDHYATEL', 'ZENTEC'],
-    'Real Estate': ['DLF', 'GODREJPROP', 'OBEROIRLTY', 'PRESTIGE', 'BRIGADE', 'SOBHA', 'PHOENIXLTD', 'MAHLIFE', 'SUNTECK', 'IBREALEST'],
-    'Chemicals': ['UPL', 'PIDILITIND', 'AARTI', 'DEEPAKNI', 'SRF', 'BALRAMCHIN', 'GNFC', 'ALKYLAMINE', 'NAVINFLUOR', 'TATACHEM'],
-    'Media': ['ZEEL', 'SUNTV', 'PVRINOX', 'NETWORK18', 'SAREGAMA', 'NAZARA', 'TIPS', 'BALAJITELE', 'TVTODAY', 'UTVME'],
-    'Hotels': ['INDHOTEL', 'LEMONTREE', 'CHALET', 'TAJGVK', 'EIH', 'ORIENTHOT', 'MAHINDCIE', 'ROYALORCH', 'TRENTL', 'JAIHINDPRO'],
-    'Textiles': ['ARVIND', 'WELSPUNIND', 'TRIDENT', 'RAYMOND', 'VARDHACRLC', 'KPR', 'SWARAJENG', 'GOKEX', 'GUJALKALI', 'CENTEXT'],
-    'Power': ['POWERGRID', 'NTPC', 'TATAPOWER', 'NHPC', 'SJVN', 'PFC', 'REC', 'TORNTPOWER', 'JSW ENERGY', 'ADANIPOWER'],
-    'Retail': ['DMART', 'TRENT', 'SHOPERSTOP', 'ADITYA', 'VEDANT', 'VMART', 'VSTIND', 'SPENCERS', 'VBLSTORE', 'GULFPETRO']
-};
+// Load NIFTY 500 symbols
+const NIFTY500_FILE = path.join(__dirname, 'nifty500-symbols.json');
+let NIFTY500_SYMBOLS = [];
+
+try {
+    NIFTY500_SYMBOLS = JSON.parse(fs.readFileSync(NIFTY500_FILE, 'utf8'));
+    // Remove "NIFTY 500" index name if present
+    NIFTY500_SYMBOLS = NIFTY500_SYMBOLS.filter(symbol => symbol !== 'NIFTY 500');
+    console.log(`📊 Loaded ${NIFTY500_SYMBOLS.length} NIFTY 500 symbols`);
+} catch (error) {
+    console.error('❌ Failed to load NIFTY 500 symbols:', error.message);
+    process.exit(1);
+}
 
 // NSE API endpoints (public)
 const NSE_BASE_URL = 'https://www.nseindia.com';
@@ -190,29 +182,32 @@ async function main() {
     let successCount = 0;
     let errorCount = 0;
     
-    // Fetch all stocks
-    for (const [sector, symbols] of Object.entries(NSE_SYMBOLS)) {
-        console.log(`\n📊 Fetching ${sector} sector...`);
+    // Fetch all NIFTY 500 stocks
+    console.log(`\n📊 Fetching ${NIFTY500_SYMBOLS.length} NIFTY 500 stocks...`);
+    
+    for (let i = 0; i < NIFTY500_SYMBOLS.length; i++) {
+        const symbol = NIFTY500_SYMBOLS[i];
+        const quote = await getStockQuote(symbol);
         
-        for (const symbol of symbols) {
-            const quote = await getStockQuote(symbol);
+        if (quote) {
+            allStockData[symbol] = quote;
+            successCount++;
             
-            if (quote) {
-                allStockData[symbol] = quote;
-                console.log(`  ✅ ${symbol}: ₹${quote.price} (${quote.changePercent > 0 ? '+' : ''}${quote.changePercent.toFixed(2)}%)`);
-                successCount++;
-            } else {
-                console.log(`  ❌ ${symbol}: Failed`);
-                errorCount++;
+            // Show progress every 50 stocks
+            if ((i + 1) % 50 === 0) {
+                console.log(`  Progress: ${i + 1}/${NIFTY500_SYMBOLS.length} (${Math.round((i + 1) / NIFTY500_SYMBOLS.length * 100)}%)`);
             }
-            
-            // Delay between requests to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+            errorCount++;
         }
+        
+        // Delay between requests to avoid rate limiting (shorter delay for batch processing)
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
     
     console.log(`\n✅ Fetched ${successCount} stocks successfully`);
     console.log(`❌ Failed: ${errorCount} stocks`);
+    console.log(`📊 Success rate: ${(successCount / NIFTY500_SYMBOLS.length * 100).toFixed(1)}%`);
     
     // Update pwa/index.html with new prices
     updateAppPrices(allStockData);
