@@ -1,0 +1,37 @@
+name: Update NSE Stock Prices
+
+on:
+  schedule:
+    # Run every day at 9:00 AM IST (3:30 AM UTC)
+    - cron: '30 3 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm init -y
+          npm install
+          
+      - name: Fetch NSE data
+        run: |
+          node scripts/fetch-nse-data.js
+          
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'NSE Data Bot'
+          git config --global user.email 'bot@nse-analyzer.com'
+          git add pwa/index.html
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🤖 Auto-update NSE prices - $(date +'%Y-%m-%d %H:%M IST')" && git push)
