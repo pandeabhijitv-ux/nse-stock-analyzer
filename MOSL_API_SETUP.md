@@ -5,10 +5,10 @@
 Your NSE Stock Analyzer is now integrated with **Motilal Oswal (MOSL) API** for real-time stock data.
 
 ### API Credentials
-- **API Key**: `4ZIJ3zvpFpoH9HsR`
-- **Secret Key**: `13ad7e42-4eea-4335-b87c-e5ef8464aff3`
-- **App Name**: NSE STOCK
-- **Primary IP**: `192.168.1.181`
+- **API Key**: `sTHWtNb6bn5bGiY`
+- **Secret Key**: `3d622c3d-7f36-43ee-8776-9056e454324a`
+- **App Name**: STOCK ANAL
+- **Primary IP**: `103.149.196.10` (Public IP - ✅ Correct for GitHub Pages)
 
 ### Deployment
 - **GitHub Pages**: https://pandeabhijitv-ux.github.io/nse-stock-analyzer/pwa/
@@ -149,8 +149,8 @@ Look for these messages:
 
 ### Configuration (lines 500-502)
 ```javascript
-const MOSL_API_KEY = '4ZIJ3zvpFpoH9HsR';
-const MOSL_SECRET_KEY = '13ad7e42-4eea-4335-b87c-e5ef8464aff3';
+const MOSL_API_KEY = 'sTHWtNb6bn5bGiY';
+const MOSL_SECRET_KEY = '3d622c3d-7f36-43ee-8776-9056e454324a';
 ```
 
 ### Authentication Function (lines 505-540)
@@ -192,10 +192,9 @@ for (const symbol of symbols) {
 ## Important Notes
 
 ### IP Whitelisting
-- Your **local IP** (`192.168.1.181`) only works on your home network
-- For GitHub Pages deployment, you need to whitelist your **public IP**
-- Public IP changes if you're not on a static IP plan
-- Solution: Use a VPS/server with static IP + CORS proxy
+- ✅ **Public IP whitelisted**: `103.149.196.10`
+- This is your correct public IP - requests from GitHub Pages will work!
+- No need to update IP address
 
 ### Rate Limits
 - Free tier may have request limits (check MOSL documentation)
