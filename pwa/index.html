@@ -644,16 +644,60 @@
                     sanitized[key] = stock[key]; // Keep nested object as-is for internal use
                 } else if (value === null || value === undefined) {
                     sanitized[key] = '';
+                } else if (Array.isArray(value)) {
+                    // Convert arrays to strings
+                    sanitized[key] = JSON.stringify(value);
                 } else if (typeof value === 'object') {
                     // Convert any unexpected objects to strings
                     sanitized[key] = JSON.stringify(value);
-                } else {
-                    // Keep primitives as-is
+                } else if (typeof value === 'number') {
+                    // Keep numbers as-is (React can render them)
                     sanitized[key] = value;
+                } else if (typeof value === 'boolean') {
+                    // Convert booleans to strings for display
+                    sanitized[key] = value ? 'Yes' : 'No';
+                } else {
+                    // Keep strings and other primitives as-is
+                    sanitized[key] = String(value);
                 }
             });
             
             return sanitized;
+        }
+        
+        // Error Boundary Component
+        class ErrorBoundary extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = { hasError: false, error: null, errorInfo: null };
+            }
+            
+            static getDerivedStateFromError(error) {
+                return { hasError: true };
+            }
+            
+            componentDidCatch(error, errorInfo) {
+                console.error('React Error Boundary caught:', error, errorInfo);
+                this.setState({ error, errorInfo });
+            }
+            
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div style={{ padding: '20px', background: '#fee', color: '#c00' }}>
+                            <h2>Something went wrong</h2>
+                            <details style={{ whiteSpace: 'pre-wrap' }}>
+                                {this.state.error && this.state.error.toString()}
+                                <br />
+                                {this.state.errorInfo && this.state.errorInfo.componentStack}
+                            </details>
+                            <button onClick={() => window.location.reload()}>Reload App</button>
+                        </div>
+                    );
+                }
+                
+                return this.props.children;
+            }
         }
 
         function App() {
@@ -2130,7 +2174,12 @@
             return null;
         }
 
-        ReactDOM.render(<App />, document.getElementById('root'));
+        ReactDOM.render(
+            <ErrorBoundary>
+                <App />
+            </ErrorBoundary>, 
+            document.getElementById('root')
+        );
     </script>
 </body>
 </html>
