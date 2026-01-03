@@ -1281,10 +1281,10 @@
                                     >
                                         <div className="stock-header">
                                             <div>
-                                                <div className="stock-symbol">{stock.symbol}</div>
-                                                <div className="stock-name">{STOCK_NAMES[stock.symbol] || stock.name}</div>
+                                                <div className="stock-symbol">{stock.symbol || 'N/A'}</div>
+                                                <div className="stock-name">{String(STOCK_NAMES[stock.symbol] || stock.name || stock.symbol || 'Unknown')}</div>
                                                 <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
-                                                    Sector: {stock.sector}
+                                                    Sector: {stock.sector || 'N/A'}
                                                 </div>
                                             </div>
                                             <div style={{ textAlign: 'right' }}>
@@ -1474,10 +1474,10 @@
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
                                             <div>
                                                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
-                                                    {stock.symbol}
+                                                    {stock.symbol || 'N/A'}
                                                 </div>
                                                 <div style={{ fontSize: '13px', color: '#666' }}>
-                                                    {stock.name}
+                                                    {String(stock.name || stock.symbol || 'Unknown')}
                                                 </div>
                                             </div>
                                             <div style={{ 
@@ -1603,10 +1603,10 @@
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
                                             <div>
                                                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
-                                                    {stock.symbol}
+                                                    {stock.symbol || 'N/A'}
                                                 </div>
                                                 <div style={{ fontSize: '13px', color: '#666' }}>
-                                                    {stock.name}
+                                                    {String(stock.name || stock.symbol || 'Unknown')}
                                                 </div>
                                             </div>
                                             <div style={{ 
@@ -1784,8 +1784,8 @@
                 return (
                     <div>
                         <div className="header">
-                            <h1>{selectedStock.symbol}</h1>
-                            <p>{selectedStock.name}</p>
+                            <h1>{selectedStock.symbol || 'Unknown'}</h1>
+                            <p>{String(selectedStock.name || selectedStock.symbol || 'Unknown Stock')}</p>
                             <div style={{
                                 background: 'rgba(255,255,255,0.1)',
                                 padding: '8px 15px',
