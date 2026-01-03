@@ -708,6 +708,42 @@
                 setIsSearching(false);
             };
             
+            // Fetch NSE Top Performers (Top Gainers, Losers, Most Active)
+            async function fetchNSETopPerformers() {
+                try {
+                    // Note: NSE API requires cookies/headers, might not work directly from browser
+                    // For now, we'll filter from our existing stocks with real prices
+                    const allStocksWithPrices = [];
+                    
+                    Object.keys(REALISTIC_PRICES).forEach(symbol => {
+                        const stock = generateMockStock(symbol, 'Multiple');
+                        if (stock) {
+                            allStocksWithPrices.push(stock);
+                        }
+                    });
+                    
+                    // Sort by change percent to get top gainers and losers
+                    const topGainers = [...allStocksWithPrices]
+                        .filter(s => parseFloat(s.changePercent) > 0)
+                        .sort((a, b) => parseFloat(b.changePercent) - parseFloat(a.changePercent))
+                        .slice(0, 20);
+                    
+                    const topLosers = [...allStocksWithPrices]
+                        .filter(s => parseFloat(s.changePercent) < 0)
+                        .sort((a, b) => parseFloat(a.changePercent) - parseFloat(b.changePercent))
+                        .slice(0, 20);
+                    
+                    const mostActive = [...allStocksWithPrices]
+                        .sort((a, b) => Math.abs(parseFloat(b.changePercent)) - Math.abs(parseFloat(a.changePercent)))
+                        .slice(0, 30);
+                    
+                    return { topGainers, topLosers, mostActive };
+                } catch (error) {
+                    console.error('Error fetching top performers:', error);
+                    return { topGainers: [], topLosers: [], mostActive: [] };
+                }
+            }
+            
             // MOSL API Configuration
             const MOSL_API_KEY = 'sTHWtNb6bn5bGiY';
             const MOSL_SECRET_KEY = '3d622c3d-7f36-43ee-8776-9056e454324a';
@@ -1139,73 +1175,81 @@
             // Category Screen - Target Oriented, Swing, Fundamental, Technical, Hot Stocks
             if (screen === 'category') {
                 React.useEffect(() => {
+                    if (!selectedSector) return;
+                    
                     const loadCategoryStocks = async () => {
                         setIsLoadingStocks(true);
                         
-                        // Get all stocks with real prices
-                        const allStockSymbols = Object.values(SECTORS).flat();
-                        const categoryStocks = [];
-                        
-                        for (const symbol of allStockSymbols) {
-                            if (REALISTIC_PRICES[symbol]) {
-                                const stock = generateMockStock(symbol, 'Multiple');
-                                
-                                // Add category-specific scoring
-                                if (selectedSector === 'Target Oriented') {
-                                    // Stocks with clear support/resistance levels
-                                    stock.targetScore = stock.score;
-                                    stock.targetPrice = stock.recommendation === 'BUY' ? 
-                                        (parseFloat(stock.price) * 1.15).toFixed(2) : 
-                                        stock.recommendation === 'HOLD' ? 
-                                        (parseFloat(stock.price) * 1.05).toFixed(2) :
-                                        (parseFloat(stock.price) * 0.92).toFixed(2);
-                                    stock.stopLoss = (parseFloat(stock.price) * 0.95).toFixed(2);
-                                } else if (selectedSector === 'Swing Stocks') {
-                                    // High momentum stocks
-                                    const momentum = parseFloat(stock.changePercent);
-                                    stock.momentumScore = momentum > 3 ? 90 : momentum > 2 ? 80 : momentum > 1 ? 70 : 50;
-                                    stock.targetPrice = (parseFloat(stock.price) * 1.10).toFixed(2);
-                                    stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
-                                } else if (selectedSector === 'Fundamentally Strong') {
-                                    // Good P/E, low debt
-                                    const pe = parseFloat(stock.peRatio);
-                                    stock.fundamentalScore = pe < 20 ? 90 : pe < 30 ? 75 : 60;
-                                    stock.targetPrice = (parseFloat(stock.price) * 1.20).toFixed(2);
-                                    stock.stopLoss = (parseFloat(stock.price) * 0.93).toFixed(2);
-                                } else if (selectedSector === 'Technically Strong') {
-                                    // RSI, MACD signals
-                                    const rsi = parseFloat(stock.rsi);
-                                    stock.technicalScore = (rsi > 40 && rsi < 60) ? 85 : (rsi > 30 && rsi < 70) ? 70 : 50;
-                                    stock.targetPrice = (parseFloat(stock.price) * 1.12).toFixed(2);
-                                    stock.stopLoss = (parseFloat(stock.price) * 0.96).toFixed(2);
-                                } else if (selectedSector === 'Hot Stocks Today') {
-                                    // Top movers
-                                    stock.dayMoveScore = Math.abs(parseFloat(stock.changePercent)) * 10;
-                                    stock.targetPrice = parseFloat(stock.changePercent) > 0 ?
-                                        (parseFloat(stock.price) * 1.08).toFixed(2) :
-                                        (parseFloat(stock.price) * 0.95).toFixed(2);
-                                    stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
+                        try {
+                            // Get all stocks with real prices
+                            const allStockSymbols = Object.values(SECTORS).flat();
+                            const categoryStocks = [];
+                            
+                            for (const symbol of allStockSymbols) {
+                                if (REALISTIC_PRICES[symbol]) {
+                                    const stock = generateMockStock(symbol, 'Multiple');
+                                    
+                                    // Add category-specific scoring
+                                    if (selectedSector === 'Target Oriented') {
+                                        // Stocks with clear support/resistance levels
+                                        stock.targetScore = stock.score;
+                                        stock.targetPrice = stock.recommendation === 'BUY' ? 
+                                            (parseFloat(stock.price) * 1.15).toFixed(2) : 
+                                            stock.recommendation === 'HOLD' ? 
+                                            (parseFloat(stock.price) * 1.05).toFixed(2) :
+                                            (parseFloat(stock.price) * 0.92).toFixed(2);
+                                        stock.stopLoss = (parseFloat(stock.price) * 0.95).toFixed(2);
+                                    } else if (selectedSector === 'Swing Stocks') {
+                                        // High momentum stocks
+                                        const momentum = parseFloat(stock.changePercent);
+                                        stock.momentumScore = momentum > 3 ? 90 : momentum > 2 ? 80 : momentum > 1 ? 70 : 50;
+                                        stock.targetPrice = (parseFloat(stock.price) * 1.10).toFixed(2);
+                                        stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
+                                    } else if (selectedSector === 'Fundamentally Strong') {
+                                        // Good P/E, low debt
+                                        const pe = parseFloat(stock.peRatio);
+                                        stock.fundamentalScore = pe < 20 ? 90 : pe < 30 ? 75 : 60;
+                                        stock.targetPrice = (parseFloat(stock.price) * 1.20).toFixed(2);
+                                        stock.stopLoss = (parseFloat(stock.price) * 0.93).toFixed(2);
+                                    } else if (selectedSector === 'Technically Strong') {
+                                        // RSI, MACD signals
+                                        const rsi = parseFloat(stock.rsi);
+                                        stock.technicalScore = (rsi > 40 && rsi < 60) ? 85 : (rsi > 30 && rsi < 70) ? 70 : 50;
+                                        stock.targetPrice = (parseFloat(stock.price) * 1.12).toFixed(2);
+                                        stock.stopLoss = (parseFloat(stock.price) * 0.96).toFixed(2);
+                                    } else if (selectedSector === 'Hot Stocks Today') {
+                                        // Top movers
+                                        stock.dayMoveScore = Math.abs(parseFloat(stock.changePercent)) * 10;
+                                        stock.targetPrice = parseFloat(stock.changePercent) > 0 ?
+                                            (parseFloat(stock.price) * 1.08).toFixed(2) :
+                                            (parseFloat(stock.price) * 0.95).toFixed(2);
+                                        stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
+                                    }
+                                    
+                                    categoryStocks.push(stock);
                                 }
-                                
-                                categoryStocks.push(stock);
                             }
+                            
+                            // Sort based on category
+                            if (selectedSector === 'Target Oriented') {
+                                categoryStocks.sort((a, b) => (b.targetScore || 0) - (a.targetScore || 0));
+                            } else if (selectedSector === 'Swing Stocks') {
+                                categoryStocks.sort((a, b) => (b.momentumScore || 0) - (a.momentumScore || 0));
+                            } else if (selectedSector === 'Fundamentally Strong') {
+                                categoryStocks.sort((a, b) => (b.fundamentalScore || 0) - (a.fundamentalScore || 0));
+                            } else if (selectedSector === 'Technically Strong') {
+                                categoryStocks.sort((a, b) => (b.technicalScore || 0) - (a.technicalScore || 0));
+                            } else if (selectedSector === 'Hot Stocks Today') {
+                                categoryStocks.sort((a, b) => (b.dayMoveScore || 0) - (a.dayMoveScore || 0));
+                            }
+                            
+                            setStocks(categoryStocks.slice(0, 50)); // Top 50 stocks
+                        } catch (error) {
+                            console.error('Error loading category stocks:', error);
+                            setStocks([]);
+                        } finally {
+                            setIsLoadingStocks(false);
                         }
-                        
-                        // Sort based on category
-                        if (selectedSector === 'Target Oriented') {
-                            categoryStocks.sort((a, b) => b.targetScore - a.targetScore);
-                        } else if (selectedSector === 'Swing Stocks') {
-                            categoryStocks.sort((a, b) => b.momentumScore - a.momentumScore);
-                        } else if (selectedSector === 'Fundamentally Strong') {
-                            categoryStocks.sort((a, b) => b.fundamentalScore - a.fundamentalScore);
-                        } else if (selectedSector === 'Technically Strong') {
-                            categoryStocks.sort((a, b) => b.technicalScore - a.technicalScore);
-                        } else if (selectedSector === 'Hot Stocks Today') {
-                            categoryStocks.sort((a, b) => b.dayMoveScore - a.dayMoveScore);
-                        }
-                        
-                        setStocks(categoryStocks.slice(0, 50)); // Top 50 stocks
-                        setIsLoadingStocks(false);
                     };
                     
                     loadCategoryStocks();
