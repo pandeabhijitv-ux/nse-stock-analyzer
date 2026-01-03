@@ -74,6 +74,20 @@ app.get('/', (req, res) => {
     });
 });
 
+// Get server's outbound IP
+app.get('/my-ip', async (req, res) => {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        res.json({ 
+            outboundIP: data.ip,
+            message: 'Add this IP to MOSL Secondary IP field'
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get IP' });
+    }
+});
+
 // Get stock quote
 app.get('/api/quote/:symbol', async (req, res) => {
     try {
