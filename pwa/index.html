@@ -764,18 +764,22 @@
                 
                 setIsSearching(true);
                 
-                // Try to fetch from NSE
-                const nseData = await fetchNSEStock(query);
+                // Check if stock exists in our database or generate it
+                const symbolUpper = query.toUpperCase().trim();
                 
-                if (nseData) {
-                    const stock = generateMockStock(query.toUpperCase(), 'Search');
+                // Check if it's in REALISTIC_PRICES or STOCK_NAMES
+                const stockExists = REALISTIC_PRICES[symbolUpper] || STOCK_NAMES[symbolUpper];
+                
+                if (stockExists || symbolUpper.length >= 3) {
+                    // Generate stock data (will use real price if available)
+                    const stock = generateMockStock(symbolUpper, 'Search');
                     const sanitized = sanitizeStockForDisplay(stock);
                     setSearchResults([sanitized]);
                     setSelectedStock(sanitized);
-                    setScreen('stockDetail'); // Fixed: was 'detail', should be 'stockDetail'
+                    setScreen('stockDetail');
                 } else {
                     setSearchResults([]);
-                    alert(`Stock "${query.toUpperCase()}" not found on NSE. Please check the symbol and try again.`);
+                    alert(`Please enter a valid NSE stock symbol (e.g., RELIANCE, TCS, INFY)`);
                 }
                 
                 setIsSearching(false);
