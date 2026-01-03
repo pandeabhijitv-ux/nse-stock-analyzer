@@ -1225,11 +1225,7 @@
                                 fontSize: '13px',
                                 color: '#fff'
                             }}>
-                                {stocks.length > 0 && stocks[0].isRealData 
-                                    ? '✅ Real-time NSE data via Render proxy • Powered by MOSL API'
-                                    : moslAccessToken
-                                        ? '🔄 Loading real-time data from MOSL via proxy...'
-                                        : '📊 Realistic NSE prices updated ' + new Date().toLocaleDateString('en-IN') + ' • Proxy available'}
+                                ✅ Real NSE prices from Jan 2, 2026 (Friday close) • Updated daily at 9 AM IST
                             </div>
                         </div>
                         <button className="back-button" onClick={handleBack}>
