@@ -628,6 +628,34 @@
             };
         }
 
+        // Data sanitization - ensure all values are safe to render
+        function sanitizeStockForDisplay(stock) {
+            if (!stock || typeof stock !== 'object') return null;
+            
+            // Create a sanitized copy
+            const sanitized = {};
+            
+            // Convert all top-level properties to safe display values
+            Object.keys(stock).forEach(key => {
+                const value = stock[key];
+                
+                // Skip the options object - we'll handle it separately
+                if (key === 'options') {
+                    sanitized[key] = stock[key]; // Keep nested object as-is for internal use
+                } else if (value === null || value === undefined) {
+                    sanitized[key] = '';
+                } else if (typeof value === 'object') {
+                    // Convert any unexpected objects to strings
+                    sanitized[key] = JSON.stringify(value);
+                } else {
+                    // Keep primitives as-is
+                    sanitized[key] = value;
+                }
+            });
+            
+            return sanitized;
+        }
+
         function App() {
             const [screen, setScreen] = useState('home');
             const [selectedSector, setSelectedSector] = useState(null);
@@ -697,9 +725,10 @@
                 
                 if (nseData) {
                     const stock = generateMockStock(query.toUpperCase(), 'Search');
-                    setSearchResults([stock]);
-                    setSelectedStock(stock);
-                    setScreen('detail');
+                    const sanitized = sanitizeStockForDisplay(stock);
+                    setSearchResults([sanitized]);
+                    setSelectedStock(sanitized);
+                    setScreen('stockDetail'); // Fixed: was 'detail', should be 'stockDetail'
                 } else {
                     setSearchResults([]);
                     alert(`Stock "${query.toUpperCase()}" not found on NSE. Please check the symbol and try again.`);
@@ -874,7 +903,7 @@
                         }
                         
                         const sortedStocks = results.sort((a, b) => b.score - a.score);
-                        setStocks(sortedStocks);
+                        setStocks(sortedStocks.map(sanitizeStockForDisplay).filter(s => s !== null));
                         setIsLoadingStocks(false);
                     }
                     
@@ -965,7 +994,8 @@
 
             const handleStockClick = (stock) => {
                 console.log(`📈 Stock clicked:`, stock);
-                setSelectedStock(stock);
+                const sanitized = sanitizeStockForDisplay(stock);
+                setSelectedStock(sanitized);
                 setScreen('stockDetail');
                 setActiveTab('overview'); // Reset to overview tab
             };
@@ -1243,7 +1273,7 @@
                                 categoryStocks.sort((a, b) => (b.dayMoveScore || 0) - (a.dayMoveScore || 0));
                             }
                             
-                            setStocks(categoryStocks.slice(0, 50)); // Top 50 stocks
+                            setStocks(categoryStocks.slice(0, 50).map(sanitizeStockForDisplay).filter(s => s !== null)); // Top 50 stocks
                         } catch (error) {
                             console.error('Error loading category stocks:', error);
                             setStocks([]);
