@@ -500,18 +500,35 @@
             const MOSL_API_KEY = 'sTHWtNb6bn5bGiY';
             const MOSL_SECRET_KEY = '3d622c3d-7f36-43ee-8776-9056e454324a';
             
-            // MOSL Authentication - get access token
+            // MOSL Authentication - get access token via proxy
             async function getMOSLAccessToken() {
                 try {
-                    // Note: MOSL API blocks browser CORS requests
-                    // This will fail with ERR_CONNECTION_CLOSED or CORS error
-                    // Solution: Deploy proxy-server/ to Vercel (see proxy-server/README.md)
+                    console.log('🔐 Authenticating via Render proxy...');
                     
-                    console.warn('⚠️ MOSL API does not support direct browser requests (CORS blocked)');
-                    console.warn('📦 Deploy proxy-server/ to Vercel for real-time data');
-                    console.warn('📊 Using mock data with realistic NSE prices as fallback');
+                    // Use proxy server instead of direct MOSL API
+                    const proxyUrl = 'https://nse-stock-analyzer.onrender.com';
                     
-                    return null; // Skip authentication, use mock data
+                    const response = await fetch(`${proxyUrl}/`, {
+                        method: 'GET'
+                    });
+                    
+                    if (!response.ok) {
+                        console.error('Proxy health check failed:', response.status);
+                        console.warn('📊 Using mock data with realistic NSE prices');
+                        return null;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'ok' && data.authenticated) {
+                        console.log('✅ Proxy authenticated with MOSL API');
+                        setMoslAccessToken('proxy-authenticated');
+                        return 'proxy-authenticated';
+                    } else {
+                        console.warn('Proxy available but MOSL auth failed');
+                        console.warn('📊 Using mock data with realistic NSE prices');
+                        return null;
+                    }
                     
                     /* Uncomment when proxy is deployed:
                     const authUrl = 'https://api.motilaloswal.com/rest/auth/v1/login';
@@ -558,11 +575,9 @@
                     setMoslAccessToken(savedToken);
                     console.log('✅ Using saved MOSL token');
                 } else {
-                    // MOSL API blocks CORS - authentication will fail
-                    // Using mock data with realistic prices instead
-                    console.log('📊 Using mock data (MOSL API requires proxy server)');
-                    // Uncomment when proxy is deployed:
-                    // getMOSLAccessToken();
+                    // Try to authenticate via proxy
+                    console.log('🔐 Authenticating with MOSL API via Render proxy...');
+                    getMOSLAccessToken();
                 }
             }, []);
             
@@ -619,19 +634,15 @@
                 }
             }, [screen, selectedSector, moslAccessToken]);
 
-            // Fetch real stock data from MOSL API
+            // Fetch real stock data from MOSL API via proxy
             async function fetchMOSLStockData(symbol, accessToken) {
                 try {
-                    // MOSL API endpoint for quotes
-                    const apiUrl = `https://api.motilaloswal.com/rest/quote/v1/getquote?symbol=${symbol}&exchange=NSE`;
+                    // Use proxy endpoint instead of direct MOSL API
+                    const proxyUrl = 'https://nse-stock-analyzer.onrender.com';
+                    const apiUrl = `${proxyUrl}/api/quote/${symbol}?exchange=NSE`;
                     
                     const response = await fetch(apiUrl, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${accessToken}`,
-                            'x-api-key': MOSL_API_KEY
-                        }
+                        method: 'GET'
                     });
                     
                     if (!response.ok) {
@@ -1150,7 +1161,11 @@
                                 fontSize: '13px',
                                 color: '#fff'
                             }}>
-                                📊 Realistic NSE prices updated {new Date().toLocaleDateString('en-IN')} • MOSL API requires proxy server (CORS blocked)
+                                {stocks.length > 0 && stocks[0].isRealData 
+                                    ? '✅ Real-time NSE data via Render proxy • Powered by MOSL API'
+                                    : moslAccessToken
+                                        ? '🔄 Loading real-time data from MOSL via proxy...'
+                                        : '📊 Realistic NSE prices updated ' + new Date().toLocaleDateString('en-IN') + ' • Proxy available'}
                             </div>
                         </div>
                         <button className="back-button" onClick={handleBack}>
