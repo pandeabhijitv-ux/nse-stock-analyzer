@@ -908,7 +908,14 @@
                     async function loadStocks() {
                         setIsLoadingStocks(true);
                         setApiError(null);
-                        const symbols = SECTORS[selectedSector];
+                        const symbols = SECTORS[selectedSector] || [];
+                        
+                        if (symbols.length === 0) {
+                            console.error(`No symbols found for sector: ${selectedSector}`);
+                            setStocks([]);
+                            setIsLoadingStocks(false);
+                            return;
+                        }
                         
                         // Try to fetch real data from MOSL API
                         const results = [];
@@ -1065,10 +1072,18 @@
                     
                     try {
                         // Get all stocks with real prices
-                        const allStockSymbols = Object.values(SECTORS).flat();
+                        const allStockSymbols = Object.values(SECTORS || {}).flat();
                         const categoryStocks = [];
                         
+                        if (!allStockSymbols || allStockSymbols.length === 0) {
+                            console.error('No stock symbols found in SECTORS');
+                            setStocks([]);
+                            setIsLoadingStocks(false);
+                            return;
+                        }
+                        
                         for (const symbol of allStockSymbols) {
+                            if (!symbol) continue;
                             if (REALISTIC_PRICES[symbol]) {
                                 const stock = generateMockStock(symbol, 'Multiple');
                                 
