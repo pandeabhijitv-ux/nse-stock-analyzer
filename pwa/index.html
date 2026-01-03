@@ -1288,9 +1288,9 @@
                                                 </div>
                                             </div>
                                             <div style={{ textAlign: 'right' }}>
-                                                <div className="stock-price">₹{stock.price}</div>
-                                                <div className={`stock-change ${parseFloat(stock.change) >= 0 ? 'positive' : 'negative'}`}>
-                                                    {parseFloat(stock.change) >= 0 ? '↑' : '↓'} {stock.change} ({stock.changePercent}%)
+                                                <div className="stock-price">₹{stock.price || '0'}</div>
+                                                <div className={`stock-change ${parseFloat(stock.change || 0) >= 0 ? 'positive' : 'negative'}`}>
+                                                    {parseFloat(stock.change || 0) >= 0 ? '↑' : '↓'} {Math.abs(parseFloat(stock.change || 0)).toFixed(2)} ({parseFloat(stock.changePercent || 0).toFixed(2)}%)
                                                 </div>
                                             </div>
                                         </div>
@@ -1305,19 +1305,19 @@
                                             <div style={{ textAlign: 'center' }}>
                                                 <div style={{ fontSize: '11px', color: '#666' }}>Target</div>
                                                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#10b981' }}>
-                                                    ₹{stock.targetPrice}
+                                                    ₹{stock.targetPrice || '0'}
                                                 </div>
                                             </div>
                                             <div style={{ textAlign: 'center' }}>
                                                 <div style={{ fontSize: '11px', color: '#666' }}>Stop Loss</div>
                                                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ef4444' }}>
-                                                    ₹{stock.stopLoss}
+                                                    ₹{stock.stopLoss || '0'}
                                                 </div>
                                             </div>
                                             <div style={{ textAlign: 'center' }}>
                                                 <div style={{ fontSize: '11px', color: '#666' }}>Score</div>
                                                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#3b82f6' }}>
-                                                    {stock.score}/100
+                                                    {stock.score || 0}/100
                                                 </div>
                                             </div>
                                         </div>
@@ -1753,22 +1753,22 @@
                                     onClick={() => handleStockClick(stock)}
                                 >
                                     <div className="stock-header">
-                                        <span className="stock-symbol">{stock.symbol}</span>
+                                        <span className="stock-symbol">{stock.symbol || ''}</span>
                                         <span className={`stock-score ${
-                                            stock.score >= 70 ? 'score-high' : 
-                                            stock.score >= 40 ? 'score-medium' : 'score-low'
+                                            (stock.score || 0) >= 70 ? 'score-high' : 
+                                            (stock.score || 0) >= 40 ? 'score-medium' : 'score-low'
                                         }`}>
-                                            {stock.score}
+                                            {stock.score || 0}
                                         </span>
                                     </div>
-                                    <div className="stock-name">{stock.name}</div>
+                                    <div className="stock-name">{stock.name || stock.symbol}</div>
                                     <div className="stock-price">
-                                        ₹{stock.price} 
+                                        ₹{stock.price || '0'} 
                                         <span style={{ 
-                                            color: stock.change >= 0 ? '#22c55e' : '#ef4444',
+                                            color: parseFloat(stock.change || 0) >= 0 ? '#22c55e' : '#ef4444',
                                             marginLeft: '10px'
                                         }}>
-                                            {stock.change >= 0 ? '↑' : '↓'} ₹{Math.abs(stock.change)} ({stock.changePercent}%)
+                                            {parseFloat(stock.change || 0) >= 0 ? '↑' : '↓'} ₹{Math.abs(parseFloat(stock.change || 0)).toFixed(2)} ({parseFloat(stock.changePercent || 0).toFixed(2)}%)
                                         </span>
                                     </div>
                                 </div>
