@@ -1580,7 +1580,7 @@
                                 </div>
                                 <div style={{ fontSize: '12px', color: '#555', lineHeight: '1.8' }}>
                                     • <strong>Entry (Premium):</strong> Amount you pay to buy the option<br/>
-                                    • <strong>Target (2x):</strong> Exit when premium doubles (100% profit)<br/>
+                                    • <strong>Target:</strong> Calculated based on stock reaching target price (intrinsic + time value)<br/>
                                     • <strong>Stop Loss (50%):</strong> Exit if premium falls 50% from entry (₹10 entry → ₹5 stop)<br/>
                                     • <strong>Confidence %:</strong> AI prediction accuracy based on technical analysis<br/>
                                     • <strong>Expiry:</strong> Monthly/Weekly - option contract validity period<br/>
@@ -1697,13 +1697,26 @@
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Target (2x):</span>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Target:</span>
                                                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#4CAF50' }}>
-                                                    ₹{(parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
-                                                        ? stock.options.premiums.call_otm
-                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
-                                                        ? stock.options.premiums.call_atm
-                                                        : stock.options.premiums.call_itm) * 2).toFixed(2)}
+                                                    ₹{(() => {
+                                                        const currentPrice = parseFloat(stock.price);
+                                                        const targetPrice = parseFloat(stock.targetPrice);
+                                                        const priceMove = targetPrice - currentPrice;
+                                                        const strikePrice = stock.options.strikes.recommended;
+                                                        const premium = parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
+                                                            ? stock.options.premiums.call_otm
+                                                            : stock.options.strikes.recommended === stock.options.strikes.atm
+                                                            ? stock.options.premiums.call_atm
+                                                            : stock.options.premiums.call_itm);
+                                                        
+                                                        // If stock reaches target, option intrinsic value = max(0, targetPrice - strikePrice)
+                                                        const intrinsicValue = Math.max(0, targetPrice - strikePrice);
+                                                        // Add time value (30-50% of intrinsic for near-term expiry)
+                                                        const timeValue = intrinsicValue * 0.4;
+                                                        const targetPremium = Math.max(intrinsicValue + timeValue, premium * 1.2); // At least 20% gain
+                                                        return targetPremium.toFixed(2);
+                                                    })()}
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1826,13 +1839,24 @@
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Target (2x):</span>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Target:</span>
                                                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#4CAF50' }}>
-                                                    ₹{(parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
-                                                        ? stock.options.premiums.put_otm
-                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
-                                                        ? stock.options.premiums.put_atm
-                                                        : stock.options.premiums.put_itm) * 2).toFixed(2)}
+                                                    ₹{(() => {
+                                                        const currentPrice = parseFloat(stock.price);
+                                                        const targetPrice = parseFloat(stock.targetPrice);
+                                                        const strikePrice = stock.options.strikes.recommended;
+                                                        const premium = parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
+                                                            ? stock.options.premiums.put_otm
+                                                            : stock.options.strikes.recommended === stock.options.strikes.atm
+                                                            ? stock.options.premiums.put_atm
+                                                            : stock.options.premiums.put_itm);
+                                                        
+                                                        // For PUT: intrinsic = max(0, strikePrice - targetPrice)
+                                                        const intrinsicValue = Math.max(0, strikePrice - targetPrice);
+                                                        const timeValue = intrinsicValue * 0.4;
+                                                        const targetPremium = Math.max(intrinsicValue + timeValue, premium * 1.2);
+                                                        return targetPremium.toFixed(2);
+                                                    })()}
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
