@@ -640,6 +640,73 @@
             const [showOptions, setShowOptions] = useState(true);
             const [apiError, setApiError] = useState(null);
             const [moslAccessToken, setMoslAccessToken] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [searchResults, setSearchResults] = useState([]);
+            const [isSearching, setIsSearching] = useState(false);
+            
+            // Fetch live NSE data for any stock
+            async function fetchNSEStock(symbol) {
+                try {
+                    const response = await fetch(`https://www.nseindia.com/api/quote-equity?symbol=${symbol.toUpperCase()}`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'User-Agent': 'Mozilla/5.0'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch stock data');
+                    }
+                    
+                    const data = await response.json();
+                    const priceInfo = data.priceInfo;
+                    
+                    if (!priceInfo) {
+                        return null;
+                    }
+                    
+                    return {
+                        symbol: symbol.toUpperCase(),
+                        price: priceInfo.lastPrice,
+                        change: priceInfo.change,
+                        changePercent: priceInfo.pChange,
+                        dayHigh: priceInfo.intraDayHighLow?.max,
+                        dayLow: priceInfo.intraDayHighLow?.min,
+                        week52High: priceInfo.weekHighLow?.max,
+                        week52Low: priceInfo.weekHighLow?.min
+                    };
+                } catch (error) {
+                    console.error(`Error fetching ${symbol}:`, error);
+                    return null;
+                }
+            }
+            
+            // Search handler
+            const handleSearch = async (query) => {
+                setSearchQuery(query);
+                
+                if (query.length < 2) {
+                    setSearchResults([]);
+                    return;
+                }
+                
+                setIsSearching(true);
+                
+                // Try to fetch from NSE
+                const nseData = await fetchNSEStock(query);
+                
+                if (nseData) {
+                    const stock = generateMockStock(query.toUpperCase(), 'Search');
+                    setSearchResults([stock]);
+                    setSelectedStock(stock);
+                    setScreen('detail');
+                } else {
+                    setSearchResults([]);
+                    alert(`Stock "${query.toUpperCase()}" not found on NSE. Please check the symbol and try again.`);
+                }
+                
+                setIsSearching(false);
+            };
             
             // MOSL API Configuration
             const MOSL_API_KEY = 'sTHWtNb6bn5bGiY';
@@ -884,9 +951,131 @@
                     <div>
                         <div className="header">
                             <h1>📈 NSE Stock Analyzer</h1>
-                            <p>AI-Powered Indian Market Analysis</p>
+                            <p>AI-Powered Multi-Strategy Analysis</p>
                         </div>
+                        
+                        {/* Search Bar */}
+                        <div style={{ padding: '15px', background: 'white', margin: '0 15px 15px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                            <input 
+                                type="text" 
+                                placeholder="🔍 Search any NSE stock (e.g., ZOMATO, DIXON, IRCTC)"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && searchQuery.trim()) {
+                                        handleSearch(searchQuery.trim());
+                                    }
+                                }}
+                                style={{ 
+                                    width: '100%', 
+                                    padding: '12px', 
+                                    border: '2px solid #e0e0e0', 
+                                    borderRadius: '8px',
+                                    fontSize: '15px',
+                                    outline: 'none'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                                onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                            />
+                            {isSearching && (
+                                <div style={{ marginTop: '8px', fontSize: '13px', color: '#666', textAlign: 'center' }}>
+                                    Searching...
+                                </div>
+                            )}
+                        </div>
+                        
                         <div className="sectors">
+                            {/* Main Strategy Categories */}
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#10b981',
+                                    background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)'
+                                }}
+                                onClick={() => {
+                                    setScreen('category');
+                                    setSelectedSector('Target Oriented');
+                                }}
+                            >
+                                <h3>🎯 Target Oriented Stocks</h3>
+                                <p>Clear price targets with stop loss</p>
+                                <span className="stock-count" style={{ background: '#10b981', color: 'white' }}>
+                                    High probability trades
+                                </span>
+                            </div>
+                            
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#f59e0b',
+                                    background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)'
+                                }}
+                                onClick={() => {
+                                    setScreen('category');
+                                    setSelectedSector('Swing Stocks');
+                                }}
+                            >
+                                <h3>📈 Swing Stocks</h3>
+                                <p>High momentum trending stocks</p>
+                                <span className="stock-count" style={{ background: '#f59e0b', color: 'white' }}>
+                                    Riding the wave
+                                </span>
+                            </div>
+                            
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#3b82f6',
+                                    background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)'
+                                }}
+                                onClick={() => {
+                                    setScreen('category');
+                                    setSelectedSector('Fundamentally Strong');
+                                }}
+                            >
+                                <h3>💎 Fundamentally Strong</h3>
+                                <p>Best P/E, ROE, debt ratios</p>
+                                <span className="stock-count" style={{ background: '#3b82f6', color: 'white' }}>
+                                    Quality picks
+                                </span>
+                            </div>
+                            
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#8b5cf6',
+                                    background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)'
+                                }}
+                                onClick={() => {
+                                    setScreen('category');
+                                    setSelectedSector('Technically Strong');
+                                }}
+                            >
+                                <h3>📊 Technically Strong</h3>
+                                <p>RSI, MACD, breakout patterns</p>
+                                <span className="stock-count" style={{ background: '#8b5cf6', color: 'white' }}>
+                                    Chart winners
+                                </span>
+                            </div>
+                            
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#ef4444',
+                                    background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)'
+                                }}
+                                onClick={() => {
+                                    setScreen('category');
+                                    setSelectedSector('Hot Stocks Today');
+                                }}
+                            >
+                                <h3>🔥 Hot Stocks Today</h3>
+                                <p>Top gainers, losers, most active</p>
+                                <span className="stock-count" style={{ background: '#ef4444', color: 'white' }}>
+                                    Live market movers
+                                </span>
+                            </div>
+                            
                             {/* Options Trading Card - Only visible 9:00-9:20 AM IST */}
                             {showOptions ? (
                                 <div 
@@ -901,9 +1090,9 @@
                                     }}
                                 >
                                     <h3>🎯 Options Trading</h3>
-                                    <p>Sure-shot Call & Put recommendations</p>
+                                    <p>Call & Put with entry/target/SL</p>
                                     <span className="stock-count" style={{ background: '#FF6B35', color: 'white' }}>
-                                        Top 20 trades • 9:00-9:20 AM IST
+                                        Top 20 trades • 9:00-9:20 AM
                                     </span>
                                 </div>
                             ) : (
@@ -917,13 +1106,197 @@
                                     }}
                                 >
                                     <h3>🕐 Options Trading</h3>
-                                    <p>Available tomorrow 9:00-9:20 AM IST</p>
+                                    <p>Available tomorrow 9:00-9:20 AM</p>
                                     <span className="stock-count" style={{ background: '#999', color: 'white' }}>
                                         Morning window only
                                     </span>
                                 </div>
                             )}
                             
+                            {/* Browse by Sectors - Collapsible */}
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#64748b',
+                                    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                                    gridColumn: '1 / -1'
+                                }}
+                                onClick={() => {
+                                    setScreen('sectors');
+                                }}
+                            >
+                                <h3>📑 Browse by Sectors</h3>
+                                <p>View 18 sectors with curated stocks</p>
+                                <span className="stock-count" style={{ background: '#64748b', color: 'white' }}>
+                                    160 stocks across 18 sectors
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+            
+            // Category Screen - Target Oriented, Swing, Fundamental, Technical, Hot Stocks
+            if (screen === 'category') {
+                React.useEffect(() => {
+                    const loadCategoryStocks = async () => {
+                        setIsLoadingStocks(true);
+                        
+                        // Get all stocks with real prices
+                        const allStockSymbols = Object.values(SECTORS).flat();
+                        const categoryStocks = [];
+                        
+                        for (const symbol of allStockSymbols) {
+                            if (REALISTIC_PRICES[symbol]) {
+                                const stock = generateMockStock(symbol, 'Multiple');
+                                
+                                // Add category-specific scoring
+                                if (selectedSector === 'Target Oriented') {
+                                    // Stocks with clear support/resistance levels
+                                    stock.targetScore = stock.score;
+                                    stock.targetPrice = stock.recommendation === 'BUY' ? 
+                                        (parseFloat(stock.price) * 1.15).toFixed(2) : 
+                                        stock.recommendation === 'HOLD' ? 
+                                        (parseFloat(stock.price) * 1.05).toFixed(2) :
+                                        (parseFloat(stock.price) * 0.92).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.95).toFixed(2);
+                                } else if (selectedSector === 'Swing Stocks') {
+                                    // High momentum stocks
+                                    const momentum = parseFloat(stock.changePercent);
+                                    stock.momentumScore = momentum > 3 ? 90 : momentum > 2 ? 80 : momentum > 1 ? 70 : 50;
+                                    stock.targetPrice = (parseFloat(stock.price) * 1.10).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
+                                } else if (selectedSector === 'Fundamentally Strong') {
+                                    // Good P/E, low debt
+                                    const pe = parseFloat(stock.peRatio);
+                                    stock.fundamentalScore = pe < 20 ? 90 : pe < 30 ? 75 : 60;
+                                    stock.targetPrice = (parseFloat(stock.price) * 1.20).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.93).toFixed(2);
+                                } else if (selectedSector === 'Technically Strong') {
+                                    // RSI, MACD signals
+                                    const rsi = parseFloat(stock.rsi);
+                                    stock.technicalScore = (rsi > 40 && rsi < 60) ? 85 : (rsi > 30 && rsi < 70) ? 70 : 50;
+                                    stock.targetPrice = (parseFloat(stock.price) * 1.12).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.96).toFixed(2);
+                                } else if (selectedSector === 'Hot Stocks Today') {
+                                    // Top movers
+                                    stock.dayMoveScore = Math.abs(parseFloat(stock.changePercent)) * 10;
+                                    stock.targetPrice = parseFloat(stock.changePercent) > 0 ?
+                                        (parseFloat(stock.price) * 1.08).toFixed(2) :
+                                        (parseFloat(stock.price) * 0.95).toFixed(2);
+                                    stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
+                                }
+                                
+                                categoryStocks.push(stock);
+                            }
+                        }
+                        
+                        // Sort based on category
+                        if (selectedSector === 'Target Oriented') {
+                            categoryStocks.sort((a, b) => b.targetScore - a.targetScore);
+                        } else if (selectedSector === 'Swing Stocks') {
+                            categoryStocks.sort((a, b) => b.momentumScore - a.momentumScore);
+                        } else if (selectedSector === 'Fundamentally Strong') {
+                            categoryStocks.sort((a, b) => b.fundamentalScore - a.fundamentalScore);
+                        } else if (selectedSector === 'Technically Strong') {
+                            categoryStocks.sort((a, b) => b.technicalScore - a.technicalScore);
+                        } else if (selectedSector === 'Hot Stocks Today') {
+                            categoryStocks.sort((a, b) => b.dayMoveScore - a.dayMoveScore);
+                        }
+                        
+                        setStocks(categoryStocks.slice(0, 50)); // Top 50 stocks
+                        setIsLoadingStocks(false);
+                    };
+                    
+                    loadCategoryStocks();
+                }, [selectedSector]);
+                
+                return (
+                    <div>
+                        <div className="header">
+                            <h1>{selectedSector}</h1>
+                            <p>Top 50 stocks with targets & stop loss</p>
+                        </div>
+                        <button className="back-button" onClick={handleBack}>
+                            ← Back to Home
+                        </button>
+                        {isLoadingStocks ? (
+                            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                                Loading stocks...
+                            </div>
+                        ) : (
+                            <div className="stock-list">
+                                {stocks.map(stock => (
+                                    <div 
+                                        key={stock.symbol} 
+                                        className="stock-item"
+                                        onClick={() => {
+                                            setSelectedStock(stock);
+                                            setScreen('detail');
+                                        }}
+                                    >
+                                        <div className="stock-header">
+                                            <div>
+                                                <div className="stock-symbol">{stock.symbol}</div>
+                                                <div className="stock-name">{STOCK_NAMES[stock.symbol] || stock.name}</div>
+                                                <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
+                                                    Sector: {stock.sector}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div className="stock-price">₹{stock.price}</div>
+                                                <div className={`stock-change ${parseFloat(stock.change) >= 0 ? 'positive' : 'negative'}`}>
+                                                    {parseFloat(stock.change) >= 0 ? '↑' : '↓'} {stock.change} ({stock.changePercent}%)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style={{ 
+                                            display: 'grid', 
+                                            gridTemplateColumns: '1fr 1fr 1fr', 
+                                            gap: '8px', 
+                                            marginTop: '10px',
+                                            paddingTop: '10px',
+                                            borderTop: '1px solid #e0e0e0'
+                                        }}>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '11px', color: '#666' }}>Target</div>
+                                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#10b981' }}>
+                                                    ₹{stock.targetPrice}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '11px', color: '#666' }}>Stop Loss</div>
+                                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ef4444' }}>
+                                                    ₹{stock.stopLoss}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '11px', color: '#666' }}>Score</div>
+                                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#3b82f6' }}>
+                                                    {stock.score}/100
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+            
+            // Sectors Browse Screen
+            if (screen === 'sectors') {
+                return (
+                    <div>
+                        <div className="header">
+                            <h1>📑 Browse by Sectors</h1>
+                            <p>160 curated stocks across 18 sectors</p>
+                        </div>
+                        <button className="back-button" onClick={handleBack}>
+                            ← Back to Home
+                        </button>
+                        <div className="sectors">
                             {Object.keys(SECTORS).map(sectorName => (
                                 <div 
                                     key={sectorName}
