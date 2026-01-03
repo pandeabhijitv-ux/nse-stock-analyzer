@@ -1095,6 +1095,7 @@
                                 if (selectedSector === 'Target Oriented') {
                                     // Stocks with clear support/resistance levels
                                     stock.targetScore = stock.score;
+                                    // Target price based on recommendation
                                     stock.targetPrice = stock.recommendation === 'BUY' ? 
                                         (parseFloat(stock.price) * 1.15).toFixed(2) : 
                                         stock.recommendation === 'HOLD' ? 
@@ -1105,26 +1106,45 @@
                                     // High momentum stocks
                                     const momentum = parseFloat(stock.changePercent);
                                     stock.momentumScore = momentum > 3 ? 90 : momentum > 2 ? 80 : momentum > 1 ? 70 : 50;
-                                    stock.targetPrice = (parseFloat(stock.price) * 1.10).toFixed(2);
+                                    // Target price based on recommendation
+                                    stock.targetPrice = stock.recommendation === 'BUY' ? 
+                                        (parseFloat(stock.price) * 1.10).toFixed(2) : 
+                                        stock.recommendation === 'HOLD' ? 
+                                        (parseFloat(stock.price) * 1.05).toFixed(2) :
+                                        (parseFloat(stock.price) * 0.95).toFixed(2);
                                     stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
                                 } else if (selectedSector === 'Fundamentally Strong') {
                                     // Good P/E, low debt
                                     const pe = parseFloat(stock.peRatio);
                                     stock.fundamentalScore = pe < 20 ? 90 : pe < 30 ? 75 : 60;
-                                    stock.targetPrice = (parseFloat(stock.price) * 1.20).toFixed(2);
+                                    // Target price based on recommendation
+                                    stock.targetPrice = stock.recommendation === 'BUY' ? 
+                                        (parseFloat(stock.price) * 1.20).toFixed(2) : 
+                                        stock.recommendation === 'HOLD' ? 
+                                        (parseFloat(stock.price) * 1.08).toFixed(2) :
+                                        (parseFloat(stock.price) * 0.90).toFixed(2);
                                     stock.stopLoss = (parseFloat(stock.price) * 0.93).toFixed(2);
                                 } else if (selectedSector === 'Technically Strong') {
                                     // RSI, MACD signals
                                     const rsi = parseFloat(stock.rsi);
                                     stock.technicalScore = (rsi > 40 && rsi < 60) ? 85 : (rsi > 30 && rsi < 70) ? 70 : 50;
-                                    stock.targetPrice = (parseFloat(stock.price) * 1.12).toFixed(2);
+                                    // Target price based on recommendation
+                                    stock.targetPrice = stock.recommendation === 'BUY' ? 
+                                        (parseFloat(stock.price) * 1.12).toFixed(2) : 
+                                        stock.recommendation === 'HOLD' ? 
+                                        (parseFloat(stock.price) * 1.05).toFixed(2) :
+                                        (parseFloat(stock.price) * 0.92).toFixed(2);
                                     stock.stopLoss = (parseFloat(stock.price) * 0.96).toFixed(2);
                                 } else if (selectedSector === 'Hot Stocks Today') {
                                     // Top movers
                                     stock.dayMoveScore = Math.abs(parseFloat(stock.changePercent)) * 10;
-                                    stock.targetPrice = parseFloat(stock.changePercent) > 0 ?
-                                        (parseFloat(stock.price) * 1.08).toFixed(2) :
-                                        (parseFloat(stock.price) * 0.95).toFixed(2);
+                                    // Target price based on current momentum AND recommendation
+                                    const baseMultiplier = parseFloat(stock.changePercent) > 0 ? 1.08 : 0.95;
+                                    stock.targetPrice = stock.recommendation === 'BUY' ? 
+                                        (parseFloat(stock.price) * baseMultiplier).toFixed(2) : 
+                                        stock.recommendation === 'HOLD' ? 
+                                        (parseFloat(stock.price) * 1.03).toFixed(2) :
+                                        (parseFloat(stock.price) * 0.93).toFixed(2);
                                     stock.stopLoss = (parseFloat(stock.price) * 0.97).toFixed(2);
                                 }
                                 
