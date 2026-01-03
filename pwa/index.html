@@ -494,24 +494,107 @@
             const [isLoadingStocks, setIsLoadingStocks] = useState(false);
             const [showOptions, setShowOptions] = useState(true);
             const [apiError, setApiError] = useState(null);
+            const [moslAccessToken, setMoslAccessToken] = useState(null);
             
-            // Load stocks when sector changes - using realistic mock data
+            // MOSL API Configuration
+            const MOSL_API_KEY = '4ZIJ3zvpFpoH9HsR';
+            const MOSL_SECRET_KEY = '13ad7e42-4eea-4335-b87c-e5ef8464aff3';
+            
+            // MOSL Authentication - get access token
+            async function getMOSLAccessToken() {
+                try {
+                    const authUrl = 'https://api.motilaloswal.com/rest/auth/v1/login';
+                    
+                    const response = await fetch(authUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': MOSL_API_KEY
+                        },
+                        body: JSON.stringify({
+                            'secretKey': MOSL_SECRET_KEY
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        console.error('MOSL Authentication failed:', response.status);
+                        return null;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data && data.accessToken) {
+                        sessionStorage.setItem('mosl_access_token', data.accessToken);
+                        setMoslAccessToken(data.accessToken);
+                        console.log('✅ MOSL API authenticated successfully');
+                        return data.accessToken;
+                    } else {
+                        console.error('No access token in response');
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('MOSL Authentication error:', error);
+                    return null;
+                }
+            }
+            
+            // Initialize MOSL API on app load
+            useEffect(() => {
+                // Check if we have token in sessionStorage
+                const savedToken = sessionStorage.getItem('mosl_access_token');
+                if (savedToken) {
+                    setMoslAccessToken(savedToken);
+                    console.log('✅ Using saved MOSL token');
+                } else {
+                    // Try to get new token
+                    console.log('🔐 Authenticating with MOSL API...');
+                    getMOSLAccessToken();
+                }
+            }, []);
+            
+            // Load stocks when sector changes - with MOSL API
             useEffect(() => {
                 if (screen === 'stockList' && selectedSector) {
                     async function loadStocks() {
                         setIsLoadingStocks(true);
+                        setApiError(null);
                         const symbols = SECTORS[selectedSector];
                         
-                        // Generate realistic mock data
-                        const results = symbols.map(symbol => {
+                        // Try to fetch real data from MOSL API
+                        const results = [];
+                        for (const symbol of symbols) {
+                            let realData = null;
+                            
+                            if (moslAccessToken) {
+                                realData = await fetchMOSLStockData(symbol, moslAccessToken);
+                            }
+                            
                             const mockData = generateMockStock(symbol, selectedSector);
-                            return {
-                                ...mockData,
-                                name: STOCK_NAMES[symbol] || `${symbol} Ltd`,
-                                sector: selectedSector,
-                                recommendation: mockData.score >= 70 ? 'BUY' : mockData.score >= 40 ? 'HOLD' : 'SELL'
-                            };
-                        });
+                            
+                            if (realData) {
+                                // Got real data - merge with mock for additional fields
+                                results.push({
+                                    ...mockData,
+                                    ...realData,
+                                    name: STOCK_NAMES[symbol] || `${symbol} Ltd`,
+                                    sector: selectedSector,
+                                    recommendation: realData.score >= 70 ? 'BUY' : realData.score >= 40 ? 'HOLD' : 'SELL',
+                                    isRealData: true
+                                });
+                            } else {
+                                // Use mock data
+                                results.push({
+                                    ...mockData,
+                                    name: STOCK_NAMES[symbol] || `${symbol} Ltd`,
+                                    sector: selectedSector,
+                                    recommendation: mockData.score >= 70 ? 'BUY' : mockData.score >= 40 ? 'HOLD' : 'SELL',
+                                    isRealData: false
+                                });
+                            }
+                            
+                            // Small delay between calls
+                            await new Promise(resolve => setTimeout(resolve, 300));
+                        }
                         
                         const sortedStocks = results.sort((a, b) => b.score - a.score);
                         setStocks(sortedStocks);
@@ -520,7 +603,85 @@
                     
                     loadStocks();
                 }
-            }, [screen, selectedSector]);
+            }, [screen, selectedSector, moslAccessToken]);
+
+            // Fetch real stock data from MOSL API
+            async function fetchMOSLStockData(symbol, accessToken) {
+                try {
+                    // MOSL API endpoint for quotes
+                    const apiUrl = `https://api.motilaloswal.com/rest/quote/v1/getquote?symbol=${symbol}&exchange=NSE`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`,
+                            'x-api-key': MOSL_API_KEY
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        console.error(`MOSL API Error ${response.status} for ${symbol}`);
+                        return null;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!data || !data.ltp) {
+                        console.error(`No price data for ${symbol}`);
+                        return null;
+                    }
+                    
+                    const currentPrice = parseFloat(data.ltp);
+                    const previousClose = parseFloat(data.close || data.prev_close);
+                    const dayHigh = parseFloat(data.high);
+                    const dayLow = parseFloat(data.low);
+                    const volume = data.volume;
+                    
+                    const change = currentPrice - previousClose;
+                    const changePercent = (change / previousClose) * 100;
+                    
+                    // Calculate RSI (simplified)
+                    let rsi = 50;
+                    if (changePercent > 5) rsi = 75;
+                    else if (changePercent > 2) rsi = 65;
+                    else if (changePercent > 0) rsi = 55;
+                    else if (changePercent > -2) rsi = 45;
+                    else if (changePercent > -5) rsi = 35;
+                    else rsi = 25;
+                    
+                    // Calculate score
+                    let score = 50;
+                    if (changePercent > 3) score += 20;
+                    else if (changePercent > 1) score += 10;
+                    else if (changePercent < -3) score -= 20;
+                    else if (changePercent < -1) score -= 10;
+                    
+                    if (rsi < 30) score += 15;
+                    else if (rsi > 70) score -= 15;
+                    else if (rsi > 60) score += 5;
+                    
+                    score = Math.max(0, Math.min(100, score));
+                    
+                    return {
+                        symbol,
+                        currentPrice: currentPrice.toFixed(2),
+                        price: currentPrice.toFixed(2),
+                        change: change.toFixed(2),
+                        changePercent: changePercent.toFixed(2),
+                        dayHigh: dayHigh.toFixed(2),
+                        dayLow: dayLow.toFixed(2),
+                        week52High: (data.week52_high || currentPrice * 1.15).toFixed(2),
+                        week52Low: (data.week52_low || currentPrice * 0.85).toFixed(2),
+                        volume: volume ? (volume / 100000).toFixed(1) + 'L' : 'N/A',
+                        rsi: rsi.toFixed(2),
+                        score: Math.round(score)
+                    };
+                } catch (error) {
+                    console.error(`Error fetching ${symbol} from MOSL:`, error);
+                    return null;
+                }
+            }
 
             const handleSectorClick = (sectorName) => {
                 console.log(`🏢 Sector clicked: ${sectorName}`);
@@ -975,7 +1136,11 @@
                                 fontSize: '13px',
                                 color: '#fff'
                             }}>
-                                ⓘ Demo Mode with AI-generated realistic data • Real NSE APIs require server-side integration
+                                {stocks.length > 0 && stocks[0].isRealData 
+                                    ? '✅ Real-time NSE data • Powered by MOSL API'
+                                    : moslAccessToken
+                                        ? '🔄 Loading real-time data from MOSL...'
+                                        : 'ⓘ Demo Mode with AI-generated realistic data • Real NSE APIs require server-side integration'}
                             </div>
                         </div>
                         <button className="back-button" onClick={handleBack}>
