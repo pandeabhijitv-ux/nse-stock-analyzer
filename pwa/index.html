@@ -633,12 +633,17 @@
                         recommended: confidence > 70 ? otm : atm
                     },
                     premiums: {
-                        call_itm: Math.round(currentPrice * 0.05),
-                        call_atm: Math.round(currentPrice * 0.03),
-                        call_otm: Math.round(currentPrice * 0.015),
-                        put_itm: Math.round(currentPrice * 0.05),
-                        put_atm: Math.round(currentPrice * 0.03),
-                        put_otm: Math.round(currentPrice * 0.015)
+                        // More realistic premiums based on moneyness and stock price
+                        // ITM: 3-6% of stock price (higher intrinsic value)
+                        call_itm: Math.max(Math.round(currentPrice * (0.04 + r(20) * 0.02)), 10),
+                        // ATM: 2-4% of stock price (time value)
+                        call_atm: Math.max(Math.round(currentPrice * (0.025 + r(21) * 0.015)), 8),
+                        // OTM: 0.8-2% of stock price (speculative)
+                        call_otm: Math.max(Math.round(currentPrice * (0.01 + r(22) * 0.01)), 5),
+                        // PUT premiums slightly different
+                        put_itm: Math.max(Math.round(currentPrice * (0.04 + r(23) * 0.02)), 10),
+                        put_atm: Math.max(Math.round(currentPrice * (0.025 + r(24) * 0.015)), 8),
+                        put_otm: Math.max(Math.round(currentPrice * (0.01 + r(25) * 0.01)), 5)
                     },
                     greeks: {
                         delta: (r(15) * 0.4 + 0.4).toFixed(2),
@@ -1576,9 +1581,10 @@
                                 <div style={{ fontSize: '12px', color: '#555', lineHeight: '1.8' }}>
                                     • <strong>Entry (Premium):</strong> Amount you pay to buy the option<br/>
                                     • <strong>Target (2x):</strong> Exit when premium doubles (100% profit)<br/>
-                                    • <strong>Stop Loss (50%):</strong> Exit if premium falls 50% (limit loss)<br/>
+                                    • <strong>Stop Loss (50%):</strong> Exit if premium falls 50% from entry (₹10 entry → ₹5 stop)<br/>
                                     • <strong>Confidence %:</strong> AI prediction accuracy based on technical analysis<br/>
-                                    • <strong>Expiry:</strong> Monthly/Weekly - option contract validity period
+                                    • <strong>Expiry:</strong> Monthly/Weekly - option contract validity period<br/>
+                                    • <strong>Max Risk:</strong> You can only lose the premium paid (limited downside)
                                 </div>
                             </div>
                             
