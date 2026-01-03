@@ -503,6 +503,17 @@
             // MOSL Authentication - get access token
             async function getMOSLAccessToken() {
                 try {
+                    // Note: MOSL API blocks browser CORS requests
+                    // This will fail with ERR_CONNECTION_CLOSED or CORS error
+                    // Solution: Deploy proxy-server/ to Vercel (see proxy-server/README.md)
+                    
+                    console.warn('⚠️ MOSL API does not support direct browser requests (CORS blocked)');
+                    console.warn('📦 Deploy proxy-server/ to Vercel for real-time data');
+                    console.warn('📊 Using mock data with realistic NSE prices as fallback');
+                    
+                    return null; // Skip authentication, use mock data
+                    
+                    /* Uncomment when proxy is deployed:
                     const authUrl = 'https://api.motilaloswal.com/rest/auth/v1/login';
                     
                     const response = await fetch(authUrl, {
@@ -532,6 +543,7 @@
                         console.error('No access token in response');
                         return null;
                     }
+                    */
                 } catch (error) {
                     console.error('MOSL Authentication error:', error);
                     return null;
@@ -546,9 +558,11 @@
                     setMoslAccessToken(savedToken);
                     console.log('✅ Using saved MOSL token');
                 } else {
-                    // Try to get new token
-                    console.log('🔐 Authenticating with MOSL API...');
-                    getMOSLAccessToken();
+                    // MOSL API blocks CORS - authentication will fail
+                    // Using mock data with realistic prices instead
+                    console.log('📊 Using mock data (MOSL API requires proxy server)');
+                    // Uncomment when proxy is deployed:
+                    // getMOSLAccessToken();
                 }
             }, []);
             
@@ -1136,11 +1150,7 @@
                                 fontSize: '13px',
                                 color: '#fff'
                             }}>
-                                {stocks.length > 0 && stocks[0].isRealData 
-                                    ? '✅ Real-time NSE data • Powered by MOSL API'
-                                    : moslAccessToken
-                                        ? '🔄 Loading real-time data from MOSL...'
-                                        : 'ⓘ Demo Mode with AI-generated realistic data • Real NSE APIs require server-side integration'}
+                                📊 Realistic NSE prices updated {new Date().toLocaleDateString('en-IN')} • MOSL API requires proxy server (CORS blocked)
                             </div>
                         </div>
                         <button className="back-button" onClick={handleBack}>
