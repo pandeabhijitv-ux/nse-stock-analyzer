@@ -361,10 +361,47 @@
             return seed / 0x7FFFFFFF; // Return 0-1
         }
 
-        // Generate mock stock data for Indian stocks
+        // Realistic price ranges for known NSE stocks (approximate real prices)
+        const REALISTIC_PRICES = {
+            // IT
+            TCS: 3500, INFY: 1450, WIPRO: 450, HCLTECH: 1200, TECHM: 1100,
+            LTIM: 5500, PERSISTENT: 5000, COFORGE: 6000, MPHASIS: 2500, LTTS: 4500,
+            // Banking
+            HDFCBANK: 1650, ICICIBANK: 1100, SBIN: 600, KOTAKBANK: 1750, AXISBANK: 1050,
+            INDUSINDBK: 1400, BANDHANBNK: 220, FEDERALBNK: 180, AUBANK: 600, IDFCFIRSTB: 70,
+            // FMCG
+            HINDUNILVR: 2400, ITC: 450, NESTLEIND: 2200, BRITANNIA: 4800, DABUR: 500,
+            MARICO: 600, COLPAL: 2800, GODREJCP: 1100, TATACONSUM: 900, UBL: 1800,
+            // Finance
+            BAJFINANCE: 6500, BAJAJFINSV: 1600, SBILIFE: 1400, HDFCLIFE: 650, ICICIGI: 1500,
+            CHOLAFIN: 1200, 'M&MFIN': 280, LICHSGFIN: 600, PNBHOUSING: 800, RECLTD: 450,
+            // Automobile
+            'M&M': 2661, MARUTI: 12213, TATAMOTORS: 752, 'BAJAJ-AUTO': 9658, HEROMOTOCO: 5980,
+            EICHERMOT: 4700, TVSMOTOR: 2436, ASHOKLEY: 220, MRF: 122975, BALKRISIND: 2876,
+            // Pharma
+            SUNPHARMA: 1750, DRREDDY: 1200, CIPLA: 1450, DIVISLAB: 5900, AUROPHARMA: 1250,
+            TORNTPHARM: 3200, LUPIN: 2000, BIOCON: 330, ALKEM: 5500, LALPATHLAB: 3000,
+            // Energy
+            RELIANCE: 1250, ONGC: 250, BPCL: 300, IOC: 140, GAIL: 190,
+            COALINDIA: 420, ADANIGREEN: 1800, TATAPOWER: 410, NTPC: 350, POWERGRID: 320,
+            // Metals & Mining
+            TATASTEEL: 140, HINDALCO: 650, VEDL: 450, JSWSTEEL: 900, HINDzinc: 500,
+            NMDC: 240, SAIL: 120, NATIONALUM: 220, JINDALSTEL: 900, ADANIENT: 2500,
+            // Infrastructure
+            LT: 3600, ADANIPORTS: 1200, DLF: 800, OBEROIRLTY: 1900, GODREJPROP: 2700,
+            PRESTIGE: 1700, BRIGADE: 1100, SUNTECK: 500, PHOENIXLTD: 1600, LODHA: 1300,
+            // Consumer Durables
+            TITAN: 3400, VOLTAS: 1650, HAVELLS: 1600, CROMPTON: 400, BLUESTAR: 1900,
+            WHIRLPOOL: 1800, BATAINDIA: 1400, RELAXO: 900, SYMPHONY: 1300, AMBER: 3800
+        };
+
+        // Generate mock stock data for Indian stocks with realistic prices
         function generateMockStock(symbol, sectorName) {
             const r = (idx) => seededRandom(symbol, idx);
-            const basePrice = r(1) * 3000 + 100; // Indian stock price range
+            
+            // Use realistic base price if available, otherwise generate
+            const currentPrice = REALISTIC_PRICES[symbol] || (r(1) * 3000 + 100);
+            
             const score = Math.floor(r(2) * 100);
             const rsi = r(3) * 100;
             const vix = r(4) * 30 + 10; // India VIX 10-40
@@ -378,16 +415,21 @@
             
             // Calculate strike prices
             const roundToStrike = (price) => Math.round(price / 50) * 50;
-            const atm = roundToStrike(basePrice);
-            const itm = optionType === 'CALL' ? roundToStrike(basePrice * 0.97) : roundToStrike(basePrice * 1.03);
-            const otm = optionType === 'CALL' ? roundToStrike(basePrice * 1.03) : roundToStrike(basePrice * 0.97);
+            const atm = roundToStrike(currentPrice);
+            const itm = optionType === 'CALL' ? roundToStrike(currentPrice * 0.97) : roundToStrike(currentPrice * 1.03);
+            const otm = optionType === 'CALL' ? roundToStrike(currentPrice * 1.03) : roundToStrike(currentPrice * 0.97);
+            
+            // Calculate small random change for display
+            const changePercent = (r(6) * 6 - 3); // -3% to +3%
+            const change = (currentPrice * changePercent / 100);
             
             return {
                 symbol,
                 name: STOCK_NAMES[symbol] || `${symbol} Ltd`,
-                price: basePrice.toFixed(2),
-                change: (r(6) * 50 - 25).toFixed(2),
-                changePercent: ((r(7) * 10 - 5)).toFixed(2),
+                price: currentPrice.toFixed(2),
+                currentPrice: currentPrice.toFixed(2),
+                change: change.toFixed(2),
+                changePercent: changePercent.toFixed(2),
                 sector: sectorName,
                 score: score,
                 peRatio: (r(8) * 50 + 10).toFixed(2),
@@ -396,14 +438,14 @@
                 recommendation: score >= 70 ? 'BUY' : score >= 40 ? 'HOLD' : 'SELL',
                 rsi: rsi.toFixed(2),
                 macd: (r(11) * 10 - 5).toFixed(2),
-                ema50: (basePrice * (1 + (r(12) * 0.1 - 0.05))).toFixed(2),
-                ema200: (basePrice * (1 + (r(13) * 0.2 - 0.1))).toFixed(2),
-                dayHigh: (basePrice * 1.03).toFixed(2),
-                dayLow: (basePrice * 0.97).toFixed(2),
-                week52High: (basePrice * 1.25).toFixed(2),
-                week52Low: (basePrice * 0.75).toFixed(2),
+                ema50: (currentPrice * (1 + (r(12) * 0.1 - 0.05))).toFixed(2),
+                ema200: (currentPrice * (1 + (r(13) * 0.2 - 0.1))).toFixed(2),
+                dayHigh: (currentPrice * 1.02).toFixed(2),
+                dayLow: (currentPrice * 0.98).toFixed(2),
+                week52High: (currentPrice * 1.15).toFixed(2),
+                week52Low: (currentPrice * 0.85).toFixed(2),
                 dividendYield: (r(14) * 3).toFixed(2) + '%',
-                bookValue: (basePrice * 0.8).toFixed(2),
+                bookValue: (currentPrice * 0.8).toFixed(2),
                 // Options data
                 options: {
                     sentiment: optionSentiment,
@@ -418,12 +460,12 @@
                         recommended: confidence > 70 ? otm : atm
                     },
                     premiums: {
-                        call_itm: Math.round(basePrice * 0.05),
-                        call_atm: Math.round(basePrice * 0.03),
-                        call_otm: Math.round(basePrice * 0.015),
-                        put_itm: Math.round(basePrice * 0.05),
-                        put_atm: Math.round(basePrice * 0.03),
-                        put_otm: Math.round(basePrice * 0.015)
+                        call_itm: Math.round(currentPrice * 0.05),
+                        call_atm: Math.round(currentPrice * 0.03),
+                        call_otm: Math.round(currentPrice * 0.015),
+                        put_itm: Math.round(currentPrice * 0.05),
+                        put_atm: Math.round(currentPrice * 0.03),
+                        put_otm: Math.round(currentPrice * 0.015)
                     },
                     greeks: {
                         delta: (r(15) * 0.4 + 0.4).toFixed(2),
@@ -450,229 +492,35 @@
             const [stockData, setStockData] = useState({});
             const [stocks, setStocks] = useState([]);
             const [isLoadingStocks, setIsLoadingStocks] = useState(false);
-            const [showOptions, setShowOptions] = useState(isOptionsWindow());
+            const [showOptions, setShowOptions] = useState(true);
             const [apiError, setApiError] = useState(null);
             
-            // Check options window every minute
+            // Load stocks when sector changes - using realistic mock data
             useEffect(() => {
-                const interval = setInterval(() => {
-                    setShowOptions(isOptionsWindow());
-                }, 60000); // Check every minute
-                return () => clearInterval(interval);
-            }, []);
-            
-            // Load stocks when sector changes
-            useEffect(() => {
-                console.log(`🔄 useEffect triggered - screen: ${screen}, sector: ${selectedSector}`);
                 if (screen === 'stockList' && selectedSector) {
                     async function loadStocks() {
-                        console.log(`🚀 Loading stocks for ${selectedSector}...`);
                         setIsLoadingStocks(true);
-                        setApiError(null);
-                        
-                        // Check cache first
-                        const cachedData = getCachedData();
-                        if (cachedData && cachedData[selectedSector]) {
-                            console.log(`📦 Using cached data for ${selectedSector}`);
-                            setStocks(cachedData[selectedSector]);
-                            setIsLoadingStocks(false);
-                            return;
-                        }
-                        
                         const symbols = SECTORS[selectedSector];
-                        console.log(`📋 Symbols to fetch:`, symbols);
                         
-                        // Fetch sequentially to respect rate limits (60/min)
-                        const results = [];
-                        for (const symbol of symbols) {
-                            const data = await fetchRealStockData(symbol);
-                            results.push(data);
-                            await new Promise(resolve => setTimeout(resolve, 1100)); // 1.1 sec delay
-                        }
-                        console.log(`📊 API Results:`, results);
+                        // Generate realistic mock data
+                        const results = symbols.map(symbol => {
+                            const mockData = generateMockStock(symbol, selectedSector);
+                            return {
+                                ...mockData,
+                                name: STOCK_NAMES[symbol] || `${symbol} Ltd`,
+                                sector: selectedSector,
+                                recommendation: mockData.score >= 70 ? 'BUY' : mockData.score >= 40 ? 'HOLD' : 'SELL'
+                            };
+                        });
                         
-                        const validStocks = results
-                            .filter(s => s !== null)
-                            .map(realData => {
-                                console.log(`🔧 Processing ${realData.symbol}...`);
-                                const mockData = generateMockStock(realData.symbol, selectedSector);
-                                const merged = {
-                                    ...realData,
-                                    name: STOCK_NAMES[realData.symbol] || `${realData.symbol} Ltd`,
-                                    price: realData.currentPrice,
-                                    sector: selectedSector,
-                                    recommendation: realData.score >= 70 ? 'BUY' : realData.score >= 40 ? 'HOLD' : 'SELL',
-                                    peRatio: mockData.peRatio,
-                                    marketCap: mockData.marketCap,
-                                    dividendYield: mockData.dividendYield,
-                                    bookValue: mockData.bookValue,
-                                    macd: mockData.macd,
-                                    ema50: mockData.ema50,
-                                    ema200: mockData.ema200,
-                                    options: mockData.options
-                                };
-                                console.log(`✅ Merged data for ${realData.symbol}:`, merged);
-                                return merged;
-                            })
-                            .sort((a, b) => b.score - a.score);
-                        
-                        if (validStocks.length === 0) {
-                            setApiError('Unable to fetch stock data. Please try again later.');
-                        } else {
-                            // Update cache
-                            const allCached = getCachedData() || {};
-                            allCached[selectedSector] = validStocks;
-                            setCachedData(allCached);
-                        }
-                        
-                        console.log(`🎉 Final stocks array:`, validStocks);
-                        setStocks(validStocks);
+                        const sortedStocks = results.sort((a, b) => b.score - a.score);
+                        setStocks(sortedStocks);
                         setIsLoadingStocks(false);
                     }
                     
                     loadStocks();
                 }
             }, [screen, selectedSector]);
-
-            // Finnhub API configuration
-            const FINNHUB_API_KEY = 'd5c0hhpr01qsbmghorjd5c0hhpr01qsbmghorje';
-            const CACHE_KEY = 'nse_stock_cache';
-            const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-            
-            // Check if we're in options trading window (9:00-9:20 AM IST)
-            function isOptionsWindow() {
-                const now = new Date();
-                const formatter = new Intl.DateTimeFormat('en-US', {
-                    timeZone: 'Asia/Kolkata',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                });
-                const istTime = formatter.format(now);
-                const [hours, minutes] = istTime.split(':').map(Number);
-                const isInWindow = hours === 9 && minutes >= 0 && minutes <= 20;
-                console.log(`⏰ IST Time: ${istTime}, Options Window: ${isInWindow}`);
-                return isInWindow;
-            }
-            
-            // Get cached data if still valid
-            function getCachedData() {
-                try {
-                    const cached = localStorage.getItem(CACHE_KEY);
-                    if (!cached) return null;
-                    
-                    const { data, timestamp } = JSON.parse(cached);
-                    if (Date.now() - timestamp < CACHE_DURATION) {
-                        console.log('📦 Using cached stock data');
-                        return data;
-                    }
-                    console.log('⏰ Cache expired');
-                    return null;
-                } catch (e) {
-                    console.error('❌ Cache read error:', e);
-                    return null;
-                }
-            }
-            
-            // Save data to cache
-            function setCachedData(data) {
-                try {
-                    localStorage.setItem(CACHE_KEY, JSON.stringify({
-                        data,
-                        timestamp: Date.now()
-                    }));
-                    console.log('💾 Cached stock data');
-                } catch (e) {
-                    console.error('❌ Cache write error:', e);
-                }
-            }
-            
-            // Fetch real stock data from Finnhub API
-            async function fetchRealStockData(symbol) {
-                console.log(`🔍 Fetching data for ${symbol}...`);
-                try {
-                    const finnhubSymbol = `${symbol}.NS`;
-                    const apiUrl = `https://finnhub.io/api/v1/quote?symbol=${finnhubSymbol}&token=${FINNHUB_API_KEY}`;
-                    console.log(`📡 Finnhub API: ${apiUrl}`);
-                    
-                    const response = await fetch(apiUrl);
-                    console.log(`✅ Response status: ${response.status}`);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    console.log(`📦 Data received for ${symbol}:`, data);
-                    
-                    if (!data.c || data.c === 0) {
-                        console.error(`❌ No price data for ${symbol}`);
-                        return null;
-                    }
-                    
-                    const currentPrice = data.c; // Current/closing price
-                    const previousClose = data.pc; // Previous close
-                    const dayHigh = data.h; // Day high
-                    const dayLow = data.l; // Day low
-                    const change = currentPrice - previousClose;
-                    const changePercent = (change / previousClose) * 100;
-                    
-                    console.log(`💰 ${symbol} Price: ₹${currentPrice}`);
-                    
-                    // Calculate RSI (simplified - use closing price trend)
-                    const rsi = calculateSimpleRSI(changePercent);
-                    
-                    // Score based on technical + fundamental
-                    const score = calculateScore(currentPrice, previousClose, rsi, changePercent);
-                    
-                    const stockData = {
-                        symbol,
-                        currentPrice: currentPrice.toFixed(2),
-                        change: change.toFixed(2),
-                        changePercent: changePercent.toFixed(2),
-                        dayHigh: dayHigh.toFixed(2),
-                        dayLow: dayLow.toFixed(2),
-                        week52High: (currentPrice * 1.25).toFixed(2), // Estimate
-                        week52Low: (currentPrice * 0.75).toFixed(2), // Estimate
-                        volume: 'N/A', // Finnhub free doesn't include volume
-                        rsi: rsi.toFixed(2),
-                        score: score
-                    };
-                    
-                    console.log(`✅ Successfully processed ${symbol}:`, stockData);
-                    return stockData;
-                } catch (error) {
-                    console.error(`❌ Error fetching ${symbol}:`, error);
-                    return null;
-                }
-            }
-            
-            function calculateSimpleRSI(changePercent) {
-                // Simplified RSI based on price change
-                if (changePercent > 5) return 75;
-                if (changePercent > 2) return 65;
-                if (changePercent > 0) return 55;
-                if (changePercent > -2) return 45;
-                if (changePercent > -5) return 35;
-                return 25;
-            }
-            
-            function calculateScore(current, previous, rsi, changePercent) {
-                let score = 50; // Base score
-                
-                // Price momentum
-                if (changePercent > 3) score += 20;
-                else if (changePercent > 1) score += 10;
-                else if (changePercent < -3) score -= 20;
-                else if (changePercent < -1) score -= 10;
-                
-                // RSI
-                if (rsi < 30) score += 15; // Oversold - good to buy
-                else if (rsi > 70) score -= 15; // Overbought
-                else if (rsi >= 40 && rsi <= 60) score += 5; // Neutral zone
-                
-                return Math.max(0, Math.min(100, Math.floor(score)));
-            }
 
             const handleSectorClick = (sectorName) => {
                 console.log(`🏢 Sector clicked: ${sectorName}`);
@@ -1127,7 +975,7 @@
                                 fontSize: '13px',
                                 color: '#fff'
                             }}>
-                                ⓘ Prices updated daily at 3:30 PM IST market close • Powered by Finnhub API
+                                ⓘ Demo Mode with AI-generated realistic data • Real NSE APIs require server-side integration
                             </div>
                         </div>
                         <button className="back-button" onClick={handleBack}>

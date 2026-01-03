@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Finnhub API Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .test-box {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .success { color: #4ec9b0; }
+        .error { color: #f48771; }
+        .info { color: #569cd6; }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #1177bb; }
+        pre {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔑 Stock API Key Test</h1>
+    
+    <div class="test-box">
+        <h3>Select API Provider:</h3>
+        <select id="apiProvider" style="padding: 10px; font-size: 14px; width: 300px; margin-bottom: 20px;">
+            <option value="finnhub">Finnhub (Current - Limited NSE)</option>
+            <option value="twelvedata">Twelve Data (Recommended - Full NSE)</option>
+        </select>
+    </div>
+    
+    <div class="test-box">
+        <h3>Your API Key:</h3>
+        <input type="text" id="apiKey" value="d5c94bhr01qsbmgjb4egd5c94bhr01qsbmgjb4f0" 
+               style="width: 500px; padding: 8px; font-family: monospace;">
+        <br><br>
+        <button onclick="testApiKey()">🧪 Test NSE Stock (RELIANCE)</button>
+        <button onclick="testUSStock()">🇺🇸 Test US Stock (AAPL)</button>
+        <button onclick="testMultipleNSE()">📊 Test 5 NSE Stocks</button>
+    </div>
+    
+    <div class="test-box">
+        <h3>Test Results:</h3>
+        <div id="results"></div>
+    </div>
+    
+    <div class="test-box">
+        <h3>📋 Setup Instructions:</h3>
+        <div id="setupInstructions">
+            <h4>Finnhub (Current):</h4>
+            <ul>
+                <li>✅ You already have this: krittikaapps@gmail.com</li>
+                <li>⚠️ Problem: Only ~5-10 NSE stocks work (M&M, RELIANCE, TCS)</li>
+                <li>❌ Most stocks return 403 Forbidden</li>
+            </ul>
+            
+            <h4>Twelve Data (Recommended):</h4>
+            <ul>
+                <li>🌟 Register FREE at: <a href="https://twelvedata.com/pricing" target="_blank" style="color: #4ec9b0;">twelvedata.com/pricing</a></li>
+                <li>📧 Use email: krittikaapps@gmail.com (or any email)</li>
+                <li>✅ Get 800 API calls per day</li>
+                <li>✅ ALL major NSE stocks supported</li>
+                <li>✅ Includes volume, previous close, % change</li>
+                <li>🔑 Get API key from: <a href="https://twelvedata.com/account/api-keys" target="_blank" style="color: #4ec9b0;">Dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        async function testApiKey() {
+            const apiKey = document.getElementById('apiKey').value;
+            const provider = document.getElementById('apiProvider').value;
+            
+            resultsDiv.innerHTML = '<p class="info">⏳ Testing NSE stock (RELIANCE)...</p>';
+            
+            try {
+                let url, symbol;
+                if (provider === 'twelvedata') {
+                    symbol = 'RELIANCE.NSE';
+                    url = `https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${apiKey}`;
+                } else {
+                    symbol = 'RELIANCE.NS';
+                    url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`;
+                }
+                
+                console.log('Testing URL:', url);
+                
+                const response = await fetch(url);
+                const status = response.status;
+                const data = await response.json();
+                
+                console.log('Response:', { status, data });
+                
+                if (status === 401) {
+                    resultsDiv.innerHTML = `
+                        <p class="error">❌ ERROR: 401 Unauthorized</p>
+                        <p><strong>Your API key is not activated yet.</strong></p>
+                        <p>Please verify your email and wait a few minutes.</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else if (status === 403) {
+                    resultsDiv.innerHTML = `
+                        <p class="error">❌ ERROR: 403 Forbidden</p>
+                        <p><strong>${provider === 'finnhub' ? 'Finnhub does not provide this NSE stock in free tier' : 'Access denied'}</strong></p>
+                        <p>This is why we need Twelve Data - it has full NSE coverage!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else if (status === 200) {
+                    if (provider === 'twelvedata') {
+                        if (data.close) {
+                            resultsDiv.innerHTML = `
+                                <p class="success">✅ SUCCESS! Twelve Data API is working!</p>
+                                <p><strong>${data.name || 'RELIANCE'}</strong></p>
+                                <p>Price: ₹${data.close} | Change: ${data.change} (${data.percent_change}%)</p>
+                                <p>High: ₹${data.high} | Low: ₹${data.low}</p>
+                                <p>Volume: ${data.volume}</p>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            `;
+                        } else {
+                            resultsDiv.innerHTML = `
+                                <p class="error">⚠️ API Key works, but no data returned</p>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            `;
+                        }
+                    } else {
+                        if (data.c && data.c !== 0) {
+                            resultsDiv.innerHTML = `
+                                <p class="success">✅ SUCCESS! Finnhub API is working!</p>
+                                <p><strong>RELIANCE.NS Price: ₹${data.c}</strong></p>
+                                <p>But many other NSE stocks won't work (403 error)</p>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            `;
+                        } else {
+                            resultsDiv.innerHTML = `
+                                <p class="error">⚠️ API Key works, but no price data</p>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            `;
+                        }
+                    }
+                } else {
+                    resultsDiv.innerHTML = `
+                        <p class="error">❌ ERROR: HTTP ${status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <p class="error">❌ Network Error</p>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        async function testMultipleNSE() {
+            const apiKey = document.getElementById('apiKey').value;
+            const provider = document.getElementById('apiProvider').value;
+            const testSymbols = ['RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'MARUTI'];
+            
+            resultsDiv.innerHTML = '<p class="info">⏳ Testing 5 major NSE stocks...</p>';
+            
+            let results = '<h3>Test Results:</h3>';
+            let successCount = 0;
+            
+            for (const symbol of testSymbols) {
+                let url;
+                if (provider === 'twelvedata') {
+                    url = `https://api.twelvedata.com/quote?symbol=${symbol}.NSE&apikey=${apiKey}`;
+                } else {
+                    url = `https://finnhub.io/api/v1/quote?symbol=${symbol}.NS&token=${apiKey}`;
+                }
+                
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    if (response.status === 200) {
+                        const price = provider === 'twelvedata' ? data.close : data.c;
+                        if (price && price !== 0) {
+                            results += `<p class="success">✅ ${symbol}: ₹${price}</p>`;
+                            successCount++;
+                        } else {
+                            results += `<p class="error">❌ ${symbol}: No data</p>`;
+                        }
+                    } else {
+                        results += `<p class="error">❌ ${symbol}: HTTP ${response.status}</p>`;
+                    }
+                } catch (error) {
+                    results += `<p class="error">❌ ${symbol}: ${error.message}</p>`;
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            results += `<p><strong>Success Rate: ${successCount}/5 stocks</strong></p>`;
+            if (successCount < 5 && provider === 'finnhub') {
+                results += `<p class="error">⚠️ Finnhub free tier has limited NSE coverage. Switch to Twelve Data for full coverage!</p>`;
+            }
+            
+            resultsDiv.innerHTML = results;
+        }
+        
+        async function testUSStock() {
+            const apiKey = document.getElementById('apiKey').value;
+            resultsDiv.innerHTML = '<p class="info">⏳ Testing US stock (AAPL)...</p>';
+            
+            try {
+                const url = `https://finnhub.io/api/v1/quote?symbol=AAPL&token=${apiKey}`;
+                console.log('Testing URL:', url);
+                
+                const response = await fetch(url);
+                const status = response.status;
+                const data = await response.json();
+                
+                console.log('Response:', { status, data });
+                
+                if (status === 401) {
+                    resultsDiv.innerHTML = `
+                        <p class="error">❌ ERROR: 401 Unauthorized</p>
+                        <p><strong>Your API key is not activated yet.</strong></p>
+                        <p>Please verify your email and wait a few minutes.</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else if (status === 200) {
+                    resultsDiv.innerHTML = `
+                        <p class="success">✅ SUCCESS! API Key is working!</p>
+                        <p><strong>AAPL Price: $${data.c}</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <p class="error">❌ ERROR: HTTP ${status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <p class="error">❌ Network Error</p>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            setTimeout(testApiKey, 500);
+        });
+    </script>
+</body>
+</html>
