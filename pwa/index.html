@@ -1085,25 +1085,35 @@
                     const loadOptionsData = async () => {
                         setOptionsLoading(true);
                         
-                        // NSE API is blocked by CORS in browsers
-                        // Currently using simulated data with realistic calculations
-                        console.warn('⚠️ NSE Option Chain API blocked by CORS - using simulated data');
-                        console.info('ℹ️ For real data, NSE API requires backend proxy or native app');
+                        console.info('🚀 Fetching REAL NSE option data via backend proxy...');
                         
                         // Generate top options recommendations across all stocks
                         const allStocks = [];
+                        let realDataCount = 0;
+                        const maxRealDataFetches = 30; // Limit to first 30 stocks
                         
                         for (const sectorName of Object.keys(SECTORS)) {
                             for (const symbol of SECTORS[sectorName]) {
-                                // NSE API blocked - skip real data fetch
-                                const stock = await generateMockStock(symbol, sectorName, false, null);
+                                // Try to fetch real NSE option chain
+                                let realOptionData = null;
+                                if (realDataCount < maxRealDataFetches) {
+                                    realOptionData = await fetchNSEOptionChain(symbol);
+                                    if (realOptionData && realOptionData.isRealData) {
+                                        realDataCount++;
+                                        console.log(`✅ [${realDataCount}/${maxRealDataFetches}] Real data for ${symbol}`);
+                                        // Small delay to avoid overwhelming backend
+                                        await new Promise(resolve => setTimeout(resolve, 200));
+                                    }
+                                }
+                                
+                                const stock = await generateMockStock(symbol, sectorName, false, realOptionData);
                                 allStocks.push(stock);
                             }
                         }
                         
                         console.log('📊 Total stocks generated:', allStocks.length);
-                        console.log('📋 Sample stock:', allStocks[0]);
-                        console.log('🔍 Has options?', allStocks[0]?.options);
+                        console.log(`✅ Real NSE data: ${realDataCount} stocks`);
+                        console.log(`⚠️ Simulated data: ${allStocks.length - realDataCount} stocks`);
                         
                         // Filter and rank best Call options (BULLISH sentiment)
                         const calls = allStocks
@@ -1130,22 +1140,16 @@
                 }
             }, [screen, showOptions]);
             
-            // Fetch real NSE Option Chain data
+            // Fetch real NSE Option Chain data via backend proxy
             async function fetchNSEOptionChain(symbol) {
                 try {
-                    // NSE blocks direct browser access due to CORS
-                    // Try through CORS proxy as fallback
-                    const corsProxy = 'https://api.allorigins.win/raw?url=';
-                    const nseUrl = encodeURIComponent(`https://www.nseindia.com/api/option-chain-equities?symbol=${symbol.toUpperCase()}`);
+                    // Use local backend proxy (or deployed Vercel URL)
+                    const API_URL = 'http://localhost:3001'; // Change to Vercel URL after deployment
                     
-                    const response = await fetch(`${corsProxy}${nseUrl}`, {
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
+                    const response = await fetch(`${API_URL}/api/option-chain/${symbol.toUpperCase()}`);
                     
                     if (!response.ok) {
-                        console.warn(`NSE Option Chain API failed for ${symbol}: ${response.status}`);
+                        console.warn(`Backend API failed for ${symbol}: ${response.status}`);
                         return null;
                     }
                     
@@ -1179,6 +1183,8 @@
                     const otmStrike = strikes.find(s => s.strikePrice > strikePrice);
                     const itmStrike = strikes.find(s => s.strikePrice < strikePrice);
                     
+                    console.log(`✅ Got REAL NSE option chain for ${symbol}`);
+                    
                     return {
                         symbol,
                         underlyingValue,
@@ -1210,7 +1216,7 @@
                         isRealData: true
                     };
                 } catch (error) {
-                    console.warn(`NSE API blocked or unavailable for ${symbol}. Using simulated data.`);
+                    console.warn(`Backend API error for ${symbol}:`, error.message);
                     return null;
                 }
             }
