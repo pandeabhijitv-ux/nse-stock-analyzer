@@ -920,17 +920,30 @@
                         const priceMove = Math.abs(targetPrice - currentPrice);
                         const movePercent = (priceMove / currentPrice) * 100;
                         
-                        // Days to reach target based on move size and VIX
-                        // Higher VIX = faster moves, larger moves = more days
+                        // 40% chance of short-term trade (1-5 days), 60% swing trade (7-18 days)
+                        const isShortTerm = r(100) < 40;
+                        
                         let daysToTarget;
-                        if (movePercent > 15) {
-                            daysToTarget = vix > 25 ? 15 : 25; // Large move: 15-25 days
-                        } else if (movePercent > 10) {
-                            daysToTarget = vix > 25 ? 10 : 18; // Medium move: 10-18 days
-                        } else if (movePercent > 5) {
-                            daysToTarget = vix > 25 ? 7 : 12; // Small move: 7-12 days
+                        if (isShortTerm) {
+                            // Aggressive short-term targets (1-5 days)
+                            if (vix > 30) {
+                                daysToTarget = Math.floor(r(101) * 2) + 1; // 1-2 days for high volatility
+                            } else if (vix > 20) {
+                                daysToTarget = Math.floor(r(102) * 3) + 2; // 2-4 days for medium volatility
+                            } else {
+                                daysToTarget = Math.floor(r(103) * 3) + 3; // 3-5 days for low volatility
+                            }
                         } else {
-                            daysToTarget = vix > 25 ? 5 : 8; // Minimal move: 5-8 days
+                            // Swing trade targets (7-18 days)
+                            if (movePercent > 15) {
+                                daysToTarget = vix > 25 ? 15 : 25; // Large move: 15-25 days
+                            } else if (movePercent > 10) {
+                                daysToTarget = vix > 25 ? 10 : 18; // Medium move: 10-18 days
+                            } else if (movePercent > 5) {
+                                daysToTarget = vix > 25 ? 7 : 12; // Small move: 7-12 days
+                            } else {
+                                daysToTarget = vix > 25 ? 5 : 8; // Minimal move: 5-8 days
+                            }
                         }
                         
                         // Ensure target date is before expiry
