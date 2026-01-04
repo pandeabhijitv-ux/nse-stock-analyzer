@@ -2300,26 +2300,151 @@
                             ← Back to {selectedSector}
                         </button>
                         
-                        {/* Tabs */}
+                        {/* Tabs - Dynamic based on category */}
                         <div className="tabs">
-                            <div 
-                                className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('overview')}
-                            >
-                                Overview
-                            </div>
-                            <div 
-                                className={`tab ${activeTab === 'fundamentals' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('fundamentals')}
-                            >
-                                Fundamentals
-                            </div>
-                            <div 
-                                className={`tab ${activeTab === 'technical' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('technical')}
-                            >
-                                Technical
-                            </div>
+                            {/* Target Oriented tabs */}
+                            {selectedSector === 'Target Oriented' && (
+                                <>
+                                    <div 
+                                        className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('overview')}
+                                    >
+                                        Overview
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'targets' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('targets')}
+                                    >
+                                        Targets
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'levels' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('levels')}
+                                    >
+                                        Levels
+                                    </div>
+                                </>
+                            )}
+                            
+                            {/* Swing Stocks tabs */}
+                            {selectedSector === 'Swing Stocks' && (
+                                <>
+                                    <div 
+                                        className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('overview')}
+                                    >
+                                        Overview
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'momentum' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('momentum')}
+                                    >
+                                        Momentum
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'entry-exit' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('entry-exit')}
+                                    >
+                                        Entry/Exit
+                                    </div>
+                                </>
+                            )}
+                            
+                            {/* Fundamentally Strong tabs */}
+                            {selectedSector === 'Fundamentally Strong' && (
+                                <>
+                                    <div 
+                                        className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('overview')}
+                                    >
+                                        Overview
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'fundamentals' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('fundamentals')}
+                                    >
+                                        Fundamentals
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'valuation' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('valuation')}
+                                    >
+                                        Valuation
+                                    </div>
+                                </>
+                            )}
+                            
+                            {/* Technically Strong tabs */}
+                            {selectedSector === 'Technically Strong' && (
+                                <>
+                                    <div 
+                                        className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('overview')}
+                                    >
+                                        Overview
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'technical' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('technical')}
+                                    >
+                                        Technical
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'patterns' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('patterns')}
+                                    >
+                                        Patterns
+                                    </div>
+                                </>
+                            )}
+                            
+                            {/* Hot Stocks Today tabs */}
+                            {selectedSector === 'Hot Stocks Today' && (
+                                <>
+                                    <div 
+                                        className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('overview')}
+                                    >
+                                        Overview
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'intraday' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('intraday')}
+                                    >
+                                        Intraday
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'volume' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('volume')}
+                                    >
+                                        Volume
+                                    </div>
+                                </>
+                            )}
+                            
+                            {/* Default tabs for sector-wise and others */}
+                            {!['Target Oriented', 'Swing Stocks', 'Fundamentally Strong', 'Technically Strong', 'Hot Stocks Today'].includes(selectedSector) && (
+                                <>
+                                    <div 
+                                        className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('overview')}
+                                    >
+                                        Overview
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'fundamentals' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('fundamentals')}
+                                    >
+                                        Fundamentals
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'technical' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('technical')}
+                                    >
+                                        Technical
+                                    </div>
+                                </>
+                            )}
                         </div>
                         
                         <div className="stock-detail">
@@ -2582,6 +2707,501 @@
                                             <span className="metric-label">Volume Trend</span>
                                             <span className="metric-value">{selectedStock.technical?.volume?.trend || 'N/A'}</span>
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TARGET ORIENTED - Targets Tab */}
+                            {activeTab === 'targets' && selectedSector === 'Target Oriented' && (
+                                <div>
+                                    <div className="detail-card" style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', color: 'white', marginBottom: '15px' }}>
+                                        <h3 style={{ marginBottom: '10px', color: '#fff' }}>🎯 Target Analysis</h3>
+                                        <div style={{ fontSize: '32px', fontWeight: 'bold', textAlign: 'center', margin: '10px 0' }}>
+                                            ₹{selectedStock.targetPrice}
+                                        </div>
+                                        <div style={{ textAlign: 'center', fontSize: '14px', opacity: 0.9 }}>
+                                            {(() => {
+                                                const percentChange = ((parseFloat(selectedStock.targetPrice) - parseFloat(selectedStock.price)) / parseFloat(selectedStock.price) * 100).toFixed(1);
+                                                return `${percentChange > 0 ? '+' : ''}${percentChange}% upside potential`;
+                                            })()}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="detail-card">
+                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>📊 Price Targets</h3>
+                                        <div style={{ background: '#dcfce7', padding: '12px', borderRadius: '8px', marginBottom: '10px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Conservative Target</span>
+                                                <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#16a34a' }}>₹{(parseFloat(selectedStock.price) * 1.05).toFixed(2)}</span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#888' }}>+5% | Low Risk | 7-10 days</div>
+                                        </div>
+                                        
+                                        <div style={{ background: '#fef3c7', padding: '12px', borderRadius: '8px', marginBottom: '10px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Primary Target</span>
+                                                <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#ca8a04' }}>₹{selectedStock.targetPrice}</span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#888' }}>
+                                                {(() => {
+                                                    const percentChange = ((parseFloat(selectedStock.targetPrice) - parseFloat(selectedStock.price)) / parseFloat(selectedStock.price) * 100).toFixed(0);
+                                                    return `${percentChange > 0 ? '+' : ''}${percentChange}% | Medium Risk | 15-20 days`;
+                                                })()}
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ background: '#dbeafe', padding: '12px', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Stretch Target</span>
+                                                <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#0369a1' }}>₹{(parseFloat(selectedStock.targetPrice) * 1.08).toFixed(2)}</span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#888' }}>
+                                                {(() => {
+                                                    const percentChange = ((parseFloat(selectedStock.targetPrice) * 1.08 - parseFloat(selectedStock.price)) / parseFloat(selectedStock.price) * 100).toFixed(0);
+                                                    return `${percentChange > 0 ? '+' : ''}${percentChange}% | High Risk | 25-30 days`;
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="detail-card" style={{ background: '#fee2e2', border: '1px solid #ef4444' }}>
+                                        <h3 style={{ marginBottom: '15px', color: '#dc2626' }}>🛡️ Risk Management</h3>
+                                        <div className="metric-row">
+                                            <span className="metric-label">Stop Loss</span>
+                                            <span className="metric-value" style={{ color: '#dc2626' }}>₹{selectedStock.stopLoss}</span>
+                                        </div>
+                                        <div className="metric-row">
+                                            <span className="metric-label">Max Loss</span>
+                                            <span className="metric-value" style={{ color: '#dc2626' }}>
+                                                {((parseFloat(selectedStock.price) - parseFloat(selectedStock.stopLoss)) / parseFloat(selectedStock.price) * 100).toFixed(1)}%
+                                            </span>
+                                        </div>
+                                        <div className="metric-row">
+                                            <span className="metric-label">Risk/Reward</span>
+                                            <span className="metric-value">
+                                                1:{(((parseFloat(selectedStock.targetPrice) - parseFloat(selectedStock.price)) / (parseFloat(selectedStock.price) - parseFloat(selectedStock.stopLoss)))).toFixed(1)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* TARGET ORIENTED - Levels Tab */}
+                            {activeTab === 'levels' && selectedSector === 'Target Oriented' && (
+                                <div className="detail-card">
+                                    <h3 style={{ marginBottom: '15px', color: '#333' }}>📍 Key Price Levels</h3>
+                                    
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <h4 style={{ fontSize: '14px', color: '#ef4444', marginBottom: '10px' }}>🔴 Resistance Levels</h4>
+                                        <div style={{ background: '#fee2e2', padding: '10px', borderRadius: '8px', marginBottom: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span>Strong Resistance (R2)</span>
+                                                <span style={{ fontWeight: 'bold' }}>₹{selectedStock.technical?.levels?.resistance2}</span>
+                                            </div>
+                                        </div>
+                                        <div style={{ background: '#fecaca', padding: '10px', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span>Resistance (R1)</span>
+                                                <span style={{ fontWeight: 'bold' }}>₹{selectedStock.technical?.levels?.resistance1}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ background: '#dbeafe', padding: '15px', borderRadius: '10px', margin: '15px 0', textAlign: 'center', border: '2px solid #0369a1' }}>
+                                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>Current Price</div>
+                                        <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0369a1' }}>₹{selectedStock.price}</div>
+                                    </div>
+                                    
+                                    <div style={{ marginTop: '20px' }}>
+                                        <h4 style={{ fontSize: '14px', color: '#22c55e', marginBottom: '10px' }}>🟢 Support Levels</h4>
+                                        <div style={{ background: '#bbf7d0', padding: '10px', borderRadius: '8px', marginBottom: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span>Support (S1)</span>
+                                                <span style={{ fontWeight: 'bold' }}>₹{selectedStock.technical?.levels?.support1}</span>
+                                            </div>
+                                        </div>
+                                        <div style={{ background: '#dcfce7', padding: '10px', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span>Strong Support (S2)</span>
+                                                <span style={{ fontWeight: 'bold' }}>₹{selectedStock.technical?.levels?.support2}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ marginTop: '15px', padding: '12px', background: '#f3f4f6', borderRadius: '8px', fontSize: '12px', color: '#666' }}>
+                                        <strong>💡 Trading Strategy:</strong><br/>
+                                        • Buy near support levels (S1, S2)<br/>
+                                        • Book profits near resistance levels (R1, R2)<br/>
+                                        • Break above R2 = Strong bullish signal<br/>
+                                        • Break below S2 = Consider stop loss
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* SWING STOCKS - Momentum Tab */}
+                            {activeTab === 'momentum' && selectedSector === 'Swing Stocks' && (
+                                <div>
+                                    <div className="detail-card" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', marginBottom: '15px' }}>
+                                        <h3 style={{ marginBottom: '10px', color: '#fff' }}>⚡ Momentum Score</h3>
+                                        <div style={{ fontSize: '36px', fontWeight: 'bold', textAlign: 'center', margin: '10px 0' }}>
+                                            {selectedStock.momentumScore || Math.floor(Math.abs(parseFloat(selectedStock.changePercent)) * 20 + 50)}/100
+                                        </div>
+                                        <div style={{ textAlign: 'center', fontSize: '14px', opacity: 0.9 }}>
+                                            Based on price action & volume
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="detail-card">
+                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>📈 Momentum Indicators</h3>
+                                        <div className="metric-row">
+                                            <span className="metric-label">Today's Change</span>
+                                            <span className="metric-value" style={{ color: parseFloat(selectedStock.changePercent) > 0 ? '#22c55e' : '#ef4444', fontWeight: 'bold' }}>
+                                                {parseFloat(selectedStock.changePercent) > 0 ? '+' : ''}{selectedStock.changePercent}%
+                                            </span>
+                                        </div>
+                                        <div className="metric-row">
+                                            <span className="metric-label">Volume Trend</span>
+                                            <span className="metric-value">{selectedStock.technical?.volume?.trend || 'Normal Volume'}</span>
+                                        </div>
+                                        <div className="metric-row">
+                                            <span className="metric-label">RSI (14)</span>
+                                            <span className="metric-value" style={{ 
+                                                color: parseFloat(selectedStock.rsi) < 30 ? '#22c55e' : parseFloat(selectedStock.rsi) > 70 ? '#ef4444' : '#f59e0b'
+                                            }}>
+                                                {selectedStock.rsi}
+                                            </span>
+                                        </div>
+                                        <div className="metric-row">
+                                            <span className="metric-label">MACD Signal</span>
+                                            <span className="metric-value" style={{ 
+                                                color: selectedStock.technical?.macd?.trend === 'BULLISH' ? '#22c55e' : '#ef4444'
+                                            }}>
+                                                {selectedStock.technical?.macd?.signalType || 'Neutral'}
+                                            </span>
+                                        </div>
+                                        <div className="metric-row">
+                                            <span className="metric-label">Trend</span>
+                                            <span className="metric-value" style={{ 
+                                                color: selectedStock.technical?.ma?.trend === 'BULLISH' ? '#22c55e' : '#ef4444',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {selectedStock.technical?.ma?.trend || 'NEUTRAL'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="detail-card" style={{ background: '#fef3c7' }}>
+                                        <h3 style={{ marginBottom: '10px', color: '#92400e' }}>⏱️ Swing Trade Setup</h3>
+                                        <div style={{ fontSize: '13px', color: '#78350f', lineHeight: '1.6' }}>
+                                            <strong>Duration:</strong> 3-7 days<br/>
+                                            <strong>Entry Zone:</strong> ₹{(parseFloat(selectedStock.price) * 0.98).toFixed(2)} - ₹{selectedStock.price}<br/>
+                                            <strong>Target:</strong> ₹{selectedStock.targetPrice}<br/>
+                                            <strong>Stop Loss:</strong> ₹{selectedStock.stopLoss}<br/>
+                                            <strong>Position Size:</strong> Risk 1-2% of capital
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* SWING STOCKS - Entry/Exit Tab */}
+                            {activeTab === 'entry-exit' && selectedSector === 'Swing Stocks' && (
+                                <div className="detail-card">
+                                    <h3 style={{ marginBottom: '15px', color: '#333' }}>🎯 Entry & Exit Strategy</h3>
+                                    
+                                    <div style={{ background: '#dcfce7', padding: '15px', borderRadius: '10px', marginBottom: '15px' }}>
+                                        <h4 style={{ fontSize: '14px', color: '#166534', marginBottom: '10px' }}>✅ Entry Points</h4>
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                                <span style={{ fontSize: '13px' }}>Aggressive Entry</span>
+                                                <span style={{ fontWeight: 'bold', color: '#16a34a' }}>₹{selectedStock.price}</span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#666' }}>Buy at current price (higher risk)</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                                <span style={{ fontSize: '13px' }}>Conservative Entry</span>
+                                                <span style={{ fontWeight: 'bold', color: '#16a34a' }}>₹{(parseFloat(selectedStock.price) * 0.98).toFixed(2)}</span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#666' }}>Wait for 2% dip (lower risk)</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ background: '#fef3c7', padding: '15px', borderRadius: '10px', marginBottom: '15px' }}>
+                                        <h4 style={{ fontSize: '14px', color: '#92400e', marginBottom: '10px' }}>🎁 Exit Points</h4>
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                                <span style={{ fontSize: '13px' }}>Partial Exit (50%)</span>
+                                                <span style={{ fontWeight: 'bold', color: '#ca8a04' }}>₹{(parseFloat(selectedStock.price) * 1.05).toFixed(2)}</span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#666' }}>Book 50% profit at +5%</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                                <span style={{ fontSize: '13px' }}>Full Exit (100%)</span>
+                                                <span style={{ fontWeight: 'bold', color: '#ca8a04' }}>₹{selectedStock.targetPrice}</span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#666' }}>Exit remaining at target</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ background: '#fee2e2', padding: '15px', borderRadius: '10px' }}>
+                                        <h4 style={{ fontSize: '14px', color: '#dc2626', marginBottom: '10px' }}>🛑 Stop Loss</h4>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                            <span style={{ fontSize: '13px' }}>Initial Stop Loss</span>
+                                            <span style={{ fontWeight: 'bold', color: '#dc2626' }}>₹{selectedStock.stopLoss}</span>
+                                        </div>
+                                        <div style={{ fontSize: '11px', color: '#991b1b', background: '#fecaca', padding: '8px', borderRadius: '6px' }}>
+                                            <strong>⚠️ Important:</strong> Move stop loss to cost once price reaches +3% to protect capital
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* FUNDAMENTALLY STRONG - Valuation Tab */}
+                            {activeTab === 'valuation' && selectedSector === 'Fundamentally Strong' && (
+                                <div>
+                                    <div className="detail-card" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', color: 'white', marginBottom: '15px' }}>
+                                        <h3 style={{ marginBottom: '10px', color: '#fff' }}>💎 Valuation Score</h3>
+                                        <div style={{ fontSize: '36px', fontWeight: 'bold', textAlign: 'center', margin: '10px 0' }}>
+                                            {selectedStock.fundamentalScore || (parseFloat(selectedStock.peRatio) < 20 ? 85 : parseFloat(selectedStock.peRatio) < 30 ? 70 : 55)}/100
+                                        </div>
+                                        <div style={{ textAlign: 'center', fontSize: '14px', opacity: 0.9' }}>
+                                            Based on P/E, Book Value & Dividends
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="detail-card">
+                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>📊 Valuation Metrics</h3>
+                                        <div className="metric-row">
+                                            <span className="metric-label">P/E Ratio</span>
+                                            <span className="metric-value" style={{ 
+                                                color: parseFloat(selectedStock.peRatio) < 20 ? '#22c55e' : parseFloat(selectedStock.peRatio) < 30 ? '#f59e0b' : '#ef4444'
+                                            }}>
+                                                {selectedStock.peRatio}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '11px', color: '#666', marginLeft: '10px', marginTop: '-8px', marginBottom: '8px' }}>
+                                            {parseFloat(selectedStock.peRatio) < 20 ? '✅ Undervalued' : parseFloat(selectedStock.peRatio) < 30 ? '⚠️ Fairly valued' : '❌ Overvalued'}
+                                        </div>
+                                        
+                                        <div className="metric-row">
+                                            <span className="metric-label">Price to Book</span>
+                                            <span className="metric-value">
+                                                {(parseFloat(selectedStock.price) / parseFloat(selectedStock.bookValue)).toFixed(2)}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '11px', color: '#666', marginLeft: '10px', marginTop: '-8px', marginBottom: '8px' }}>
+                                            {(parseFloat(selectedStock.price) / parseFloat(selectedStock.bookValue)) < 3 ? '✅ Good value' : '⚠️ Check fundamentals'}
+                                        </div>
+                                        
+                                        <div className="metric-row">
+                                            <span className="metric-label">Dividend Yield</span>
+                                            <span className="metric-value">{selectedStock.dividendYield}</span>
+                                        </div>
+                                        
+                                        <div className="metric-row">
+                                            <span className="metric-label">Book Value</span>
+                                            <span className="metric-value">₹{selectedStock.bookValue}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="detail-card" style={{ background: '#e0f2fe' }}>
+                                        <h3 style={{ marginBottom: '10px', color: '#0369a1' }}>📅 Investment Horizon</h3>
+                                        <div style={{ fontSize: '13px', color: '#075985', lineHeight: '1.6' }}>
+                                            <strong>Recommended Duration:</strong> 6-12 months<br/>
+                                            <strong>Investment Style:</strong> Long-term value investing<br/>
+                                            <strong>Risk Level:</strong> Low to Medium<br/>
+                                            <strong>Expected Return:</strong> {((parseFloat(selectedStock.targetPrice) - parseFloat(selectedStock.price)) / parseFloat(selectedStock.price) * 100).toFixed(0)}% - {((parseFloat(selectedStock.targetPrice) * 1.2 - parseFloat(selectedStock.price)) / parseFloat(selectedStock.price) * 100).toFixed(0)}%<br/>
+                                            <strong>Ideal For:</strong> Long-term wealth creation
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* TECHNICALLY STRONG - Patterns Tab */}
+                            {activeTab === 'patterns' && selectedSector === 'Technically Strong' && (
+                                <div>
+                                    {selectedStock.technical?.pattern && (
+                                        <>
+                                            <div className="detail-card" style={{ 
+                                                background: selectedStock.technical.pattern.type === 'BULLISH' ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)' : 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+                                                border: `2px solid ${selectedStock.technical.pattern.type === 'BULLISH' ? '#22c55e' : '#ef4444'}`
+                                            }}>
+                                                <h3 style={{ marginBottom: '15px', color: '#333' }}>📊 Detected Pattern</h3>
+                                                <div style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px', color: '#333' }}>
+                                                    {selectedStock.technical.pattern.name}
+                                                </div>
+                                                <div style={{ 
+                                                    fontSize: '16px', 
+                                                    fontWeight: 'bold',
+                                                    color: selectedStock.technical.pattern.type === 'BULLISH' ? '#16a34a' : '#dc2626',
+                                                    marginBottom: '10px'
+                                                }}>
+                                                    {selectedStock.technical.pattern.type === 'BULLISH' ? '🟢 BULLISH PATTERN' : '🔴 BEARISH PATTERN'}
+                                                </div>
+                                                <div style={{ fontSize: '13px', color: '#666' }}>
+                                                    Reliability: <strong>{selectedStock.technical.pattern.reliability}%</strong>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="detail-card">
+                                                <h3 style={{ marginBottom: '15px', color: '#333' }}>🎯 Pattern Details</h3>
+                                                <div className="metric-row">
+                                                    <span className="metric-label">Current Price</span>
+                                                    <span className="metric-value">₹{selectedStock.price}</span>
+                                                </div>
+                                                <div className="metric-row">
+                                                    <span className="metric-label">Pattern Target</span>
+                                                    <span className="metric-value" style={{ 
+                                                        color: selectedStock.technical.pattern.type === 'BULLISH' ? '#22c55e' : '#ef4444',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        ₹{selectedStock.technical.pattern.target}
+                                                    </span>
+                                                </div>
+                                                <div className="metric-row">
+                                                    <span className="metric-label">Expected Time</span>
+                                                    <span className="metric-value">{selectedStock.technical.pattern.timeframe}</span>
+                                                </div>
+                                                <div className="metric-row">
+                                                    <span className="metric-label">Potential Move</span>
+                                                    <span className="metric-value" style={{ 
+                                                        color: selectedStock.technical.pattern.type === 'BULLISH' ? '#22c55e' : '#ef4444',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        {((parseFloat(selectedStock.technical.pattern.target) - parseFloat(selectedStock.price)) / parseFloat(selectedStock.price) * 100).toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <button 
+                                                onClick={() => setShowPatternModal(true)}
+                                                style={{
+                                                    width: '100%',
+                                                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    padding: '15px',
+                                                    borderRadius: '10px',
+                                                    fontSize: '16px',
+                                                    fontWeight: 'bold',
+                                                    cursor: 'pointer',
+                                                    boxShadow: '0 4px 15px rgba(245, 87, 108, 0.4)'
+                                                }}
+                                            >
+                                                📊 View Chart Pattern Visualization
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {/* HOT STOCKS TODAY - Intraday Tab */}
+                            {activeTab === 'intraday' && selectedSector === 'Hot Stocks Today' && (
+                                <div>
+                                    <div className="detail-card" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)', color: 'white', marginBottom: '15px' }}>
+                                        <h3 style={{ marginBottom: '10px', color: '#fff' }}>🔥 Intraday Performance</h3>
+                                        <div style={{ fontSize: '32px', fontWeight: 'bold', textAlign: 'center', margin: '10px 0' }}>
+                                            {parseFloat(selectedStock.changePercent) > 0 ? '+' : ''}{selectedStock.changePercent}%
+                                        </div>
+                                        <div style={{ textAlign: 'center', fontSize: '14px', opacity: 0.9' }}>
+                                            Today's price movement
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="detail-card">
+                                        <h3 style={{ marginBottom: '15px', color: '#333' }}>📊 Today's Range</h3>
+                                        <div style={{ marginBottom: '15px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Day High</span>
+                                                <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#22c55e' }}>₹{selectedStock.dayHigh}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Current</span>
+                                                <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#0369a1' }}>₹{selectedStock.price}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Day Low</span>
+                                                <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#ef4444' }}>₹{selectedStock.dayLow}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ background: '#f3f4f6', padding: '12px', borderRadius: '8px' }}>
+                                            <div style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>Day's Range</div>
+                                            <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', position: 'relative', overflow: 'hidden' }}>
+                                                <div style={{ 
+                                                    position: 'absolute',
+                                                    left: 0,
+                                                    width: `${((parseFloat(selectedStock.price) - parseFloat(selectedStock.dayLow)) / (parseFloat(selectedStock.dayHigh) - parseFloat(selectedStock.dayLow)) * 100)}%`,
+                                                    height: '100%',
+                                                    background: 'linear-gradient(90deg, #ef4444 0%, #22c55e 100%)',
+                                                    borderRadius: '4px'
+                                                }}></div>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>
+                                                Price at {((parseFloat(selectedStock.price) - parseFloat(selectedStock.dayLow)) / (parseFloat(selectedStock.dayHigh) - parseFloat(selectedStock.dayLow)) * 100).toFixed(0)}% of day's range
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="detail-card" style={{ background: '#fef3c7' }}>
+                                        <h3 style={{ marginBottom: '10px', color: '#92400e' }}>⚡ Intraday Trading Levels</h3>
+                                        <div style={{ fontSize: '13px', color: '#78350f', lineHeight: '1.6' }}>
+                                            <strong>Buy Above:</strong> ₹{(parseFloat(selectedStock.price) * 1.005).toFixed(2)}<br/>
+                                            <strong>Sell Below:</strong> ₹{(parseFloat(selectedStock.price) * 0.995).toFixed(2)}<br/>
+                                            <strong>Intraday Target:</strong> ₹{(parseFloat(selectedStock.price) * 1.015).toFixed(2)}<br/>
+                                            <strong>Intraday Stop Loss:</strong> ₹{(parseFloat(selectedStock.price) * 0.985).toFixed(2)}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* HOT STOCKS TODAY - Volume Tab */}
+                            {activeTab === 'volume' && selectedSector === 'Hot Stocks Today' && (
+                                <div className="detail-card">
+                                    <h3 style={{ marginBottom: '15px', color: '#333' }}>📊 Volume Analysis</h3>
+                                    
+                                    <div style={{ background: '#dbeafe', padding: '15px', borderRadius: '10px', marginBottom: '15px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                            <span style={{ fontSize: '13px', color: '#666' }}>Today's Volume</span>
+                                            <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#0369a1' }}>
+                                                {selectedStock.technical?.volume?.current || selectedStock.volume}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <span style={{ fontSize: '13px', color: '#666' }}>Average Volume</span>
+                                            <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#666' }}>
+                                                {selectedStock.technical?.volume?.average || selectedStock.volume}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ background: '#f3f4f6', padding: '15px', borderRadius: '10px', marginBottom: '15px' }}>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px', color: '#333' }}>
+                                            Volume Status
+                                        </div>
+                                        <div style={{ 
+                                            fontSize: '16px', 
+                                            fontWeight: 'bold',
+                                            color: selectedStock.technical?.volume?.trend?.includes('High') ? '#22c55e' : '#f59e0b',
+                                            marginBottom: '5px'
+                                        }}>
+                                            {selectedStock.technical?.volume?.trend || 'Normal Volume'}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#666' }}>
+                                            {selectedStock.technical?.volume?.trend?.includes('High') ? 
+                                                '✅ High volume indicates strong interest' : 
+                                                '⚠️ Normal volume - monitor for breakout'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ padding: '12px', background: '#fef3c7', borderRadius: '8px', fontSize: '12px', color: '#78350f' }}>
+                                        <strong>💡 Volume Insight:</strong><br/>
+                                        {parseFloat(selectedStock.changePercent) > 0 ? 
+                                            '• Rising price with high volume = Strong bullish momentum' :
+                                            '• Falling price with high volume = Strong bearish pressure'}<br/>
+                                        • Watch for volume spikes for entry/exit signals<br/>
+                                        • Low volume moves are less reliable
                                     </div>
                                 </div>
                             )}
