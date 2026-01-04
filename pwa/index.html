@@ -1784,6 +1784,51 @@
             
             // Options Trading Screen - Dedicated section for Call/Put recommendations
             if (screen === 'optionsTrading') {
+                const [topCalls, setTopCalls] = React.useState([]);
+                const [topPuts, setTopPuts] = React.useState([]);
+                const [loading, setLoading] = React.useState(true);
+                
+                React.useEffect(() => {
+                    const loadOptionsData = async () => {
+                        setLoading(true);
+                        
+                        // Generate top options recommendations across all stocks
+                        const allStocks = [];
+                        for (const sectorName of Object.keys(SECTORS)) {
+                            for (const symbol of SECTORS[sectorName]) {
+                                const stock = await generateMockStock(symbol, sectorName);
+                                allStocks.push(stock);
+                            }
+                        }
+                        
+                        console.log('📊 Total stocks generated:', allStocks.length);
+                        console.log('📋 Sample stock:', allStocks[0]);
+                        console.log('🔍 Has options?', allStocks[0]?.options);
+                        
+                        // Filter and rank best Call options (BULLISH sentiment)
+                        const calls = allStocks
+                            .filter(s => s.options && s.options.optionType === 'CALL')
+                            .sort((a, b) => b.options.confidence - a.options.confidence)
+                            .slice(0, 10);
+                        
+                        console.log('📞 Top Calls found:', calls.length);
+                        
+                        // Filter and rank best Put options (BEARISH sentiment)
+                        const puts = allStocks
+                            .filter(s => s.options && s.options.optionType === 'PUT')
+                            .sort((a, b) => b.options.confidence - a.options.confidence)
+                            .slice(0, 10);
+                        
+                        console.log('📉 Top Puts found:', puts.length);
+                        
+                        setTopCalls(calls);
+                        setTopPuts(puts);
+                        setLoading(false);
+                    };
+                    
+                    loadOptionsData();
+                }, []);
+                
                 // Check if options window is active
                 if (!showOptions) {
                     return (
@@ -1818,34 +1863,34 @@
                     );
                 }
                 
-                // Generate top options recommendations across all stocks
-                const allStocks = [];
-                for (const sectorName of Object.keys(SECTORS)) {
-                    for (const symbol of SECTORS[sectorName]) {
-                        const stock = await generateMockStock(symbol, sectorName);
-                        allStocks.push(stock);
-                    }
+                // Show loading state while data is being fetched
+                if (loading) {
+                    return (
+                        <div>
+                            <div className="header">
+                                <h1>🎯 Options Trading</h1>
+                                <p>Loading recommendations...</p>
+                            </div>
+                            <button className="back-button" onClick={handleBack}>
+                                ← Back to Home
+                            </button>
+                            <div className="stock-list">
+                                <div style={{
+                                    background: 'white',
+                                    borderRadius: '12px',
+                                    padding: '40px',
+                                    margin: '20px',
+                                    textAlign: 'center',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}>
+                                    <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
+                                    <h2 style={{ color: '#4CAF50', marginBottom: '10px' }}>Analyzing Market Data...</h2>
+                                    <p style={{ fontSize: '14px', color: '#666' }}>Generating Call and Put recommendations</p>
+                                </div>
+                            </div>
+                        </div>
+                    );
                 }
-                
-                console.log('📊 Total stocks generated:', allStocks.length);
-                console.log('📋 Sample stock:', allStocks[0]);
-                console.log('🔍 Has options?', allStocks[0]?.options);
-                
-                // Filter and rank best Call options (BULLISH sentiment)
-                const topCalls = allStocks
-                    .filter(s => s.options && s.options.optionType === 'CALL')
-                    .sort((a, b) => b.options.confidence - a.options.confidence)
-                    .slice(0, 10);
-                
-                console.log('📞 Top Calls found:', topCalls.length);
-                
-                // Filter and rank best Put options (BEARISH sentiment)
-                const topPuts = allStocks
-                    .filter(s => s.options && s.options.optionType === 'PUT')
-                    .sort((a, b) => b.options.confidence - a.options.confidence)
-                    .slice(0, 10);
-                
-                console.log('📉 Top Puts found:', topPuts.length);
                 
                 return (
                     <div>
