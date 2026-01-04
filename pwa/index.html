@@ -1413,7 +1413,7 @@
             if (screen === 'category') {
                 console.log(`🖥️ Rendering category screen:`, selectedSector);
                 return (
-                    <div>
+                    <div key={`category-${selectedSector}`}>
                         <div className="header">
                             <h1>{selectedSector}</h1>
                             <p>Top 50 stocks with targets & stop loss</p>
@@ -2025,7 +2025,7 @@
                 const opt = selectedStock.options || {};
                 
                 return (
-                    <div>
+                    <div key={`stockDetail-${selectedStock.symbol}`}>
                         <div className="header">
                             <h1>{selectedStock.symbol || 'Unknown'}</h1>
                             <p>{String(selectedStock.name || selectedStock.symbol || 'Unknown Stock')}</p>
