@@ -656,7 +656,39 @@
                         monthly: '27 Feb 2026',
                         recommended: vix > 25 ? 'Near Term' : 'Monthly'
                     },
-                    strategy: isBullish ? 'Long Call' : isBearish ? 'Long Put' : 'Long Straddle'
+                    strategy: isBullish ? 'Long Call' : isBearish ? 'Long Put' : 'Long Straddle',
+                    // Calculate expected target date based on price move and volatility
+                    targetDate: (() => {
+                        const today = new Date('2026-01-04');
+                        const targetPrice = parseFloat(score >= 70 ? (currentPrice * 1.15) : score >= 40 ? (currentPrice * 1.05) : (currentPrice * 0.92));
+                        const priceMove = Math.abs(targetPrice - currentPrice);
+                        const movePercent = (priceMove / currentPrice) * 100;
+                        
+                        // Days to reach target based on move size and VIX
+                        // Higher VIX = faster moves, larger moves = more days
+                        let daysToTarget;
+                        if (movePercent > 15) {
+                            daysToTarget = vix > 25 ? 15 : 25; // Large move: 15-25 days
+                        } else if (movePercent > 10) {
+                            daysToTarget = vix > 25 ? 10 : 18; // Medium move: 10-18 days
+                        } else if (movePercent > 5) {
+                            daysToTarget = vix > 25 ? 7 : 12; // Small move: 7-12 days
+                        } else {
+                            daysToTarget = vix > 25 ? 5 : 8; // Minimal move: 5-8 days
+                        }
+                        
+                        // Ensure target date is before expiry
+                        const expiryDate = new Date(vix > 25 ? '2026-01-30' : '2026-02-27');
+                        const targetDate = new Date(today);
+                        targetDate.setDate(today.getDate() + daysToTarget);
+                        
+                        // If target date exceeds expiry, use 3-5 days before expiry
+                        if (targetDate > expiryDate) {
+                            targetDate.setTime(expiryDate.getTime() - (3 + Math.floor(r(26) * 2)) * 24 * 60 * 60 * 1000);
+                        }
+                        
+                        return targetDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                    })()
                 }
             };
         }
@@ -1581,6 +1613,7 @@
                                 <div style={{ fontSize: '12px', color: '#555', lineHeight: '1.8' }}>
                                     • <strong>Entry (Premium):</strong> Amount you pay to buy the option<br/>
                                     • <strong>Target:</strong> Calculated based on stock reaching target price (intrinsic + time value)<br/>
+                                    • <strong>Expected By:</strong> Estimated date to reach target based on price move & volatility<br/>
                                     • <strong>Stop Loss (50%):</strong> Exit if premium falls 50% from entry (₹10 entry → ₹5 stop)<br/>
                                     • <strong>Confidence %:</strong> AI prediction accuracy based on technical analysis<br/>
                                     • <strong>Expiry:</strong> Monthly/Weekly - option contract validity period<br/>
@@ -1717,6 +1750,12 @@
                                                         const targetPremium = Math.max(intrinsicValue + timeValue, premium * 1.2); // At least 20% gain
                                                         return targetPremium.toFixed(2);
                                                     })()}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Expected By:</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#1976d2' }}>
+                                                    📅 {stock.options.targetDate}
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1857,6 +1896,12 @@
                                                         const targetPremium = Math.max(intrinsicValue + timeValue, premium * 1.2);
                                                         return targetPremium.toFixed(2);
                                                     })()}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Expected By:</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#1976d2' }}>
+                                                    📅 {stock.options.targetDate}
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
