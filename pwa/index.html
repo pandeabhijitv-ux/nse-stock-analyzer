@@ -1827,17 +1827,25 @@
                     }
                 }
                 
+                console.log('📊 Total stocks generated:', allStocks.length);
+                console.log('📋 Sample stock:', allStocks[0]);
+                console.log('🔍 Has options?', allStocks[0]?.options);
+                
                 // Filter and rank best Call options (BULLISH sentiment)
                 const topCalls = allStocks
                     .filter(s => s.options && s.options.optionType === 'CALL')
                     .sort((a, b) => b.options.confidence - a.options.confidence)
                     .slice(0, 10);
                 
+                console.log('📞 Top Calls found:', topCalls.length);
+                
                 // Filter and rank best Put options (BEARISH sentiment)
                 const topPuts = allStocks
                     .filter(s => s.options && s.options.optionType === 'PUT')
                     .sort((a, b) => b.options.confidence - a.options.confidence)
                     .slice(0, 10);
+                
+                console.log('📉 Top Puts found:', topPuts.length);
                 
                 return (
                     <div>
