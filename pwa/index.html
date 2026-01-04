@@ -1143,8 +1143,8 @@
             // Fetch real NSE Option Chain data via backend proxy
             async function fetchNSEOptionChain(symbol) {
                 try {
-                    // Use local backend proxy (or deployed Vercel URL)
-                    const API_URL = 'http://localhost:3001'; // Change to Vercel URL after deployment
+                    // Production backend on Vercel
+                    const API_URL = 'https://backend-amber-nine-14.vercel.app';
                     
                     const response = await fetch(`${API_URL}/api/option-chain/${symbol.toUpperCase()}`);
                     
