@@ -573,15 +573,27 @@
             };
 
         // Generate mock stock data for Indian stocks with realistic prices
-        function generateMockStock(symbol, sectorName) {
+        // Now supports real technical data from Finnhub API
+        async function generateMockStock(symbol, sectorName, useRealTechnicals = false) {
             const r = (idx) => seededRandom(symbol, idx);
             
             // Use realistic base price if available, otherwise generate
             const currentPrice = REALISTIC_PRICES[symbol] || (r(1) * 3000 + 100);
             
             const score = Math.floor(r(2) * 100);
-            const rsi = r(3) * 100;
+            let rsi = r(3) * 100;
             const vix = r(4) * 30 + 10; // India VIX 10-40
+            
+            // Try to fetch real technical data if requested
+            let realTechnicalData = null;
+            if (useRealTechnicals) {
+                realTechnicalData = await fetchFinnhubTechnicalData(symbol);
+            }
+            
+            // Use real RSI if available, otherwise use mock
+            if (realTechnicalData && realTechnicalData.rsi) {
+                rsi = realTechnicalData.rsi;
+            }
             
             // Determine options recommendation
             const isBullish = score >= 60 || rsi < 35;
@@ -600,12 +612,24 @@
             const changePercent = (r(6) * 6 - 3); // -3% to +3%
             const change = (currentPrice * changePercent / 100);
             
-            // Enhanced Technical Analysis
-            const ema50 = parseFloat((currentPrice * (1 + (r(12) * 0.1 - 0.05))).toFixed(2));
-            const ema200 = parseFloat((currentPrice * (1 + (r(13) * 0.2 - 0.1))).toFixed(2));
-            const macd = parseFloat((r(11) * 10 - 5).toFixed(2));
-            const macdSignal = parseFloat((macd * 0.9).toFixed(2));
-            const macdHistogram = macd - macdSignal;
+            // Enhanced Technical Analysis - Use real data if available
+            let ema50, ema200, macd, macdSignal, macdHistogram;
+            
+            if (realTechnicalData) {
+                ema50 = realTechnicalData.ema50;
+                ema200 = realTechnicalData.ema200;
+                macd = realTechnicalData.macd;
+                macdSignal = realTechnicalData.macdSignal;
+                macdHistogram = realTechnicalData.macdHistogram;
+                console.log(`✅ Using REAL technical data for ${symbol}`);
+            } else {
+                // Fallback to mock calculations
+                ema50 = parseFloat((currentPrice * (1 + (r(12) * 0.1 - 0.05))).toFixed(2));
+                ema200 = parseFloat((currentPrice * (1 + (r(13) * 0.2 - 0.1))).toFixed(2));
+                macd = parseFloat((r(11) * 10 - 5).toFixed(2));
+                macdSignal = parseFloat((macd * 0.9).toFixed(2));
+                macdHistogram = macd - macdSignal;
+            }
             
             // Moving Average Crossover Analysis
             const maCrossover = ema50 > ema200 ? 'Golden Cross (Bullish)' : 'Death Cross (Bearish)';
@@ -731,7 +755,8 @@
                         average: `${avgVolume}L`,
                         trend: volumeTrend
                     },
-                    pattern: selectedPattern
+                    pattern: selectedPattern,
+                    isRealData: realTechnicalData !== null // Flag to show if using real API data
                 },
                 // Options data
                 options: {
@@ -1005,6 +1030,122 @@
             const MOSL_API_KEY = 'sTHWtNb6bn5bGiY';
             const MOSL_SECRET_KEY = '3d622c3d-7f36-43ee-8776-9056e454324a';
             
+            // Finnhub API Configuration
+            const FINNHUB_API_KEY = 'd5c0hhpr01qsbmghorjd5c0hhpr01qsbmghorje';
+            const TECHNICAL_CACHE_KEY = 'finnhub_technical_cache';
+            const TECHNICAL_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+            
+            // Fetch technical indicators from Finnhub API
+            async function fetchFinnhubTechnicalData(symbol) {
+                try {
+                    // Check cache first
+                    const cached = localStorage.getItem(`${TECHNICAL_CACHE_KEY}_${symbol}`);
+                    if (cached) {
+                        const data = JSON.parse(cached);
+                        if (Date.now() - data.timestamp < TECHNICAL_CACHE_DURATION) {
+                            console.log(`📊 Using cached technical data for ${symbol}`);
+                            return data.technical;
+                        }
+                    }
+                    
+                    const nsSymbol = `${symbol}.NS`;
+                    const toDate = Math.floor(Date.now() / 1000);
+                    const fromDate = toDate - (200 * 24 * 60 * 60); // 200 days of data
+                    
+                    console.log(`📊 Fetching technical indicators for ${symbol} from Finnhub...`);
+                    
+                    // Fetch RSI
+                    const rsiResponse = await fetch(
+                        `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=rsi&token=${FINNHUB_API_KEY}`
+                    );
+                    
+                    if (!rsiResponse.ok) {
+                        console.error(`Finnhub RSI API error for ${symbol}: ${rsiResponse.status}`);
+                        return null;
+                    }
+                    
+                    const rsiData = await rsiResponse.json();
+                    
+                    // Small delay to respect rate limit (60/min = 1 per second)
+                    await new Promise(resolve => setTimeout(resolve, 1100));
+                    
+                    // Fetch EMA
+                    const emaResponse = await fetch(
+                        `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=ema&timeperiod=50&token=${FINNHUB_API_KEY}`
+                    );
+                    
+                    if (!emaResponse.ok) {
+                        console.error(`Finnhub EMA API error for ${symbol}: ${emaResponse.status}`);
+                        return null;
+                    }
+                    
+                    const emaData = await emaResponse.json();
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1100));
+                    
+                    // Fetch EMA 200
+                    const ema200Response = await fetch(
+                        `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=ema&timeperiod=200&token=${FINNHUB_API_KEY}`
+                    );
+                    
+                    if (!ema200Response.ok) {
+                        console.error(`Finnhub EMA200 API error for ${symbol}: ${ema200Response.status}`);
+                        return null;
+                    }
+                    
+                    const ema200Data = await ema200Response.json();
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1100));
+                    
+                    // Fetch MACD
+                    const macdResponse = await fetch(
+                        `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=macd&token=${FINNHUB_API_KEY}`
+                    );
+                    
+                    if (!macdResponse.ok) {
+                        console.error(`Finnhub MACD API error for ${symbol}: ${macdResponse.status}`);
+                        return null;
+                    }
+                    
+                    const macdData = await macdResponse.json();
+                    
+                    // Extract latest values
+                    const rsi = rsiData.rsi && rsiData.rsi.length > 0 ? rsiData.rsi[rsiData.rsi.length - 1] : null;
+                    const ema50 = emaData.ema && emaData.ema.length > 0 ? emaData.ema[emaData.ema.length - 1] : null;
+                    const ema200 = ema200Data.ema && ema200Data.ema.length > 0 ? ema200Data.ema[ema200Data.ema.length - 1] : null;
+                    const macd = macdData.macd && macdData.macd.length > 0 ? macdData.macd[macdData.macd.length - 1] : null;
+                    const macdSignal = macdData.macdSignal && macdData.macdSignal.length > 0 ? macdData.macdSignal[macdData.macdSignal.length - 1] : null;
+                    const macdHistogram = macdData.macdHist && macdData.macdHist.length > 0 ? macdData.macdHist[macdData.macdHist.length - 1] : null;
+                    
+                    if (!rsi || !ema50 || !ema200 || !macd || !macdSignal) {
+                        console.warn(`Incomplete technical data for ${symbol}`);
+                        return null;
+                    }
+                    
+                    const technical = {
+                        rsi: parseFloat(rsi.toFixed(2)),
+                        ema50: parseFloat(ema50.toFixed(2)),
+                        ema200: parseFloat(ema200.toFixed(2)),
+                        macd: parseFloat(macd.toFixed(2)),
+                        macdSignal: parseFloat(macdSignal.toFixed(2)),
+                        macdHistogram: parseFloat(macdHistogram.toFixed(2))
+                    };
+                    
+                    // Cache the result
+                    localStorage.setItem(`${TECHNICAL_CACHE_KEY}_${symbol}`, JSON.stringify({
+                        technical,
+                        timestamp: Date.now()
+                    }));
+                    
+                    console.log(`✅ Fetched technical data for ${symbol}:`, technical);
+                    return technical;
+                    
+                } catch (error) {
+                    console.error(`Error fetching technical data for ${symbol}:`, error);
+                    return null;
+                }
+            }
+            
             // MOSL Authentication - get access token via proxy
             async function getMOSLAccessToken() {
                 try {
@@ -1101,7 +1242,7 @@
                             return;
                         }
                         
-                        // Try to fetch real data from MOSL API
+                        // Try to fetch real data from MOSL API and real technical indicators
                         const results = [];
                         for (const symbol of symbols) {
                             let realData = null;
@@ -1110,7 +1251,9 @@
                                 realData = await fetchMOSLStockData(symbol, moslAccessToken);
                             }
                             
-                            const mockData = generateMockStock(symbol, selectedSector);
+                            // Generate stock data with real technical indicators (only for first 10 stocks to save API quota)
+                            const useRealTechnicals = symbols.indexOf(symbol) < 10;
+                            const mockData = await generateMockStock(symbol, selectedSector, useRealTechnicals);
                             
                             if (realData) {
                                 // Got real data - merge with mock for additional fields
@@ -1121,7 +1264,7 @@
                                     name: STOCK_NAMES[symbol] || `${symbol} Ltd`,
                                     sector: selectedSector,
                                     recommendation: realData.score >= 70 ? 'BUY' : realData.score >= 40 ? 'HOLD' : 'SELL',
-                                    technical: mockData.technical, // Preserve technical analysis from mock
+                                    technical: mockData.technical, // Preserve technical analysis from mock (or real if fetched)
                                     options: mockData.options, // Preserve options data from mock
                                     isRealData: true
                                 });
@@ -1274,7 +1417,9 @@
                         for (const symbol of allStockSymbols) {
                             if (!symbol) continue;
                             if (REALISTIC_PRICES[symbol]) {
-                                const stock = generateMockStock(symbol, 'Multiple');
+                                // Use real technical data for "Technically Strong" category
+                                const useRealTechnicals = selectedSector === 'Technically Strong';
+                                const stock = await generateMockStock(symbol, 'Multiple', useRealTechnicals);
                                 
                                 // Add category-specific scoring
                                 if (selectedSector === 'Target Oriented') {
@@ -2263,6 +2408,22 @@
                             {/* Technical Tab */}
                             {activeTab === 'technical' && (
                                 <div>
+                                    {/* Data Source Indicator */}
+                                    {selectedStock.technical?.isRealData && (
+                                        <div style={{
+                                            background: '#dcfce7',
+                                            color: '#166534',
+                                            padding: '10px',
+                                            borderRadius: '8px',
+                                            marginBottom: '15px',
+                                            fontSize: '13px',
+                                            textAlign: 'center',
+                                            border: '1px solid #22c55e'
+                                        }}>
+                                            ✅ <strong>Live Data:</strong> Technical indicators from Finnhub API
+                                        </div>
+                                    )}
+                                    
                                     {/* Technical Score Card */}
                                     <div className="detail-card" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', marginBottom: '15px' }}>
                                         <h3 style={{ marginBottom: '10px', color: '#fff' }}>📊 Technical Score</h3>
