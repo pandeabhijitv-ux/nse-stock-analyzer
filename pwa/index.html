@@ -1829,13 +1829,13 @@
                 
                 // Filter and rank best Call options (BULLISH sentiment)
                 const topCalls = allStocks
-                    .filter(s => s.options.optionType === 'CALL')
+                    .filter(s => s.options && s.options.optionType === 'CALL')
                     .sort((a, b) => b.options.confidence - a.options.confidence)
                     .slice(0, 10);
                 
                 // Filter and rank best Put options (BEARISH sentiment)
                 const topPuts = allStocks
-                    .filter(s => s.options.optionType === 'PUT')
+                    .filter(s => s.options && s.options.optionType === 'PUT')
                     .sort((a, b) => b.options.confidence - a.options.confidence)
                     .slice(0, 10);
                 
