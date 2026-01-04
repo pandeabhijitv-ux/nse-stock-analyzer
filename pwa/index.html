@@ -1120,9 +1120,11 @@
             const handleStockClick = (stock) => {
                 console.log(`📈 Stock clicked:`, stock);
                 const sanitized = sanitizeStockForDisplay(stock);
+                console.log(`✅ Setting selectedStock to:`, sanitized.symbol);
                 setSelectedStock(sanitized);
                 setScreen('stockDetail');
                 setActiveTab('overview'); // Reset to overview tab
+                console.log(`✅ Screen changed to: stockDetail`);
             };
 
             const handleBack = () => {
@@ -1409,6 +1411,7 @@
             
             // Category Screen - Target Oriented, Swing, Fundamental, Technical, Hot Stocks
             if (screen === 'category') {
+                console.log(`🖥️ Rendering category screen:`, selectedSector);
                 return (
                     <div>
                         <div className="header">
@@ -1429,9 +1432,13 @@
                                         key={stock.symbol} 
                                         className="stock-item"
                                         onClick={() => {
-                                            setSelectedStock(sanitizeStockForDisplay(stock));
+                                            console.log(`🎯 Category stock clicked:`, stock.symbol);
+                                            const sanitized = sanitizeStockForDisplay(stock);
+                                            console.log(`✅ Setting selectedStock to:`, sanitized.symbol);
+                                            setSelectedStock(sanitized);
                                             setActiveTab('overview');
                                             setScreen('stockDetail');
+                                            console.log(`✅ Screen changed to: stockDetail`);
                                         }}
                                     >
                                         <div className="stock-header">
@@ -2000,6 +2007,7 @@
             }
 
             if (screen === 'stockDetail') {
+                console.log(`🖥️ Rendering stockDetail screen for:`, selectedStock?.symbol);
                 if (!selectedStock) {
                     return (
                         <div>
