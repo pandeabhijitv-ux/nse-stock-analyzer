@@ -1085,35 +1085,21 @@
                     const loadOptionsData = async () => {
                         setOptionsLoading(true);
                         
-                        console.info('🚀 Fetching REAL NSE option data via backend proxy...');
+                        console.info('� Generating options analysis with real-time price data...');
                         
                         // Generate top options recommendations across all stocks
                         const allStocks = [];
-                        let realDataCount = 0;
-                        const maxRealDataFetches = 30; // Limit to first 30 stocks
                         
                         for (const sectorName of Object.keys(SECTORS)) {
                             for (const symbol of SECTORS[sectorName]) {
-                                // Try to fetch real NSE option chain
-                                let realOptionData = null;
-                                if (realDataCount < maxRealDataFetches) {
-                                    realOptionData = await fetchNSEOptionChain(symbol);
-                                    if (realOptionData && realOptionData.isRealData) {
-                                        realDataCount++;
-                                        console.log(`✅ [${realDataCount}/${maxRealDataFetches}] Real data for ${symbol}`);
-                                        // Small delay to avoid overwhelming backend
-                                        await new Promise(resolve => setTimeout(resolve, 200));
-                                    }
-                                }
-                                
-                                const stock = await generateMockStock(symbol, sectorName, false, realOptionData);
+                                // Generate stock with option analysis
+                                // Note: NSE blocks cloud providers, so we use simulation based on real prices
+                                const stock = await generateMockStock(symbol, sectorName, false, null);
                                 allStocks.push(stock);
                             }
                         }
                         
-                        console.log('📊 Total stocks generated:', allStocks.length);
-                        console.log(`✅ Real NSE data: ${realDataCount} stocks`);
-                        console.log(`⚠️ Simulated data: ${allStocks.length - realDataCount} stocks`);
+                        console.log('📊 Options analysis complete:', allStocks.length, 'stocks analyzed');
                         
                         // Filter and rank best Call options (BULLISH sentiment)
                         const calls = allStocks
@@ -2055,7 +2041,7 @@
                                     marginBottom: '10px',
                                     textAlign: 'center'
                                 }}>
-                                    ⚠️ SIMULATED DATA - DO NOT TRADE ⚠️
+                                    ⚠️ EDUCATIONAL / ANALYSIS TOOL ⚠️
                                 </div>
                                 <div style={{
                                     fontSize: '14px',
@@ -2064,9 +2050,9 @@
                                     fontWeight: '600',
                                     lineHeight: '1.6'
                                 }}>
-                                    This is <strong>MOCK OPTION DATA</strong> for demonstration only.<br/>
-                                    Premiums, strikes, and dates are <strong>SIMULATED</strong>.<br/>
-                                    <strong>Always verify with NSE Option Chain before trading!</strong>
+                                    Analysis uses <strong>real-time stock prices</strong> and <strong>technical indicators</strong>.<br/>
+                                    Option premiums are <strong>calculated estimates</strong> (NSE blocks direct API access).<br/>
+                                    <strong>⚠️ NOT INVESTMENT ADVICE - Verify with NSE before trading!</strong>
                                 </div>
                             </div>
                             
