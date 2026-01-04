@@ -1114,12 +1114,15 @@
                             
                             if (realData) {
                                 // Got real data - merge with mock for additional fields
+                                // Preserve technical object from mock data
                                 results.push({
                                     ...mockData,
                                     ...realData,
                                     name: STOCK_NAMES[symbol] || `${symbol} Ltd`,
                                     sector: selectedSector,
                                     recommendation: realData.score >= 70 ? 'BUY' : realData.score >= 40 ? 'HOLD' : 'SELL',
+                                    technical: mockData.technical, // Preserve technical analysis from mock
+                                    options: mockData.options, // Preserve options data from mock
                                     isRealData: true
                                 });
                             } else {
