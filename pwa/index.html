@@ -2072,9 +2072,13 @@
                                 <div style={{ fontSize: '13px', color: '#666', marginBottom: '3px' }}>Target Price</div>
                                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2e7d32' }}>₹{selectedStock.targetPrice}</div>
                                 <div style={{ fontSize: '12px', color: '#888', marginTop: '3px' }}>
-                                    {selectedStock.recommendation === 'BUY' ? '(+15% upside)' : 
-                                     selectedStock.recommendation === 'HOLD' ? '(+5% upside)' : 
-                                     '(-8% downside)'}
+                                    {(() => {
+                                        const current = parseFloat(selectedStock.price);
+                                        const target = parseFloat(selectedStock.targetPrice);
+                                        const percentChange = ((target - current) / current * 100).toFixed(1);
+                                        const sign = percentChange >= 0 ? '+' : '';
+                                        return `(${sign}${percentChange}% ${percentChange >= 0 ? 'upside' : 'downside'})`;
+                                    })()}
                                 </div>
                             </div>
                             
