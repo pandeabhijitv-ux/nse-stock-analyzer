@@ -818,8 +818,8 @@
             Object.keys(stock).forEach(key => {
                 const value = stock[key];
                 
-                // Skip the options object - we'll handle it separately
-                if (key === 'options') {
+                // Skip the options and technical objects - we'll handle them separately
+                if (key === 'options' || key === 'technical') {
                     sanitized[key] = stock[key]; // Keep nested object as-is for internal use
                 } else if (value === null || value === undefined) {
                     sanitized[key] = '';
