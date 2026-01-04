@@ -1,0 +1,5 @@
+# NSE Options Proxy - Vercel Deployment
+
+node_modules/
+.env
+*.log
