@@ -572,6 +572,122 @@
                 GULFPETRO: 35.7,
             };
 
+        // Finnhub API Configuration for technical indicators
+        const FINNHUB_API_KEY = 'd5c0hhpr01qsbmghorjd5c0hhpr01qsbmghorje';
+        const TECHNICAL_CACHE_KEY = 'finnhub_technical_cache';
+        const TECHNICAL_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+        
+        // Fetch technical indicators from Finnhub API
+        async function fetchFinnhubTechnicalData(symbol) {
+            try {
+                // Check cache first
+                const cached = localStorage.getItem(`${TECHNICAL_CACHE_KEY}_${symbol}`);
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    if (Date.now() - data.timestamp < TECHNICAL_CACHE_DURATION) {
+                        console.log(`📊 Using cached technical data for ${symbol}`);
+                        return data.technical;
+                    }
+                }
+                
+                const nsSymbol = `${symbol}.NS`;
+                const toDate = Math.floor(Date.now() / 1000);
+                const fromDate = toDate - (200 * 24 * 60 * 60); // 200 days of data
+                
+                console.log(`📊 Fetching technical indicators for ${symbol} from Finnhub...`);
+                
+                // Fetch RSI
+                const rsiResponse = await fetch(
+                    `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=rsi&token=${FINNHUB_API_KEY}`
+                );
+                
+                if (!rsiResponse.ok) {
+                    console.error(`Finnhub RSI API error for ${symbol}: ${rsiResponse.status}`);
+                    return null;
+                }
+                
+                const rsiData = await rsiResponse.json();
+                
+                // Small delay to respect rate limit (60/min = 1 per second)
+                await new Promise(resolve => setTimeout(resolve, 1100));
+                
+                // Fetch EMA
+                const emaResponse = await fetch(
+                    `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=ema&timeperiod=50&token=${FINNHUB_API_KEY}`
+                );
+                
+                if (!emaResponse.ok) {
+                    console.error(`Finnhub EMA API error for ${symbol}: ${emaResponse.status}`);
+                    return null;
+                }
+                
+                const emaData = await emaResponse.json();
+                
+                await new Promise(resolve => setTimeout(resolve, 1100));
+                
+                // Fetch EMA 200
+                const ema200Response = await fetch(
+                    `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=ema&timeperiod=200&token=${FINNHUB_API_KEY}`
+                );
+                
+                if (!ema200Response.ok) {
+                    console.error(`Finnhub EMA200 API error for ${symbol}: ${ema200Response.status}`);
+                    return null;
+                }
+                
+                const ema200Data = await ema200Response.json();
+                
+                await new Promise(resolve => setTimeout(resolve, 1100));
+                
+                // Fetch MACD
+                const macdResponse = await fetch(
+                    `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=macd&token=${FINNHUB_API_KEY}`
+                );
+                
+                if (!macdResponse.ok) {
+                    console.error(`Finnhub MACD API error for ${symbol}: ${macdResponse.status}`);
+                    return null;
+                }
+                
+                const macdData = await macdResponse.json();
+                
+                // Extract latest values
+                const rsi = rsiData.rsi && rsiData.rsi.length > 0 ? rsiData.rsi[rsiData.rsi.length - 1] : null;
+                const ema50 = emaData.ema && emaData.ema.length > 0 ? emaData.ema[emaData.ema.length - 1] : null;
+                const ema200 = ema200Data.ema && ema200Data.ema.length > 0 ? ema200Data.ema[ema200Data.ema.length - 1] : null;
+                const macd = macdData.macd && macdData.macd.length > 0 ? macdData.macd[macdData.macd.length - 1] : null;
+                const macdSignal = macdData.macdSignal && macdData.macdSignal.length > 0 ? macdData.macdSignal[macdData.macdSignal.length - 1] : null;
+                const macdHistogram = macdData.macdHist && macdData.macdHist.length > 0 ? macdData.macdHist[macdData.macdHist.length - 1] : null;
+                
+                if (!rsi || !ema50 || !ema200 || !macd || !macdSignal) {
+                    console.warn(`Incomplete technical data for ${symbol}`);
+                    return null;
+                }
+                
+                const technical = {
+                    rsi: parseFloat(rsi.toFixed(2)),
+                    ema50: parseFloat(ema50.toFixed(2)),
+                    ema200: parseFloat(ema200.toFixed(2)),
+                    macd: parseFloat(macd.toFixed(2)),
+                    macdSignal: parseFloat(macdSignal.toFixed(2)),
+                    macdHistogram: parseFloat(macdHistogram.toFixed(2))
+                };
+                
+                // Cache the result
+                localStorage.setItem(`${TECHNICAL_CACHE_KEY}_${symbol}`, JSON.stringify({
+                    technical,
+                    timestamp: Date.now()
+                }));
+                
+                console.log(`✅ Fetched technical data for ${symbol}:`, technical);
+                return technical;
+                
+            } catch (error) {
+                console.error(`Error fetching technical data for ${symbol}:`, error);
+                return null;
+            }
+        }
+
         // Generate mock stock data for Indian stocks with realistic prices
         // Now supports real technical data from Finnhub API
         async function generateMockStock(symbol, sectorName, useRealTechnicals = false) {
@@ -1029,122 +1145,6 @@
             // MOSL API Configuration
             const MOSL_API_KEY = 'sTHWtNb6bn5bGiY';
             const MOSL_SECRET_KEY = '3d622c3d-7f36-43ee-8776-9056e454324a';
-            
-            // Finnhub API Configuration
-            const FINNHUB_API_KEY = 'd5c0hhpr01qsbmghorjd5c0hhpr01qsbmghorje';
-            const TECHNICAL_CACHE_KEY = 'finnhub_technical_cache';
-            const TECHNICAL_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-            
-            // Fetch technical indicators from Finnhub API
-            async function fetchFinnhubTechnicalData(symbol) {
-                try {
-                    // Check cache first
-                    const cached = localStorage.getItem(`${TECHNICAL_CACHE_KEY}_${symbol}`);
-                    if (cached) {
-                        const data = JSON.parse(cached);
-                        if (Date.now() - data.timestamp < TECHNICAL_CACHE_DURATION) {
-                            console.log(`📊 Using cached technical data for ${symbol}`);
-                            return data.technical;
-                        }
-                    }
-                    
-                    const nsSymbol = `${symbol}.NS`;
-                    const toDate = Math.floor(Date.now() / 1000);
-                    const fromDate = toDate - (200 * 24 * 60 * 60); // 200 days of data
-                    
-                    console.log(`📊 Fetching technical indicators for ${symbol} from Finnhub...`);
-                    
-                    // Fetch RSI
-                    const rsiResponse = await fetch(
-                        `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=rsi&token=${FINNHUB_API_KEY}`
-                    );
-                    
-                    if (!rsiResponse.ok) {
-                        console.error(`Finnhub RSI API error for ${symbol}: ${rsiResponse.status}`);
-                        return null;
-                    }
-                    
-                    const rsiData = await rsiResponse.json();
-                    
-                    // Small delay to respect rate limit (60/min = 1 per second)
-                    await new Promise(resolve => setTimeout(resolve, 1100));
-                    
-                    // Fetch EMA
-                    const emaResponse = await fetch(
-                        `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=ema&timeperiod=50&token=${FINNHUB_API_KEY}`
-                    );
-                    
-                    if (!emaResponse.ok) {
-                        console.error(`Finnhub EMA API error for ${symbol}: ${emaResponse.status}`);
-                        return null;
-                    }
-                    
-                    const emaData = await emaResponse.json();
-                    
-                    await new Promise(resolve => setTimeout(resolve, 1100));
-                    
-                    // Fetch EMA 200
-                    const ema200Response = await fetch(
-                        `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=ema&timeperiod=200&token=${FINNHUB_API_KEY}`
-                    );
-                    
-                    if (!ema200Response.ok) {
-                        console.error(`Finnhub EMA200 API error for ${symbol}: ${ema200Response.status}`);
-                        return null;
-                    }
-                    
-                    const ema200Data = await ema200Response.json();
-                    
-                    await new Promise(resolve => setTimeout(resolve, 1100));
-                    
-                    // Fetch MACD
-                    const macdResponse = await fetch(
-                        `https://finnhub.io/api/v1/indicator?symbol=${nsSymbol}&resolution=D&from=${fromDate}&to=${toDate}&indicator=macd&token=${FINNHUB_API_KEY}`
-                    );
-                    
-                    if (!macdResponse.ok) {
-                        console.error(`Finnhub MACD API error for ${symbol}: ${macdResponse.status}`);
-                        return null;
-                    }
-                    
-                    const macdData = await macdResponse.json();
-                    
-                    // Extract latest values
-                    const rsi = rsiData.rsi && rsiData.rsi.length > 0 ? rsiData.rsi[rsiData.rsi.length - 1] : null;
-                    const ema50 = emaData.ema && emaData.ema.length > 0 ? emaData.ema[emaData.ema.length - 1] : null;
-                    const ema200 = ema200Data.ema && ema200Data.ema.length > 0 ? ema200Data.ema[ema200Data.ema.length - 1] : null;
-                    const macd = macdData.macd && macdData.macd.length > 0 ? macdData.macd[macdData.macd.length - 1] : null;
-                    const macdSignal = macdData.macdSignal && macdData.macdSignal.length > 0 ? macdData.macdSignal[macdData.macdSignal.length - 1] : null;
-                    const macdHistogram = macdData.macdHist && macdData.macdHist.length > 0 ? macdData.macdHist[macdData.macdHist.length - 1] : null;
-                    
-                    if (!rsi || !ema50 || !ema200 || !macd || !macdSignal) {
-                        console.warn(`Incomplete technical data for ${symbol}`);
-                        return null;
-                    }
-                    
-                    const technical = {
-                        rsi: parseFloat(rsi.toFixed(2)),
-                        ema50: parseFloat(ema50.toFixed(2)),
-                        ema200: parseFloat(ema200.toFixed(2)),
-                        macd: parseFloat(macd.toFixed(2)),
-                        macdSignal: parseFloat(macdSignal.toFixed(2)),
-                        macdHistogram: parseFloat(macdHistogram.toFixed(2))
-                    };
-                    
-                    // Cache the result
-                    localStorage.setItem(`${TECHNICAL_CACHE_KEY}_${symbol}`, JSON.stringify({
-                        technical,
-                        timestamp: Date.now()
-                    }));
-                    
-                    console.log(`✅ Fetched technical data for ${symbol}:`, technical);
-                    return technical;
-                    
-                } catch (error) {
-                    console.error(`Error fetching technical data for ${symbol}:`, error);
-                    return null;
-                }
-            }
             
             // MOSL Authentication - get access token via proxy
             async function getMOSLAccessToken() {
