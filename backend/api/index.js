@@ -146,10 +146,5 @@ app.get('/api/quote/:symbol', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, () => {
-    console.log(`🚀 NSE Options Proxy running on port ${PORT}`);
-    console.log(`📡 Option Chain: http://localhost:${PORT}/api/option-chain/:symbol`);
-    console.log(`📈 Stock Quote: http://localhost:${PORT}/api/quote/:symbol`);
-});
+// Export for Vercel serverless
+module.exports = app;
