@@ -1820,12 +1820,12 @@
                 
                 // Generate top options recommendations across all stocks
                 const allStocks = [];
-                Object.keys(SECTORS).forEach(sectorName => {
-                    SECTORS[sectorName].forEach(symbol => {
-                        const stock = generateMockStock(symbol, sectorName);
+                for (const sectorName of Object.keys(SECTORS)) {
+                    for (const symbol of SECTORS[sectorName]) {
+                        const stock = await generateMockStock(symbol, sectorName);
                         allStocks.push(stock);
-                    });
-                });
+                    }
+                }
                 
                 // Filter and rank best Call options (BULLISH sentiment)
                 const topCalls = allStocks
