@@ -42,3 +42,8 @@ coverage/
 # Temporary files
 *.tmp
 .cache/
+
+# Capacitor
+android/
+ios/
+capacitor.config.ts
