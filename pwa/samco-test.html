@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Samco API Test - LIVE NSE Options</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .option-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+        }
+        .error {
+            background: #ff5252;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Samco API - LIVE NSE Options Test</h1>
+        <p>Testing real-time option chain data from Samco</p>
+    </div>
+
+    <div style="text-align: center;">
+        <button onclick="testReliance()">Test RELIANCE 1600 CE</button>
+        <button onclick="testMultiple()">Fetch Multiple Options</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <script>
+        const SAMCO_API = 'http://localhost:3002';
+
+        async function testReliance() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            
+            status.innerHTML = '<div class="loading">⏳ Fetching RELIANCE 1600 CE data...</div>';
+            results.innerHTML = '';
+
+            try {
+                const url = `${SAMCO_API}/api/option-chain?symbol=RELIANCE&expiry=2026-01-27&strike=1600&type=CE`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.success && data.data.optionChainDetails) {
+                    const option = data.data.optionChainDetails[0];
+                    status.innerHTML = '<div class="success">✅ SUCCESS! Live data received from Samco</div>';
+                    results.innerHTML = `
+                        <div class="option-card">
+                            <h2>${option.tradingSymbol}</h2>
+                            <p><strong>LTP:</strong> ₹${option.lastTradedPrice}</p>
+                            <p><strong>Spot Price:</strong> ₹${option.spotPrice}</p>
+                            <p><strong>Strike:</strong> ₹${option.strikePrice}</p>
+                            <p><strong>Expiry:</strong> ${option.expiryDate}</p>
+                            <p><strong>IV:</strong> ${option.impliedVolatility}%</p>
+                            <p><strong>Delta:</strong> ${option.delta}</p>
+                            <p><strong>Gamma:</strong> ${option.gamma}</p>
+                            <p><strong>Theta:</strong> ${option.theta}</p>
+                            <p><strong>Vega:</strong> ${option.vega}</p>
+                            <p><strong>Open Interest:</strong> ${option.openInterest.toLocaleString()}</p>
+                            <p><strong>Volume:</strong> ${option.volume.toLocaleString()}</p>
+                            <p><strong>Change:</strong> ${option.change} (${option.changePer}%)</p>
+                        </div>
+                    `;
+                } else {
+                    status.innerHTML = '<div class="error">❌ No data returned</div>';
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testMultiple() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            
+            status.innerHTML = '<div class="loading">⏳ Fetching multiple options... This will take ~30 seconds</div>';
+            results.innerHTML = '';
+
+            const stocksToFetch = [
+                { symbol: 'RELIANCE', expiry: '2026-01-27', strike: 1600, type: 'CE' },
+                { symbol: 'RELIANCE', expiry: '2026-01-27', strike: 1600, type: 'PE' },
+                { symbol: 'INFY', expiry: '2026-01-30', strike: 1950, type: 'CE' }
+            ];
+
+            const allOptions = [];
+
+            for (const opt of stocksToFetch) {
+                try {
+                    const url = `${SAMCO_API}/api/option-chain?symbol=${opt.symbol}&expiry=${opt.expiry}&strike=${opt.strike}&type=${opt.type}`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.success && data.data.optionChainDetails) {
+                        allOptions.push(...data.data.optionChainDetails);
+                    }
+
+                    // Wait 1.5 seconds to avoid rate limit
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                } catch (error) {
+                    console.error('Error fetching:', error);
+                }
+            }
+
+            status.innerHTML = `<div class="success">✅ SUCCESS! Fetched ${allOptions.length} options</div>`;
+            
+            results.innerHTML = allOptions.map(option => `
+                <div class="option-card">
+                    <h3>${option.tradingSymbol} - ${option.optionType}</h3>
+                    <p><strong>LTP:</strong> ₹${option.lastTradedPrice} | <strong>Spot:</strong> ₹${option.spotPrice}</p>
+                    <p><strong>IV:</strong> ${option.impliedVolatility}% | <strong>Delta:</strong> ${option.delta}</p>
+                    <p><strong>OI:</strong> ${option.openInterest.toLocaleString()} | <strong>Volume:</strong> ${option.volume.toLocaleString()}</p>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
