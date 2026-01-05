@@ -1089,13 +1089,10 @@
                         
                         const SAMCO_API = 'http://localhost:3002';
                         
-                        // Define stocks with their expiry dates and strike prices to fetch
+                        // Using RELIANCE only (confirmed working) with multiple strikes
+                        // Expiry: Jan 27, 2026 (confirmed valid)
                         const stocksToFetch = [
-                            { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1580, 1600, 1620] },
-                            { symbol: 'INFY', expiry: '2026-01-30', strikes: [1900, 1950, 2000] },
-                            { symbol: 'TCS', expiry: '2026-01-30', strikes: [4200, 4300, 4400] },
-                            { symbol: 'HDFCBANK', expiry: '2026-01-30', strikes: [1800, 1850, 1900] },
-                            { symbol: 'ICICIBANK', expiry: '2026-01-29', strikes: [1300, 1320, 1340] },
+                            { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1540, 1560, 1580, 1600, 1620, 1640] },
                         ];
                         
                         const allOptions = [];
