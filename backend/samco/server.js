@@ -3,6 +3,7 @@ const cors = require('cors');
 const https = require('https');
 const fetch = require('node-fetch');
 const NodeCache = require('node-cache');
+const cron = require('node-cron');
 require('dotenv').config();
 
 const app = express();
@@ -15,6 +16,9 @@ const agent = new https.Agent({
 
 // Cache with 5-minute TTL for option chain data
 const cache = new NodeCache({ stdTTL: 300 });
+
+// Daily options cache with 24-hour TTL
+const dailyOptionsCache = new NodeCache({ stdTTL: 86400 });
 
 // Middleware
 app.use(cors());
@@ -339,7 +343,217 @@ function transformOptionChain(samcoData, symbol) {
 // SERVER START
 // ============================================
 
-app.listen(PORT, () => {
+// ============================================
+// DAILY OPTIONS CACHING
+// ============================================
+
+// Top 30 High-Liquidity Nifty Stocks (same as frontend)
+const stocksToFetch = [
+  { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1550, 1580] },
+  { symbol: 'TCS', expiry: '2026-01-27', strikes: [3150, 3220] },
+  { symbol: 'ICICIBANK', expiry: '2026-01-27', strikes: [1340, 1370] },
+  { symbol: 'INFY', expiry: '2026-01-27', strikes: [1570, 1610] },
+  { symbol: 'BHARTIARTL', expiry: '2026-01-27', strikes: [2060, 2110] },
+  { symbol: 'AXISBANK', expiry: '2026-01-27', strikes: [1260, 1290] },
+  { symbol: 'KOTAKBANK', expiry: '2026-01-27', strikes: [2150, 2190] },
+  { symbol: 'ITC', expiry: '2026-01-27', strikes: [340, 350] },
+  { symbol: 'HINDUNILVR', expiry: '2026-01-27', strikes: [2340, 2380] },
+  { symbol: 'SUNPHARMA', expiry: '2026-01-27', strikes: [1690, 1730] },
+  { symbol: 'MARUTI', expiry: '2026-01-27', strikes: [16810, 17160] },
+  { symbol: 'TATASTEEL', expiry: '2026-01-27', strikes: [180, 190] },
+  { symbol: 'HCLTECH', expiry: '2026-01-27', strikes: [1580, 1610] },
+  { symbol: 'TECHM', expiry: '2026-01-27', strikes: [1560, 1600] },
+  { symbol: 'WIPRO', expiry: '2026-01-27', strikes: [260, 260] },
+  { symbol: 'ADANIENT', expiry: '2026-01-27', strikes: [2230, 2280] },
+  { symbol: 'ADANIPORTS', expiry: '2026-01-27', strikes: [1460, 1490] },
+  { symbol: 'ASIANPAINT', expiry: '2026-01-27', strikes: [2760, 2820] },
+  { symbol: 'BAJAJ-AUTO', expiry: '2026-01-27', strikes: [9310, 9500] },
+  { symbol: 'BAJAJFINSV', expiry: '2026-01-27', strikes: [2000, 2040] },
+  { symbol: 'JSWSTEEL', expiry: '2026-01-27', strikes: [1160, 1190] },
+  { symbol: 'ULTRACEMCO', expiry: '2026-01-27', strikes: [11850, 12090] },
+  { symbol: 'GRASIM', expiry: '2026-01-27', strikes: [2790, 2850] },
+  { symbol: 'CIPLA', expiry: '2026-01-27', strikes: [1490, 1520] },
+  { symbol: 'DRREDDY', expiry: '2026-01-27', strikes: [1230, 1250] },
+  { symbol: 'APOLLOHOSP', expiry: '2026-01-27', strikes: [6940, 7080] },
+  { symbol: 'EICHERMOT', expiry: '2026-01-27', strikes: [7330, 7480] },
+  { symbol: 'BPCL', expiry: '2026-01-27', strikes: [370, 380] },
+  { symbol: 'NTPC', expiry: '2026-01-27', strikes: [340, 350] },
+  { symbol: 'SBILIFE', expiry: '2026-01-27', strikes: [2030, 2080] },
+];
+
+// Calculate comprehensive option quality score (same as frontend)
+function calculateOptionScore(opt) {
+  let score = 0;
+  
+  // 1. Liquidity Score (30 points)
+  const volumeScore = Math.min((opt.volume / 100000) * 15, 15);
+  const oiScore = Math.min((opt.openInterest / 1000000) * 15, 15);
+  score += volumeScore + oiScore;
+  
+  // 2. Greeks Score (30 points)
+  const delta = Math.abs(opt.delta);
+  const deltaScore = delta >= 0.4 && delta <= 0.6 ? 15 : (1 - Math.abs(delta - 0.5) * 2) * 15;
+  const thetaScore = Math.max(0, 15 - Math.abs(opt.theta) * 100);
+  score += deltaScore + thetaScore;
+  
+  // 3. IV Score (20 points)
+  const iv = opt.impliedVolatility;
+  const ivScore = iv >= 15 && iv <= 35 ? 20 : Math.max(0, 20 - Math.abs(iv - 25) * 0.5);
+  score += ivScore;
+  
+  // 4. Price Efficiency Score (20 points)
+  const price = opt.lastTradedPrice;
+  const priceScore = price >= 10 && price <= 100 ? 20 : Math.max(0, 20 - Math.abs(price - 55) * 0.2);
+  score += priceScore;
+  
+  return Math.round(score);
+}
+
+// Fetch and cache top options (runs daily at 8 AM)
+async function fetchAndCacheOptions() {
+  try {
+    console.log('🔄 Starting daily option scan at', new Date().toISOString());
+    const allOptions = [];
+    const totalCalls = stocksToFetch.length * 2 * 2; // 30 × 2 × 2 = 120
+    let completedCalls = 0;
+    
+    // Fetch all 120 options
+    for (const stock of stocksToFetch) {
+      for (const strike of stock.strikes) {
+        try {
+          // Fetch CALL option
+          const callSymbol = `${stock.symbol}${stock.expiry.split('-')[2]}${stock.expiry.split('-')[1].toUpperCase()}${strike}CE`;
+          const callResponse = await fetch(`http://localhost:${PORT}/api/option-chain?symbol=${callSymbol}`);
+          const callData = await callResponse.json();
+          
+          if (callData.success && callData.options && callData.options.length > 0) {
+            const opt = callData.options[0];
+            allOptions.push({
+              tradingSymbol: opt.tradingSymbol,
+              underlyingSymbol: opt.underlyingSymbol,
+              expiryDate: opt.expiryDate,
+              spotPrice: opt.spotPrice,
+              strikePrice: opt.strikePrice,
+              lastTradedPrice: opt.ltp,
+              impliedVolatility: opt.iv,
+              delta: opt.delta,
+              gamma: opt.gamma,
+              theta: opt.theta,
+              vega: opt.vega,
+              openInterest: opt.openInterest,
+              volume: opt.volume,
+              change: opt.change,
+              changePer: opt.changePer,
+              optionType: 'CALL'
+            });
+          }
+          
+          completedCalls++;
+          console.log(`[${completedCalls}/${totalCalls}] Fetched ${stock.symbol} ${strike} CALL`);
+          
+          // Fetch PUT option
+          const putSymbol = `${stock.symbol}${stock.expiry.split('-')[2]}${stock.expiry.split('-')[1].toUpperCase()}${strike}PE`;
+          const putResponse = await fetch(`http://localhost:${PORT}/api/option-chain?symbol=${putSymbol}`);
+          const putData = await putResponse.json();
+          
+          if (putData.success && putData.options && putData.options.length > 0) {
+            const opt = putData.options[0];
+            allOptions.push({
+              tradingSymbol: opt.tradingSymbol,
+              underlyingSymbol: opt.underlyingSymbol,
+              expiryDate: opt.expiryDate,
+              spotPrice: opt.spotPrice,
+              strikePrice: opt.strikePrice,
+              lastTradedPrice: opt.ltp,
+              impliedVolatility: opt.iv,
+              delta: opt.delta,
+              gamma: opt.gamma,
+              theta: opt.theta,
+              vega: opt.vega,
+              openInterest: opt.openInterest,
+              volume: opt.volume,
+              change: opt.change,
+              changePer: opt.changePer,
+              optionType: 'PUT'
+            });
+          }
+          
+          completedCalls++;
+          console.log(`[${completedCalls}/${totalCalls}] Fetched ${stock.symbol} ${strike} PUT`);
+          
+          // Rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+        } catch (error) {
+          console.error(`Error fetching ${stock.symbol} ${strike}:`, error.message);
+        }
+      }
+    }
+    
+    console.log('📊 Total options fetched:', allOptions.length);
+    
+    // Score and select top 5
+    const scored = allOptions.map(opt => ({
+      ...opt,
+      optionScore: calculateOptionScore(opt)
+    }));
+    
+    const top5 = scored.sort((a, b) => b.optionScore - a.optionScore).slice(0, 5);
+    
+    // Cache results
+    dailyOptionsCache.set('TOP_OPTIONS', {
+      data: top5,
+      timestamp: new Date().toISOString(),
+      expiryDate: '2026-01-27',
+      totalScanned: allOptions.length
+    });
+    
+    console.log('✅ Cached top 5 options for the day');
+    console.log('🏆 Top option:', top5[0].tradingSymbol, 'Score:', top5[0].optionScore);
+    
+  } catch (error) {
+    console.error('❌ Error in daily option scan:', error.message);
+  }
+}
+
+// Get cached top options endpoint
+app.get('/api/top-options-cached', (req, res) => {
+  const cached = dailyOptionsCache.get('TOP_OPTIONS');
+  
+  if (cached) {
+    return res.json({
+      success: true,
+      data: cached.data,
+      cachedAt: cached.timestamp,
+      expiryDate: cached.expiryDate,
+      totalScanned: cached.totalScanned,
+      message: 'Data refreshes daily at 8:00 AM IST'
+    });
+  }
+  
+  res.status(503).json({
+    success: false,
+    error: 'Cache not ready. Data will be available after 8:15 AM IST.',
+    nextRefresh: '8:00 AM IST'
+  });
+});
+
+// Manual refresh endpoint (for testing/admin)
+app.get('/api/refresh-options-cache', async (req, res) => {
+  res.json({ success: true, message: 'Cache refresh started in background' });
+  fetchAndCacheOptions(); // Run in background
+});
+
+// Schedule daily refresh at 8:00 AM IST
+cron.schedule('0 8 * * *', fetchAndCacheOptions, {
+  timezone: 'Asia/Kolkata'
+});
+
+// ============================================
+// SERVER STARTUP
+// ============================================
+
+app.listen(PORT, async () => {
   console.log('='.repeat(50));
   console.log('🚀 Samco API Proxy Server Started');
   console.log('='.repeat(50));
@@ -356,9 +570,16 @@ app.listen(PORT, () => {
   console.log(`   GET  /api/quote/:symbol                           - Get real-time quote`);
   console.log(`   GET  /api/search/:query                           - Search stocks/derivatives`);
   console.log(`   GET  /api/market-depth/:symbol                    - Get market depth`);
+  console.log(`   GET  /api/top-options-cached                      - Get cached top 5 options`);
+  console.log(`   GET  /api/refresh-options-cache                   - Manual cache refresh`);
   console.log('='.repeat(50));
   console.log('✅ Ready to serve requests!');
+  console.log('🔔 Daily option scan scheduled at 8:00 AM IST');
   console.log('');
+  
+  // Run cache refresh immediately on startup
+  console.log('🔄 Running initial cache refresh...');
+  await fetchAndCacheOptions();
 });
 
 // Graceful shutdown
