@@ -1837,6 +1837,44 @@
                                 </span>
                             </div>
                             
+                            {/* Gold & Silver Analysis */}
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#f59e0b',
+                                    background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)'
+                                }}
+                                onClick={() => {
+                                    setScreen('goldSilver');
+                                    setSelectedSector('Gold & Silver');
+                                }}
+                            >
+                                <h3>🥇 Gold & Silver</h3>
+                                <p>Precious metals with astro analysis</p>
+                                <span className="stock-count" style={{ background: '#f59e0b', color: 'white' }}>
+                                    Venus & Moon impact
+                                </span>
+                            </div>
+                            
+                            {/* Commodities Analysis */}
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#059669',
+                                    background: 'linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%)'
+                                }}
+                                onClick={() => {
+                                    setScreen('commodities');
+                                    setSelectedSector('Commodities');
+                                }}
+                            >
+                                <h3>📦 Commodities</h3>
+                                <p>Oil, Gas, Metals & Agriculture</p>
+                                <span className="stock-count" style={{ background: '#059669', color: 'white' }}>
+                                    Global market trends
+                                </span>
+                            </div>
+                            
                             {/* Browse by Sectors - Collapsible */}
                             <div 
                                 className="sector-card"
@@ -1966,6 +2004,795 @@
                                     <span className="stock-count">{SECTORS[sectorName].length} stocks</span>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                );
+            }
+            
+            // Gold & Silver Screen - Precious Metals Analysis
+            if (screen === 'goldSilver') {
+                const goldSilverData = {
+                    gold: {
+                        metal: 'Gold',
+                        symbol: '🥇',
+                        color: '#f59e0b',
+                        pricePerUnit: '71,500',
+                        unit: '₹/10g (24K)',
+                        change: '+2.3%',
+                        trend: 'BULLISH',
+                        planet: 'Shukra (Venus)',
+                        planetIcon: '♀',
+                        planetDescription: 'Venus rules gold, luxury, and wealth. Currently strong in favorable position.',
+                        currentTransit: 'Venus in supportive position - Favorable for gold investments',
+                        technicals: {
+                            rsi: 62,
+                            macd: 'Positive crossover',
+                            trend: 'Uptrend',
+                            support: '₹70,000/10g',
+                            resistance: '₹73,500/10g'
+                        },
+                        factors: [
+                            { icon: '💵', factor: 'Dollar Index', impact: 'Weakening dollar = Gold up', status: 'POSITIVE' },
+                            { icon: '🏛️', factor: 'Central Banks', impact: 'Global banks buying gold reserves', status: 'POSITIVE' },
+                            { icon: '🔥', factor: 'Inflation Hedge', impact: 'Rising inflation drives gold demand', status: 'POSITIVE' },
+                            { icon: '🪔', factor: 'Wedding Season', impact: 'Jan-Mar: High demand period in India', status: 'POSITIVE' },
+                            { icon: '📊', factor: 'Import Duty', impact: 'Current: 6% + 3% GST = 9% total', status: 'NEUTRAL' },
+                            { icon: '🌍', factor: 'Geopolitics', impact: 'Global tensions support safe haven demand', status: 'POSITIVE' }
+                        ],
+                        seasonalEvents: [
+                            { date: 'Feb 14, 2026', event: 'Mahashivratri', impact: 'Moderate buying' },
+                            { date: 'Mar 5, 2026', event: 'Holi', impact: 'Low buying' },
+                            { date: 'Apr 13, 2026', event: 'Ugadi/Gudi Padwa', impact: 'High buying' },
+                            { date: 'May 10, 2026', event: 'Akshaya Tritiya', impact: '⭐ Peak buying season' }
+                        ],
+                        relatedStocks: [
+                            { symbol: 'TITAN', name: 'Titan Company', sector: 'Jewelry', score: 82 },
+                            { symbol: 'MUTHOOTFIN', name: 'Muthoot Finance', sector: 'Gold Loan', score: 78 },
+                            { symbol: 'MANAPPURAM', name: 'Manappuram Finance', sector: 'Gold Loan', score: 75 },
+                            { symbol: 'KALYANIJEWEL', name: 'Kalyan Jewellers', sector: 'Jewelry', score: 71 }
+                        ]
+                    },
+                    silver: {
+                        metal: 'Silver',
+                        symbol: '🥈',
+                        color: '#94a3b8',
+                        pricePerUnit: '89,200',
+                        unit: '₹/kg',
+                        change: '+1.8%',
+                        trend: 'BULLISH',
+                        planet: 'Chandra (Moon)',
+                        planetIcon: '☽',
+                        planetDescription: 'Moon rules silver, emotions, and liquidity. Fast-moving influence.',
+                        currentTransit: 'Waxing Moon phase - Favorable for silver trading',
+                        technicals: {
+                            rsi: 58,
+                            macd: 'Bullish divergence',
+                            trend: 'Uptrend with volatility',
+                            support: '₹86,000/kg',
+                            resistance: '₹92,000/kg'
+                        },
+                        factors: [
+                            { icon: '🔋', factor: 'Industrial Demand', impact: 'Solar panels, EV batteries use silver', status: 'POSITIVE' },
+                            { icon: '💰', factor: 'Gold-Silver Ratio', impact: 'Currently 80:1 (Average: 75:1)', status: 'POSITIVE' },
+                            { icon: '⚡', factor: 'Green Energy', impact: 'Solar power expansion drives demand', status: 'POSITIVE' },
+                            { icon: '🪔', factor: 'Festival Demand', impact: 'Lower than gold but steady', status: 'NEUTRAL' },
+                            { icon: '📊', factor: 'Import Duty', impact: 'Current: 10% + 3% GST', status: 'NEUTRAL' },
+                            { icon: '💵', factor: 'Dollar Correlation', impact: 'Follows gold but more volatile', status: 'POSITIVE' }
+                        ],
+                        seasonalEvents: [
+                            { date: 'Feb-Mar 2026', event: 'Wedding Season', impact: 'Moderate demand for silver items' },
+                            { date: 'Apr 13, 2026', event: 'New Year (Ugadi)', impact: 'Good buying period' },
+                            { date: 'Oct-Nov 2026', event: 'Diwali/Dhanteras', impact: '⭐ Peak silver buying' }
+                        ],
+                        relatedStocks: [
+                            { symbol: 'HINDZINC', name: 'Hindustan Zinc', sector: 'Silver Producer', score: 79 },
+                            { symbol: 'TITAN', name: 'Titan Company', sector: 'Jewelry', score: 82 },
+                            { symbol: 'VEDL', name: 'Vedanta', sector: 'Diversified Metals', score: 74 }
+                        ]
+                    }
+                };
+
+                return (
+                    <div>
+                        <div className="header" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+                            <h1>🥇 Gold & Silver Analysis</h1>
+                            <p>Precious Metals with Astrological Insights</p>
+                            <div style={{
+                                background: 'rgba(255,255,255,0.15)',
+                                padding: '12px 20px',
+                                borderRadius: '10px',
+                                marginTop: '12px',
+                                fontSize: '13px',
+                                color: '#fff',
+                                lineHeight: '1.6'
+                            }}>
+                                💰 Combining Vedic astrology, technical analysis & market factors<br/>
+                                Educational content • Not investment advice
+                            </div>
+                        </div>
+                        <button className="back-button" onClick={handleBack}>
+                            ← Back to Home
+                        </button>
+                        
+                        {/* Gold Analysis */}
+                        <div style={{
+                            background: '#fff',
+                            margin: '20px',
+                            borderRadius: '15px',
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                            border: `3px solid ${goldSilverData.gold.color}`
+                        }}>
+                            {/* Header */}
+                            <div style={{
+                                background: `linear-gradient(135deg, ${goldSilverData.gold.color} 0%, #d97706 100%)`,
+                                padding: '25px',
+                                color: '#fff'
+                            }}>
+                                <div style={{ fontSize: '50px', marginBottom: '10px' }}>{goldSilverData.gold.symbol}</div>
+                                <h2 style={{ margin: '0 0 15px 0', fontSize: '24px' }}>{goldSilverData.gold.metal}</h2>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '5px' }}>
+                                    {goldSilverData.gold.pricePerUnit}
+                                </div>
+                                <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                                    {goldSilverData.gold.unit}
+                                </div>
+                                <div style={{
+                                    display: 'inline-block',
+                                    background: goldSilverData.gold.change.includes('+') ? '#22c55e' : '#ef4444',
+                                    padding: '8px 16px',
+                                    borderRadius: '20px',
+                                    marginTop: '12px',
+                                    fontSize: '16px',
+                                    fontWeight: 'bold'
+                                }}>
+                                    {goldSilverData.gold.change} Today
+                                </div>
+                            </div>
+
+                            {/* Planetary Influence */}
+                            <div style={{
+                                background: '#fef3c7',
+                                padding: '20px',
+                                borderBottom: '2px solid #fbbf24'
+                            }}>
+                                <div style={{ fontSize: '40px', marginBottom: '10px' }}>{goldSilverData.gold.planetIcon}</div>
+                                <h3 style={{ fontSize: '18px', color: '#92400e', marginBottom: '8px' }}>
+                                    Ruled by {goldSilverData.gold.planet}
+                                </h3>
+                                <div style={{ fontSize: '14px', color: '#78350f', lineHeight: '1.6', marginBottom: '12px' }}>
+                                    {goldSilverData.gold.planetDescription}
+                                </div>
+                                <div style={{
+                                    background: '#fff',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    border: '2px solid #fbbf24',
+                                    fontSize: '14px',
+                                    color: '#92400e',
+                                    fontWeight: '600'
+                                }}>
+                                    🔮 {goldSilverData.gold.currentTransit}
+                                </div>
+                            </div>
+
+                            {/* Technical Analysis */}
+                            <div style={{ padding: '20px', background: '#fafafa', borderBottom: '1px solid #e5e5e5' }}>
+                                <h3 style={{ fontSize: '17px', marginBottom: '15px', color: '#1f2937' }}>📊 Technical Analysis</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #e5e5e5' }}>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>RSI</div>
+                                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: goldSilverData.gold.technicals.rsi > 50 ? '#22c55e' : '#ef4444' }}>
+                                            {goldSilverData.gold.technicals.rsi}
+                                        </div>
+                                    </div>
+                                    <div style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #e5e5e5' }}>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>MACD</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#16a34a' }}>
+                                            {goldSilverData.gold.technicals.macd}
+                                        </div>
+                                    </div>
+                                    <div style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #e5e5e5' }}>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Support</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937' }}>
+                                            {goldSilverData.gold.technicals.support}
+                                        </div>
+                                    </div>
+                                    <div style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #e5e5e5' }}>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Resistance</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937' }}>
+                                            {goldSilverData.gold.technicals.resistance}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Market Factors */}
+                            <div style={{ padding: '20px' }}>
+                                <h3 style={{ fontSize: '17px', marginBottom: '15px', color: '#1f2937' }}>🎯 Market Factors</h3>
+                                {goldSilverData.gold.factors.map((factor, idx) => (
+                                    <div key={idx} style={{
+                                        background: factor.status === 'POSITIVE' ? '#f0fdf4' : factor.status === 'NEGATIVE' ? '#fef2f2' : '#fffbeb',
+                                        padding: '15px',
+                                        marginBottom: '10px',
+                                        borderRadius: '10px',
+                                        border: factor.status === 'POSITIVE' ? '2px solid #22c55e' : factor.status === 'NEGATIVE' ? '2px solid #ef4444' : '2px solid #f59e0b'
+                                    }}>
+                                        <div style={{ fontSize: '24px', marginBottom: '8px' }}>{factor.icon}</div>
+                                        <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#1f2937', marginBottom: '6px' }}>
+                                            {factor.factor}
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: '#4b5563', lineHeight: '1.5' }}>
+                                            {factor.impact}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Seasonal Events */}
+                            <div style={{ padding: '20px', background: '#fafafa' }}>
+                                <h3 style={{ fontSize: '17px', marginBottom: '15px', color: '#1f2937' }}>📅 Important Dates (2026)</h3>
+                                {goldSilverData.gold.seasonalEvents.map((event, idx) => (
+                                    <div key={idx} style={{
+                                        background: '#fff',
+                                        padding: '12px',
+                                        marginBottom: '10px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e5e5e5',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937' }}>
+                                                {event.event}
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                                {event.date}
+                                            </div>
+                                        </div>
+                                        <div style={{
+                                            fontSize: '12px',
+                                            fontWeight: '600',
+                                            color: event.impact.includes('⭐') ? '#ea580c' : event.impact.includes('High') ? '#16a34a' : '#6b7280'
+                                        }}>
+                                            {event.impact}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Related Stocks */}
+                            <div style={{ padding: '20px' }}>
+                                <h3 style={{ fontSize: '17px', marginBottom: '15px', color: '#1f2937' }}>📈 Related Stocks</h3>
+                                <div style={{ display: 'grid', gap: '10px' }}>
+                                    {goldSilverData.gold.relatedStocks.map((stock, idx) => (
+                                        <div key={idx} style={{
+                                            background: '#f9fafb',
+                                            padding: '15px',
+                                            borderRadius: '10px',
+                                            border: '1px solid #e5e5e5',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
+                                            <div>
+                                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>
+                                                    {stock.symbol}
+                                                </div>
+                                                <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                                                    {stock.name}
+                                                </div>
+                                                <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+                                                    {stock.sector}
+                                                </div>
+                                            </div>
+                                            <div style={{
+                                                background: stock.score >= 75 ? '#22c55e' : '#f59e0b',
+                                                color: '#fff',
+                                                padding: '8px 16px',
+                                                borderRadius: '8px',
+                                                fontSize: '18px',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {stock.score}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Silver Analysis (Similar structure) */}
+                        <div style={{
+                            background: '#fff',
+                            margin: '20px',
+                            borderRadius: '15px',
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                            border: `3px solid ${goldSilverData.silver.color}`
+                        }}>
+                            {/* Header */}
+                            <div style={{
+                                background: `linear-gradient(135deg, ${goldSilverData.silver.color} 0%, #64748b 100%)`,
+                                padding: '25px',
+                                color: '#fff'
+                            }}>
+                                <div style={{ fontSize: '50px', marginBottom: '10px' }}>{goldSilverData.silver.symbol}</div>
+                                <h2 style={{ margin: '0 0 15px 0', fontSize: '24px' }}>{goldSilverData.silver.metal}</h2>
+                                <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '5px' }}>
+                                    {goldSilverData.silver.pricePerUnit}
+                                </div>
+                                <div style={{ fontSize: '14px', opacity: 0.9' }}>
+                                    {goldSilverData.silver.unit}
+                                </div>
+                                <div style={{
+                                    display: 'inline-block',
+                                    background: goldSilverData.silver.change.includes('+') ? '#22c55e' : '#ef4444',
+                                    padding: '8px 16px',
+                                    borderRadius: '20px',
+                                    marginTop: '12px',
+                                    fontSize: '16px',
+                                    fontWeight: 'bold'
+                                }}>
+                                    {goldSilverData.silver.change} Today
+                                </div>
+                            </div>
+
+                            {/* Planetary Influence */}
+                            <div style={{
+                                background: '#e0e7ff',
+                                padding: '20px',
+                                borderBottom: '2px solid #818cf8'
+                            }}>
+                                <div style={{ fontSize: '40px', marginBottom: '10px' }}>{goldSilverData.silver.planetIcon}</div>
+                                <h3 style={{ fontSize: '18px', color: '#3730a3', marginBottom: '8px' }}>
+                                    Ruled by {goldSilverData.silver.planet}
+                                </h3>
+                                <div style={{ fontSize: '14px', color: '#4338ca', lineHeight: '1.6', marginBottom: '12px' }}>
+                                    {goldSilverData.silver.planetDescription}
+                                </div>
+                                <div style={{
+                                    background: '#fff',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    border: '2px solid #818cf8',
+                                    fontSize: '14px',
+                                    color: '#3730a3',
+                                    fontWeight: '600'
+                                }}>
+                                    🔮 {goldSilverData.silver.currentTransit}
+                                </div>
+                            </div>
+
+                            {/* Technical, Factors, Events, Stocks - Similar structure to Gold */}
+                            <div style={{ padding: '20px', background: '#fafafa', borderBottom: '1px solid #e5e5e5' }}>
+                                <h3 style={{ fontSize: '17px', marginBottom: '15px', color: '#1f2937' }}>📊 Technical Analysis</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #e5e5e5' }}>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>RSI</div>
+                                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: goldSilverData.silver.technicals.rsi > 50 ? '#22c55e' : '#ef4444' }}>
+                                            {goldSilverData.silver.technicals.rsi}
+                                        </div>
+                                    </div>
+                                    <div style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #e5e5e5' }}>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>MACD</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#16a34a' }}>
+                                            {goldSilverData.silver.technicals.macd}
+                                        </div>
+                                    </div>
+                                    <div style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #e5e5e5' }}>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Support</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937' }}>
+                                            {goldSilverData.silver.technicals.support}
+                                        </div>
+                                    </div>
+                                    <div style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #e5e5e5' }}>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Resistance</div>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937' }}>
+                                            {goldSilverData.silver.technicals.resistance}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ padding: '20px' }}>
+                                <h3 style={{ fontSize: '17px', marginBottom: '15px', color: '#1f2937' }}>🎯 Market Factors</h3>
+                                {goldSilverData.silver.factors.map((factor, idx) => (
+                                    <div key={idx} style={{
+                                        background: factor.status === 'POSITIVE' ? '#f0fdf4' : factor.status === 'NEGATIVE' ? '#fef2f2' : '#fffbeb',
+                                        padding: '15px',
+                                        marginBottom: '10px',
+                                        borderRadius: '10px',
+                                        border: factor.status === 'POSITIVE' ? '2px solid #22c55e' : factor.status === 'NEGATIVE' ? '2px solid #ef4444' : '2px solid #f59e0b'
+                                    }}>
+                                        <div style={{ fontSize: '24px', marginBottom: '8px' }}>{factor.icon}</div>
+                                        <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#1f2937', marginBottom: '6px' }}>
+                                            {factor.factor}
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: '#4b5563', lineHeight: '1.5' }}>
+                                            {factor.impact}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div style={{ padding: '20px', background: '#fafafa' }}>
+                                <h3 style={{ fontSize: '17px', marginBottom: '15px', color: '#1f2937' }}>📅 Important Dates (2026)</h3>
+                                {goldSilverData.silver.seasonalEvents.map((event, idx) => (
+                                    <div key={idx} style={{
+                                        background: '#fff',
+                                        padding: '12px',
+                                        marginBottom: '10px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e5e5e5',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937' }}>
+                                                {event.event}
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                                {event.date}
+                                            </div>
+                                        </div>
+                                        <div style={{
+                                            fontSize: '12px',
+                                            fontWeight: '600',
+                                            color: event.impact.includes('⭐') ? '#ea580c' : event.impact.includes('demand') ? '#16a34a' : '#6b7280'
+                                        }}>
+                                            {event.impact}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div style={{ padding: '20px' }}>
+                                <h3 style={{ fontSize: '17px', marginBottom: '15px', color: '#1f2937' }}>📈 Related Stocks</h3>
+                                <div style={{ display: 'grid', gap: '10px' }}>
+                                    {goldSilverData.silver.relatedStocks.map((stock, idx) => (
+                                        <div key={idx} style={{
+                                            background: '#f9fafb',
+                                            padding: '15px',
+                                            borderRadius: '10px',
+                                            border: '1px solid #e5e5e5',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
+                                            <div>
+                                                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>
+                                                    {stock.symbol}
+                                                </div>
+                                                <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                                                    {stock.name}
+                                                </div>
+                                                <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+                                                    {stock.sector}
+                                                </div>
+                                            </div>
+                                            <div style={{
+                                                background: stock.score >= 75 ? '#22c55e' : '#f59e0b',
+                                                color: '#fff',
+                                                padding: '8px 16px',
+                                                borderRadius: '8px',
+                                                fontSize: '18px',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {stock.score}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Disclaimer */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                            margin: '20px',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            border: '2px solid #fca5a5',
+                            fontSize: '13px',
+                            color: '#7f1d1d',
+                            lineHeight: '1.7'
+                        }}>
+                            ⚠️ <strong>Disclaimer:</strong> Gold and silver prices are subject to market volatility. This analysis combines astrological, technical, and fundamental factors for educational purposes only. Not investment advice. Trade at your own risk.
+                        </div>
+                    </div>
+                );
+            }
+            
+            // Commodities Screen - Oil, Gas, Metals & Agriculture
+            if (screen === 'commodities') {
+                const commoditiesData = [
+                    {
+                        name: 'Crude Oil',
+                        symbol: '🛢️',
+                        price: '₹6,850/barrel',
+                        change: '+1.2%',
+                        planet: 'Surya (Sun) & Mangal (Mars)',
+                        planetIcon: '☉ ♂',
+                        color: '#dc2626',
+                        trend: 'VOLATILE',
+                        description: 'Ruled by Sun (energy) and Mars (fire, war). Geopolitical tensions and energy demand drive prices.',
+                        factors: [
+                            'OPEC+ production cuts',
+                            'Russia-Ukraine geopolitics',
+                            'China demand recovery',
+                            'US strategic reserves'
+                        ],
+                        relatedStocks: ['RELIANCE', 'ONGC', 'BPCL', 'IOC']
+                    },
+                    {
+                        name: 'Natural Gas',
+                        symbol: '🔥',
+                        price: '₹295/mmBtu',
+                        change: '-0.8%',
+                        planet: 'Rahu (North Node)',
+                        planetIcon: '☊',
+                        color: '#ea580c',
+                        trend: 'BEARISH',
+                        description: 'Rahu rules gases and sudden changes. Unpredictable price movements based on weather and supply.',
+                        factors: [
+                            'Winter demand in Europe',
+                            'LNG exports from US',
+                            'Renewable energy shift',
+                            'Storage levels'
+                        ],
+                        relatedStocks: ['GAIL', 'IGL', 'MGL', 'GSPL']
+                    },
+                    {
+                        name: 'Copper',
+                        symbol: '🔶',
+                        price: '₹775/kg',
+                        change: '+2.1%',
+                        planet: 'Shukra (Venus)',
+                        planetIcon: '♀',
+                        color: '#ea580c',
+                        trend: 'BULLISH',
+                        description: 'Venus rules copper and conductivity. EV revolution and electrical infrastructure drive demand.',
+                        factors: [
+                            'EV & battery demand',
+                            'Infrastructure spending',
+                            'China property sector',
+                            'Mine supply constraints'
+                        ],
+                        relatedStocks: ['HINDALCO', 'VEDL', 'HINDCOPPER']
+                    },
+                    {
+                        name: 'Zinc',
+                        symbol: '⚪',
+                        price: '₹265/kg',
+                        change: '+0.5%',
+                        planet: 'Shani (Saturn)',
+                        planetIcon: '♄',
+                        color: '#6366f1',
+                        trend: 'STEADY',
+                        description: 'Saturn rules zinc (anti-corrosion, structure). Steady industrial demand.',
+                        factors: [
+                            'Galvanizing steel demand',
+                            'Construction activity',
+                            'Battery sector growth',
+                            'Global zinc inventories'
+                        ],
+                        relatedStocks: ['HINDZINC', 'VEDL', 'HINDUSTAN ZINC']
+                    },
+                    {
+                        name: 'Aluminum',
+                        symbol: '⬜',
+                        price: '₹215/kg',
+                        change: '+1.4%',
+                        planet: 'Budha (Mercury)',
+                        planetIcon: '☿',
+                        color: '#8b5cf6',
+                        trend: 'BULLISH',
+                        description: 'Mercury rules aluminum (lightweight, communication). Aviation and EV sectors boost demand.',
+                        factors: [
+                            'Aviation recovery',
+                            'EV lightweight materials',
+                            'Power costs (energy intensive)',
+                            'China production limits'
+                        ],
+                        relatedStocks: ['HINDALCO', 'VEDL', 'NALCO']
+                    },
+                    {
+                        name: 'Agricultural Commodities',
+                        symbol: '🌾',
+                        price: 'Various',
+                        change: 'Seasonal',
+                        planet: 'Chandra (Moon) & Shukra (Venus)',
+                        planetIcon: '☽ ♀',
+                        color: '#16a34a',
+                        trend: 'SEASONAL',
+                        description: 'Moon rules agriculture and water. Venus rules crops and fertility. Monsoon critical for India.',
+                        factors: [
+                            '2026 Monsoon forecast: Normal',
+                            'Govt MSP (Minimum Support Price)',
+                            'Export restrictions on wheat/rice',
+                            'Global food inflation'
+                        ],
+                        relatedStocks: ['ITC', 'BRITANNIA', 'DABUR', 'MARICO']
+                    }
+                ];
+
+                return (
+                    <div>
+                        <div className="header" style={{ background: 'linear-gradient(135deg, #059669 0%, #047857 100%)' }}>
+                            <h1>📦 Commodities Analysis</h1>
+                            <p>Energy, Metals & Agriculture with Planetary Insights</p>
+                            <div style={{
+                                background: 'rgba(255,255,255,0.15)',
+                                padding: '12px 20px',
+                                borderRadius: '10px',
+                                marginTop: '12px',
+                                fontSize: '13px',
+                                color: '#fff',
+                                lineHeight: '1.6'
+                            }}>
+                                🌍 Global commodities with Vedic astrology & market analysis<br/>
+                                Educational content • Not trading advice
+                            </div>
+                        </div>
+                        <button className="back-button" onClick={handleBack}>
+                            ← Back to Home
+                        </button>
+
+                        {/* Current Market Overview */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                            margin: '20px',
+                            padding: '20px',
+                            borderRadius: '15px',
+                            border: '2px solid #fbbf24',
+                            boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+                        }}>
+                            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#92400e', marginBottom: '10px' }}>
+                                🌏 Global Commodity Market - January 2026
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#78350f', lineHeight: '1.8' }}>
+                                <strong>Energy:</strong> Oil volatile due to OPEC cuts • Gas prices down<br/>
+                                <strong>Metals:</strong> Industrial metals rally on infrastructure push<br/>
+                                <strong>Agriculture:</strong> Normal monsoon expected • MSP increases<br/>
+                                <strong>Currency:</strong> USD/INR at 83.2 • Affects import costs
+                            </div>
+                        </div>
+
+                        {/* Commodities Cards */}
+                        {commoditiesData.map((commodity, index) => (
+                            <div key={index} style={{
+                                background: '#fff',
+                                margin: '20px',
+                                borderRadius: '15px',
+                                overflow: 'hidden',
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                                border: `3px solid ${commodity.color}`
+                            }}>
+                                {/* Header */}
+                                <div style={{
+                                    background: `linear-gradient(135deg, ${commodity.color} 0%, ${commodity.color}dd 100%)`,
+                                    padding: '20px',
+                                    color: '#fff'
+                                }}>
+                                    <div style={{ fontSize: '40px', marginBottom: '10px' }}>{commodity.symbol}</div>
+                                    <h2 style={{ margin: '0 0 10px 0', fontSize: '22px' }}>{commodity.name}</h2>
+                                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '5px' }}>
+                                        {commodity.price}
+                                    </div>
+                                    <div style={{
+                                        display: 'inline-block',
+                                        background: commodity.change.includes('+') ? '#22c55e' : commodity.change.includes('-') ? '#ef4444' : '#f59e0b',
+                                        padding: '6px 14px',
+                                        borderRadius: '20px',
+                                        marginTop: '8px',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {commodity.change === 'Seasonal' ? 'Seasonal Variation' : `${commodity.change} Today`}
+                                    </div>
+                                    <div style={{
+                                        marginTop: '10px',
+                                        padding: '8px 14px',
+                                        background: 'rgba(255,255,255,0.2)',
+                                        borderRadius: '8px',
+                                        fontSize: '13px',
+                                        display: 'inline-block'
+                                    }}>
+                                        Trend: {commodity.trend}
+                                    </div>
+                                </div>
+
+                                {/* Planetary Influence */}
+                                <div style={{
+                                    background: '#f9fafb',
+                                    padding: '20px',
+                                    borderBottom: '2px solid #e5e7eb'
+                                }}>
+                                    <div style={{ fontSize: '35px', marginBottom: '10px' }}>{commodity.planetIcon}</div>
+                                    <h3 style={{ fontSize: '17px', color: '#1f2937', marginBottom: '8px' }}>
+                                        Ruled by {commodity.planet}
+                                    </h3>
+                                    <div style={{ fontSize: '14px', color: '#4b5563', lineHeight: '1.6' }}>
+                                        {commodity.description}
+                                    </div>
+                                </div>
+
+                                {/* Key Factors */}
+                                <div style={{ padding: '20px' }}>
+                                    <h3 style={{ fontSize: '16px', marginBottom: '12px', color: '#1f2937' }}>🎯 Key Factors:</h3>
+                                    <div style={{ display: 'grid', gap: '10px' }}>
+                                        {commodity.factors.map((factor, idx) => (
+                                            <div key={idx} style={{
+                                                background: '#f0fdf4',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #bbf7d0',
+                                                fontSize: '14px',
+                                                color: '#166534'
+                                            }}>
+                                                • {factor}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Related Stocks */}
+                                <div style={{ padding: '20px', background: '#fafafa' }}>
+                                    <h3 style={{ fontSize: '16px', marginBottom: '12px', color: '#1f2937' }}>📈 Related Indian Stocks:</h3>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                        {commodity.relatedStocks.map((stock, idx) => (
+                                            <div key={idx} style={{
+                                                background: '#fff',
+                                                padding: '10px 16px',
+                                                borderRadius: '8px',
+                                                border: '2px solid #e5e7eb',
+                                                fontSize: '14px',
+                                                fontWeight: '600',
+                                                color: '#374151',
+                                                cursor: 'pointer'
+                                            }}>
+                                                {stock}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* MCX Trading Info */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                            margin: '20px',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            border: '2px solid #60a5fa'
+                        }}>
+                            <h3 style={{ fontSize: '17px', color: '#1e3a8a', marginBottom: '12px' }}>
+                                ℹ️ MCX Trading Hours
+                            </h3>
+                            <div style={{ fontSize: '14px', color: '#1e40af', lineHeight: '1.8' }}>
+                                <strong>Morning Session:</strong> 9:00 AM - 5:00 PM<br/>
+                                <strong>Evening Session:</strong> 5:00 PM - 11:30/11:55 PM<br/>
+                                <strong>Best Time:</strong> 9:30 AM - 11:30 AM (high volatility)<br/>
+                                <strong>Platform:</strong> MCX (Multi Commodity Exchange of India)
+                            </div>
+                        </div>
+
+                        {/* Disclaimer */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                            margin: '20px',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            border: '2px solid #fca5a5',
+                            fontSize: '13px',
+                            color: '#7f1d1d',
+                            lineHeight: '1.7'
+                        }}>
+                            ⚠️ <strong>Risk Warning:</strong> Commodity trading is highly volatile and risky. Prices affected by global events, weather, geopolitics. This analysis is educational only. Consult registered commodity advisors before trading.
                         </div>
                     </div>
                 );
