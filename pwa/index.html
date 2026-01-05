@@ -1089,24 +1089,42 @@
                         
                         const SAMCO_API = 'http://localhost:3002';
                         
-                        // Fetch options for stocks that our analysis recommends
-                        // We'll match these with our stock analysis to generate BUY recommendations
+                        // Top 20 Most Liquid Option Stocks (2 strikes per stock: ATM + ITM)
+                        // Total: 20 stocks × 2 strikes × 2 types = 80 API calls (~2 min load time)
                         const stocksToFetch = [
-                            { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1560, 1580, 1600] },
-                            { symbol: 'SBIN', expiry: '2026-01-27', strikes: [800, 820, 840] },
-                            { symbol: 'TMCV', expiry: '2026-01-27', strikes: [900, 920, 940] },  // Fixed: TATAMOTORS → TMCV
-                            { symbol: 'ITC', expiry: '2026-01-27', strikes: [460, 470, 480] },
-                            { symbol: 'AXISBANK', expiry: '2026-01-27', strikes: [1100, 1120, 1140] },
+                            { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1560, 1580] },      // Mega cap
+                            { symbol: 'TCS', expiry: '2026-01-27', strikes: [4200, 4250] },           // IT
+                            { symbol: 'HDFCBANK', expiry: '2026-01-27', strikes: [1700, 1720] },      // Banking
+                            { symbol: 'INFY', expiry: '2026-01-27', strikes: [1900, 1920] },          // IT
+                            { symbol: 'ICICIBANK', expiry: '2026-01-27', strikes: [1250, 1270] },     // Banking
+                            { symbol: 'SBIN', expiry: '2026-01-27', strikes: [800, 820] },            // PSU Bank
+                            { symbol: 'BHARTIARTL', expiry: '2026-01-27', strikes: [1600, 1620] },    // Telecom
+                            { symbol: 'ITC', expiry: '2026-01-27', strikes: [460, 470] },             // FMCG
+                            { symbol: 'KOTAKBANK', expiry: '2026-01-27', strikes: [1900, 1920] },     // Banking
+                            { symbol: 'LT', expiry: '2026-01-27', strikes: [3600, 3650] },            // Infra
+                            { symbol: 'AXISBANK', expiry: '2026-01-27', strikes: [1100, 1120] },      // Banking
+                            { symbol: 'HINDUNILVR', expiry: '2026-01-27', strikes: [2400, 2420] },    // FMCG
+                            { symbol: 'MARUTI', expiry: '2026-01-27', strikes: [11000, 11200] },      // Auto
+                            { symbol: 'BAJFINANCE', expiry: '2026-01-27', strikes: [7000, 7100] },    // NBFC
+                            { symbol: 'SUNPHARMA', expiry: '2026-01-27', strikes: [1700, 1720] },     // Pharma
+                            { symbol: 'TMCV', expiry: '2026-01-27', strikes: [900, 920] },            // Auto (TATAMOTORS)
+                            { symbol: 'WIPRO', expiry: '2026-01-27', strikes: [580, 590] },           // IT
+                            { symbol: 'ADANIENT', expiry: '2026-01-27', strikes: [2400, 2450] },      // Conglomerate
+                            { symbol: 'TATASTEEL', expiry: '2026-01-27', strikes: [140, 145] },       // Metals
+                            { symbol: 'M&M', expiry: '2026-01-27', strikes: [2800, 2850] },           // Auto
                         ];
                         
                         const allOptions = [];
+                        const totalCalls = stocksToFetch.length * 2 * 2; // 20 stocks × 2 strikes × 2 types = 80
+                        let completedCalls = 0;
                         
                         for (const stock of stocksToFetch) {
                             for (const strike of stock.strikes) {
                                 try {
                                     // Fetch CALL option
+                                    completedCalls++;
                                     const callUrl = `${SAMCO_API}/api/option-chain?symbol=${stock.symbol}&expiry=${stock.expiry}&strike=${strike}&type=CE`;
-                                    console.log(`Fetching CALL: ${stock.symbol} ${strike}CE`);
+                                    console.log(`[${completedCalls}/${totalCalls}] Fetching CALL: ${stock.symbol} ${strike}CE`);
                                     const callRes = await fetch(callUrl);
                                     if (callRes.ok) {
                                         const callData = await callRes.json();
@@ -1140,8 +1158,9 @@
                                     await new Promise(resolve => setTimeout(resolve, 1500));
                                     
                                     // Fetch PUT option
+                                    completedCalls++;
                                     const putUrl = `${SAMCO_API}/api/option-chain?symbol=${stock.symbol}&expiry=${stock.expiry}&strike=${strike}&type=PE`;
-                                    console.log(`Fetching PUT: ${stock.symbol} ${strike}PE`);
+                                    console.log(`[${completedCalls}/${totalCalls}] Fetching PUT: ${stock.symbol} ${strike}PE`);
                                     const putRes = await fetch(putUrl);
                                     if (putRes.ok) {
                                         const putData = await putRes.json();
@@ -1252,35 +1271,21 @@
                             };
                         }));
                         
-                        // Group by stock symbol and pick BEST option per stock (not just top 3)
-                        const callsByStock = {};
-                        optionsWithAnalysis
-                            .filter(opt => opt.optionType === 'CALL' && opt.matchesSignal)
-                            .forEach(opt => {
-                                if (!callsByStock[opt.underLyingSymbol] || opt.optionScore > callsByStock[opt.underLyingSymbol].optionScore) {
-                                    callsByStock[opt.underLyingSymbol] = opt;
-                                }
-                            });
+                        console.log(`📊 Analyzed ${optionsWithAnalysis.length} options from 20 stocks`);
                         
-                        const calls = Object.values(callsByStock)
-                            .sort((a, b) => b.optionScore - a.optionScore); // Sort by option quality score
+                        // Select Top 5 BEST options across ALL stocks (mix of CALLs and PUTs)
+                        const allMatchingOptions = optionsWithAnalysis
+                            .filter(opt => opt.matchesSignal)
+                            .sort((a, b) => b.optionScore - a.optionScore)
+                            .slice(0, 5); // Top 5 highest scoring options regardless of type
                         
-                        console.log('📞 Best CALL per stock (Bullish):', calls.map(c => `${c.underLyingSymbol}: Score ${c.optionScore.toFixed(1)}`));
+                        // Split into CALLs and PUTs for display
+                        const calls = allMatchingOptions.filter(opt => opt.optionType === 'CALL');
+                        const puts = allMatchingOptions.filter(opt => opt.optionType === 'PUT');
                         
-                        // Group by stock symbol and pick BEST option per stock
-                        const putsByStock = {};
-                        optionsWithAnalysis
-                            .filter(opt => opt.optionType === 'PUT' && opt.matchesSignal)
-                            .forEach(opt => {
-                                if (!putsByStock[opt.underLyingSymbol] || opt.optionScore > putsByStock[opt.underLyingSymbol].optionScore) {
-                                    putsByStock[opt.underLyingSymbol] = opt;
-                                }
-                            });
-                        
-                        const puts = Object.values(putsByStock)
-                            .sort((a, b) => b.optionScore - a.optionScore); // Sort by option quality score
-                        
-                        console.log('📉 Best PUT per stock (Bearish):', puts.map(p => `${p.underLyingSymbol}: Score ${p.optionScore.toFixed(1)}`));
+                        console.log('🏆 Top 5 Options Selected:');
+                        console.log('📞 CALLs:', calls.map(c => `${c.underLyingSymbol} ${c.strikePrice} - Score: ${c.optionScore.toFixed(1)}`));
+                        console.log('📉 PUTs:', puts.map(p => `${p.underLyingSymbol} ${p.strikePrice} - Score: ${p.optionScore.toFixed(1)}`));
                         
                         setTopCalls(calls);
                         setTopPuts(puts);
