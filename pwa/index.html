@@ -1106,9 +1106,11 @@
                                     const callRes = await fetch(callUrl);
                                     if (callRes.ok) {
                                         const callData = await callRes.json();
+                                        console.log('Call response:', callData);
                                         if (callData.success && callData.data) {
                                             // Transform Samco field names to match display expectations
                                             const opt = callData.data;
+                                            console.log('Adding CALL option:', opt.tradingSymbol);
                                             allOptions.push({
                                                 tradingSymbol: opt.tradingSymbol,
                                                 underLyingSymbol: opt.underlyingSymbol,
