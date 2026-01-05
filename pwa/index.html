@@ -1089,10 +1089,13 @@
                         
                         const SAMCO_API = 'http://localhost:3002';
                         
-                        // Using RELIANCE only (confirmed working) with multiple strikes
-                        // Expiry: Jan 27, 2026 (confirmed valid)
+                        // Using liquid stocks with Jan 27, 2026 expiry (confirmed valid)
                         const stocksToFetch = [
-                            { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1540, 1560, 1580, 1600, 1620, 1640] },
+                            { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1560, 1580, 1600] },
+                            { symbol: 'SBIN', expiry: '2026-01-27', strikes: [800, 820, 840] },
+                            { symbol: 'TATAMOTORS', expiry: '2026-01-27', strikes: [900, 920, 940] },
+                            { symbol: 'ITC', expiry: '2026-01-27', strikes: [460, 470, 480] },
+                            { symbol: 'AXISBANK', expiry: '2026-01-27', strikes: [1100, 1120, 1140] },
                         ];
                         
                         const allOptions = [];
