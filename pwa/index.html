@@ -1107,9 +1107,9 @@
                                     if (callRes.ok) {
                                         const callData = await callRes.json();
                                         console.log('Call response:', callData);
-                                        if (callData.success && callData.data) {
+                                        if (callData.success && callData.options && callData.options.length > 0) {
                                             // Transform Samco field names to match display expectations
-                                            const opt = callData.data;
+                                            const opt = callData.options[0];
                                             console.log('Adding CALL option:', opt.tradingSymbol);
                                             allOptions.push({
                                                 tradingSymbol: opt.tradingSymbol,
@@ -1141,9 +1141,9 @@
                                     const putRes = await fetch(putUrl);
                                     if (putRes.ok) {
                                         const putData = await putRes.json();
-                                        if (putData.success && putData.data) {
+                                        if (putData.success && putData.options && putData.options.length > 0) {
                                             // Transform Samco field names to match display expectations
-                                            const opt = putData.data;
+                                            const opt = putData.options[0];
                                             allOptions.push({
                                                 tradingSymbol: opt.tradingSymbol,
                                                 underLyingSymbol: opt.underlyingSymbol,
