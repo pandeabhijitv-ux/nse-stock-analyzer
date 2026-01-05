@@ -1087,35 +1087,85 @@
                         
                         console.info('� Generating options analysis with real-time price data...');
                         
-                        // Generate top options recommendations across all stocks
-                        const allStocks = [];
+                        const SAMCO_API = 'http://localhost:3002';
                         
-                        for (const sectorName of Object.keys(SECTORS)) {
-                            for (const symbol of SECTORS[sectorName]) {
-                                // Generate stock with option analysis
-                                // Note: NSE blocks cloud providers, so we use simulation based on real prices
-                                const stock = await generateMockStock(symbol, sectorName, false, null);
-                                allStocks.push(stock);
+                        // Define stocks with their expiry dates and strike prices to fetch
+                        const stocksToFetch = [
+                            { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1580, 1600, 1620] },
+                            { symbol: 'INFY', expiry: '2026-01-30', strikes: [1900, 1950, 2000] },
+                            { symbol: 'TCS', expiry: '2026-01-30', strikes: [4200, 4300, 4400] },
+                            { symbol: 'HDFCBANK', expiry: '2026-01-30', strikes: [1800, 1850, 1900] },
+                            { symbol: 'ICICIBANK', expiry: '2026-01-29', strikes: [1300, 1320, 1340] },
+                        ];
+                        
+                        const allOptions = [];
+                        
+                        for (const stock of stocksToFetch) {
+                            for (const strike of stock.strikes) {
+                                try {
+                                    // Fetch CALL option
+                                    const callUrl = `${SAMCO_API}/api/option-chain?symbol=${stock.symbol}&expiry=${stock.expiry}&strike=${strike}&type=CE`;
+                                    console.log(`Fetching CALL: ${stock.symbol} ${strike}CE`);
+                                    const callRes = await fetch(callUrl);
+                                    if (callRes.ok) {
+                                        const callData = await callRes.json();
+                                        if (callData.success && callData.data) {
+                                            allOptions.push({ ...callData.data, optionType: 'CALL' });
+                                        }
+                                    }
+                                    
+                                    // Rate limiting: 1.5 seconds between requests
+                                    await new Promise(resolve => setTimeout(resolve, 1500));
+                                    
+                                    // Fetch PUT option
+                                    const putUrl = `${SAMCO_API}/api/option-chain?symbol=${stock.symbol}&expiry=${stock.expiry}&strike=${strike}&type=PE`;
+                                    console.log(`Fetching PUT: ${stock.symbol} ${strike}PE`);
+                                    const putRes = await fetch(putUrl);
+                                    if (putRes.ok) {
+                                        const putData = await putRes.json();
+                                        if (putData.success && putData.data) {
+                                            allOptions.push({ ...putData.data, optionType: 'PUT' });
+                                        }
+                                    }
+                                    
+                                    // Rate limiting
+                                    await new Promise(resolve => setTimeout(resolve, 1500));
+                                    
+                                } catch (error) {
+                                    console.error(`Error fetching ${stock.symbol} ${strike}:`, error.message);
+                                }
                             }
                         }
                         
-                        console.log('📊 Options analysis complete:', allStocks.length, 'stocks analyzed');
+                        console.log('📊 Fetched options:', allOptions.length);
                         
-                        // Filter and rank best Call options (BULLISH sentiment)
-                        const calls = allStocks
-                            .filter(s => s.options && s.options.optionType === 'CALL')
-                            .sort((a, b) => b.options.confidence - a.options.confidence)
+                        // Rank CALL options by IV * Delta * (OI/1M) score
+                        const calls = allOptions
+                            .filter(opt => opt.optionType === 'CALL')
+                            .map(opt => ({
+                                ...opt,
+                                score: parseFloat(opt.impliedVolatility || 0) * 
+                                       Math.abs(parseFloat(opt.delta || 0)) * 
+                                       (parseFloat(opt.openInterest || 0) / 1000000)
+                            }))
+                            .sort((a, b) => b.score - a.score)
                             .slice(0, 10);
                         
-                        console.log('📞 Top Calls found:', calls.length);
+                        console.log('📞 Top Calls:', calls.length);
                         
-                        // Filter and rank best Put options (BEARISH sentiment)
-                        const puts = allStocks
-                            .filter(s => s.options && s.options.optionType === 'PUT')
-                            .sort((a, b) => b.options.confidence - a.options.confidence)
+                        // Rank PUT options by IV * |Delta| * (OI/1M) score
+                        const puts = allOptions
+                            .filter(opt => opt.optionType === 'PUT')
+                            .map(opt => ({
+                                ...opt,
+                                score: parseFloat(opt.impliedVolatility || 0) * 
+                                       Math.abs(parseFloat(opt.delta || 0)) * 
+                                       (parseFloat(opt.openInterest || 0) / 1000000)
+                            }))
+                            .sort((a, b) => b.score - a.score)
                             .slice(0, 10);
                         
-                        console.log('📉 Top Puts found:', puts.length);
+                        console.log('📉 Top Puts:', puts.length);
                         
                         setTopCalls(calls);
                         setTopPuts(puts);
@@ -3139,14 +3189,14 @@
                             <h1>🎯 Options Trading</h1>
                             <p>Pre-Market Call & Put Recommendations</p>
                             
-                            {/* CRITICAL WARNING - SIMULATED DATA */}
+                            {/* LIVE NSE DATA VIA SAMCO */}
                             <div style={{
-                                background: 'linear-gradient(135deg, #ff5252 0%, #f44336 100%)',
+                                background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
                                 padding: '20px',
                                 borderRadius: '12px',
                                 marginTop: '15px',
                                 marginBottom: '15px',
-                                boxShadow: '0 4px 12px rgba(244, 67, 54, 0.4)',
+                                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.4)',
                                 border: '3px solid #fff',
                                 animation: 'pulse 2s infinite'
                             }}>
@@ -3157,7 +3207,7 @@
                                     marginBottom: '10px',
                                     textAlign: 'center'
                                 }}>
-                                    ⚠️ EDUCATIONAL / ANALYSIS TOOL ⚠️
+                                    🚀 LIVE NSE DATA - SAMCO API 🚀
                                 </div>
                                 <div style={{
                                     fontSize: '14px',
@@ -3166,9 +3216,9 @@
                                     fontWeight: '600',
                                     lineHeight: '1.6'
                                 }}>
-                                    Analysis uses <strong>real-time stock prices</strong> and <strong>technical indicators</strong>.<br/>
-                                    Option premiums are <strong>calculated estimates</strong> (NSE blocks direct API access).<br/>
-                                    <strong>⚠️ NOT INVESTMENT ADVICE - Verify with NSE before trading!</strong>
+                                    Real-time option chain data from <strong>NSE</strong> via <strong>Samco Trade API</strong>.<br/>
+                                    Live premiums, Greeks, Open Interest, and Volume.<br/>
+                                    <strong>⚠️ NOT INVESTMENT ADVICE - Trade at your own risk!</strong>
                                 </div>
                             </div>
                             
@@ -3236,9 +3286,9 @@
                                     🟢 Top Call Options
                                 </h2>
                                 
-                                {topCalls.map((stock, index) => (
+                                {topCalls.map((opt, index) => (
                                     <div 
-                                        key={stock.symbol}
+                                        key={opt.tradingSymbol || index}
                                         className="options-trade-card"
                                         style={{ 
                                             background: 'white',
@@ -3252,19 +3302,19 @@
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
                                             <div>
                                                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
-                                                    {stock.symbol || 'N/A'}
+                                                    {opt.tradingSymbol || opt.stockSymbol || 'N/A'}
                                                     <span style={{
-                                                        background: '#ff5252',
+                                                        background: '#4CAF50',
                                                         color: 'white',
                                                         fontSize: '10px',
                                                         padding: '2px 8px',
                                                         borderRadius: '4px',
                                                         marginLeft: '8px',
                                                         fontWeight: 'bold'
-                                                    }}>DEMO</span>
+                                                    }}>LIVE</span>
                                                 </div>
                                                 <div style={{ fontSize: '13px', color: '#666' }}>
-                                                    {String(stock.name || stock.symbol || 'Unknown')}
+                                                    {opt.underLyingSymbol || opt.stockSymbol} - {opt.expiryDate}
                                                 </div>
                                             </div>
                                             <div style={{ 
@@ -3275,7 +3325,7 @@
                                                 fontSize: '13px',
                                                 fontWeight: 'bold'
                                             }}>
-                                                {stock.options.confidence}% Sure
+                                                IV: {parseFloat(opt.impliedVolatility || 0).toFixed(1)}%
                                             </div>
                                         </div>
                                         
@@ -3286,15 +3336,15 @@
                                             marginBottom: '12px'
                                         }}>
                                             <div>
-                                                <div style={{ fontSize: '12px', color: '#666' }}>Current Price</div>
+                                                <div style={{ fontSize: '12px', color: '#666' }}>Spot Price</div>
                                                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-                                                    ₹{stock.price}
+                                                    ₹{opt.spotPrice}
                                                 </div>
                                             </div>
                                             <div>
                                                 <div style={{ fontSize: '12px', color: '#666' }}>Strike Price</div>
                                                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-                                                    ₹{stock.options.strikes.recommended}
+                                                    ₹{opt.strikePrice}
                                                 </div>
                                             </div>
                                         </div>
@@ -3306,66 +3356,37 @@
                                             marginBottom: '10px'
                                         }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Entry (Premium):</span>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>LTP (Premium):</span>
                                                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#2e7d32' }}>
-                                                    ₹{stock.options.strikes.recommended === stock.options.strikes.otm 
-                                                        ? stock.options.premiums.call_otm
-                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
-                                                        ? stock.options.premiums.call_atm
-                                                        : stock.options.premiums.call_itm}
+                                                    ₹{opt.lastTradedPrice} 
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Target:</span>
-                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#4CAF50' }}>
-                                                    ₹{(() => {
-                                                        const currentPrice = parseFloat(stock.price);
-                                                        const targetPrice = parseFloat(stock.targetPrice);
-                                                        const priceMove = targetPrice - currentPrice;
-                                                        const strikePrice = stock.options.strikes.recommended;
-                                                        const premium = parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
-                                                            ? stock.options.premiums.call_otm
-                                                            : stock.options.strikes.recommended === stock.options.strikes.atm
-                                                            ? stock.options.premiums.call_atm
-                                                            : stock.options.premiums.call_itm);
-                                                        
-                                                        // If stock reaches target, option intrinsic value = max(0, targetPrice - strikePrice)
-                                                        const intrinsicValue = Math.max(0, targetPrice - strikePrice);
-                                                        // Add time value (30-50% of intrinsic for near-term expiry)
-                                                        const timeValue = intrinsicValue * 0.4;
-                                                        const targetPremium = Math.max(intrinsicValue + timeValue, premium * 1.2); // At least 20% gain
-                                                        return targetPremium.toFixed(2);
-                                                    })()}
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Change:</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: opt.change >= 0 ? '#4CAF50' : '#d32f2f' }}>
+                                                    {opt.change >= 0 ? '+' : ''}{opt.change} ({opt.changePer}%)
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Expected By:</span>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Delta:</span>
                                                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#1976d2' }}>
-                                                    📅 {stock.options.targetDate}
+                                                    {parseFloat(opt.delta).toFixed(3)}
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Stop Loss (Max 5%):</span>
-                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#d32f2f' }}>
-                                                    ₹{(() => {
-                                                        const premium = parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
-                                                            ? stock.options.premiums.call_otm
-                                                            : stock.options.strikes.recommended === stock.options.strikes.atm
-                                                            ? stock.options.premiums.call_atm
-                                                            : stock.options.premiums.call_itm);
-                                                        const maxStopLoss = premium * 0.95;
-                                                        return maxStopLoss.toFixed(2);
-                                                    })()}
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Open Interest:</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>
+                                                    {(opt.openInterest / 1000000).toFixed(2)}M
                                                 </span>
                                             </div>
                                         </div>
                                         
                                         <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
-                                            📅 Expiry: {stock.options.expiry.recommended} | VIX: {stock.options.vix}
+                                            📊 Volume: {(opt.volume / 1000000).toFixed(2)}M | Gamma: {parseFloat(opt.gamma).toFixed(4)}
                                         </div>
                                         
                                         <div style={{ fontSize: '13px', color: '#2e7d32', fontWeight: '600' }}>
-                                            💡 {stock.options.strategy}
+                                            💡 Theta: {parseFloat(opt.theta).toFixed(2)} | Vega: {parseFloat(opt.vega).toFixed(2)}
                                         </div>
                                     </div>
                                 ))}
@@ -3390,9 +3411,9 @@
                                     🔴 Top Put Options
                                 </h2>
                                 
-                                {topPuts.map((stock, index) => (
+                                {topPuts.map((opt, index) => (
                                     <div 
-                                        key={stock.symbol}
+                                        key={opt.tradingSymbol}
                                         className="options-trade-card"
                                         style={{ 
                                             background: 'white',
@@ -3406,19 +3427,19 @@
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
                                             <div>
                                                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
-                                                    {stock.symbol || 'N/A'}
+                                                    {opt.tradingSymbol || 'N/A'}
                                                     <span style={{
-                                                        background: '#ff5252',
+                                                        background: '#4CAF50',
                                                         color: 'white',
                                                         fontSize: '10px',
                                                         padding: '2px 8px',
                                                         borderRadius: '4px',
                                                         marginLeft: '8px',
                                                         fontWeight: 'bold'
-                                                    }}>DEMO</span>
+                                                    }}>LIVE</span>
                                                 </div>
                                                 <div style={{ fontSize: '13px', color: '#666' }}>
-                                                    {String(stock.name || stock.symbol || 'Unknown')}
+                                                    {String(opt.underLyingSymbol || opt.tradingSymbol || 'Unknown')}
                                                 </div>
                                             </div>
                                             <div style={{ 
@@ -3429,7 +3450,7 @@
                                                 fontSize: '13px',
                                                 fontWeight: 'bold'
                                             }}>
-                                                {stock.options.confidence}% Sure
+                                                IV: {parseFloat(opt.impliedVolatility).toFixed(2)}%
                                             </div>
                                         </div>
                                         
@@ -3440,15 +3461,15 @@
                                             marginBottom: '12px'
                                         }}>
                                             <div>
-                                                <div style={{ fontSize: '12px', color: '#666' }}>Current Price</div>
+                                                <div style={{ fontSize: '12px', color: '#666' }}>Spot Price</div>
                                                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-                                                    ₹{stock.price}
+                                                    ₹{opt.spotPrice}
                                                 </div>
                                             </div>
                                             <div>
                                                 <div style={{ fontSize: '12px', color: '#666' }}>Strike Price</div>
                                                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-                                                    ₹{stock.options.strikes.recommended}
+                                                    ₹{opt.strikePrice}
                                                 </div>
                                             </div>
                                         </div>
@@ -3460,60 +3481,37 @@
                                             marginBottom: '10px'
                                         }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Entry (Premium):</span>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>LTP (Last Price):</span>
                                                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#c62828' }}>
-                                                    ₹{stock.options.strikes.recommended === stock.options.strikes.otm 
-                                                        ? stock.options.premiums.put_otm
-                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
-                                                        ? stock.options.premiums.put_atm
-                                                        : stock.options.premiums.put_itm}
+                                                    ₹{opt.lastTradedPrice}
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Target:</span>
-                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#4CAF50' }}>
-                                                    ₹{(() => {
-                                                        const currentPrice = parseFloat(stock.price);
-                                                        const targetPrice = parseFloat(stock.targetPrice);
-                                                        const strikePrice = stock.options.strikes.recommended;
-                                                        const premium = parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
-                                                            ? stock.options.premiums.put_otm
-                                                            : stock.options.strikes.recommended === stock.options.strikes.atm
-                                                            ? stock.options.premiums.put_atm
-                                                            : stock.options.premiums.put_itm);
-                                                        
-                                                        // For PUT: intrinsic = max(0, strikePrice - targetPrice)
-                                                        const intrinsicValue = Math.max(0, strikePrice - targetPrice);
-                                                        const timeValue = intrinsicValue * 0.4;
-                                                        const targetPremium = Math.max(intrinsicValue + timeValue, premium * 1.2);
-                                                        return targetPremium.toFixed(2);
-                                                    })()}
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Change:</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: opt.change >= 0 ? '#4CAF50' : '#d32f2f' }}>
+                                                    {opt.change >= 0 ? '+' : ''}{opt.change} ({opt.changePer}%)
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Expected By:</span>
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Delta:</span>
                                                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#1976d2' }}>
-                                                    📅 {stock.options.targetDate}
+                                                    {parseFloat(opt.delta).toFixed(3)}
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span style={{ fontSize: '13px', color: '#666' }}>Stop Loss (50%):</span>
-                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#d32f2f' }}>
-                                                    ₹{(parseFloat(stock.options.strikes.recommended === stock.options.strikes.otm 
-                                                        ? stock.options.premiums.put_otm
-                                                        : stock.options.strikes.recommended === stock.options.strikes.atm
-                                                        ? stock.options.premiums.put_atm
-                                                        : stock.options.premiums.put_itm) * 0.5).toFixed(2)}
+                                                <span style={{ fontSize: '13px', color: '#666' }}>Open Interest:</span>
+                                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>
+                                                    {(opt.openInterest / 1000000).toFixed(2)}M
                                                 </span>
                                             </div>
                                         </div>
                                         
                                         <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
-                                            📅 Expiry: {stock.options.expiry.recommended} | VIX: {stock.options.vix}
+                                            📊 Volume: {(opt.volume / 1000000).toFixed(2)}M | Gamma: {parseFloat(opt.gamma).toFixed(4)}
                                         </div>
                                         
                                         <div style={{ fontSize: '13px', color: '#c62828', fontWeight: '600' }}>
-                                            💡 {stock.options.strategy}
+                                            💡 Theta: {parseFloat(opt.theta).toFixed(2)} | Vega: {parseFloat(opt.vega).toFixed(2)}
                                         </div>
                                     </div>
                                 ))}
