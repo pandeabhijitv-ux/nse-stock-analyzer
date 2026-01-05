@@ -1089,11 +1089,12 @@
                         
                         const SAMCO_API = 'http://localhost:3002';
                         
-                        // Using liquid stocks with Jan 27, 2026 expiry (confirmed valid)
+                        // Fetch options for stocks that our analysis recommends
+                        // We'll match these with our stock analysis to generate BUY recommendations
                         const stocksToFetch = [
                             { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1560, 1580, 1600] },
                             { symbol: 'SBIN', expiry: '2026-01-27', strikes: [800, 820, 840] },
-                            { symbol: 'TATAMOTORS', expiry: '2026-01-27', strikes: [900, 920, 940] },
+                            { symbol: 'TMCV', expiry: '2026-01-27', strikes: [900, 920, 940] },  // Fixed: TATAMOTORS → TMCV
                             { symbol: 'ITC', expiry: '2026-01-27', strikes: [460, 470, 480] },
                             { symbol: 'AXISBANK', expiry: '2026-01-27', strikes: [1100, 1120, 1140] },
                         ];
@@ -1179,33 +1180,59 @@
                         
                         console.log('📊 Fetched options:', allOptions.length);
                         
-                        // Rank CALL options by IV * Delta * (OI/1M) score
-                        const calls = allOptions
-                            .filter(opt => opt.optionType === 'CALL')
-                            .map(opt => ({
+                        // Add stock analysis and recommendations to each option
+                        const optionsWithAnalysis = await Promise.all(allOptions.map(async (opt) => {
+                            // Generate stock analysis for the underlying symbol
+                            const stockAnalysis = await generateMockStock(opt.underLyingSymbol, 'Options', false, null);
+                            
+                            // Determine if this option matches our recommendation
+                            const isBullish = stockAnalysis.options.optionType === 'CALL';
+                            const isBearish = stockAnalysis.options.optionType === 'PUT';
+                            const matchesSignal = (opt.optionType === 'CALL' && isBullish) || 
+                                                  (opt.optionType === 'PUT' && isBearish);
+                            
+                            // Calculate profit potential
+                            const currentPremium = parseFloat(opt.lastTradedPrice);
+                            const targetPremium = currentPremium * 1.3; // 30% profit target
+                            const stopLoss = currentPremium * 0.85; // 15% stop-loss
+                            
+                            // Generate recommendation reasoning
+                            let reasoning = '';
+                            if (isBullish && opt.optionType === 'CALL') {
+                                reasoning = `${opt.underLyingSymbol} showing bullish signals (Score: ${stockAnalysis.score}/100). Stock expected to move from ₹${opt.spotPrice} towards ₹${stockAnalysis.targetPrice}. This CALL option benefits from upward movement.`;
+                            } else if (isBearish && opt.optionType === 'PUT') {
+                                reasoning = `${opt.underLyingSymbol} showing bearish signals (Score: ${stockAnalysis.score}/100). Stock at ₹${opt.spotPrice} may decline. This PUT option benefits from downward movement.`;
+                            }
+                            
+                            return {
                                 ...opt,
-                                score: parseFloat(opt.impliedVolatility || 0) * 
-                                       Math.abs(parseFloat(opt.delta || 0)) * 
-                                       (parseFloat(opt.openInterest || 0) / 1000000)
-                            }))
-                            .sort((a, b) => b.score - a.score)
+                                matchesSignal,
+                                stockScore: stockAnalysis.score,
+                                stockRecommendation: stockAnalysis.recommendation,
+                                confidence: stockAnalysis.options.confidence,
+                                reasoning,
+                                targetPremium: targetPremium.toFixed(2),
+                                stopLoss: stopLoss.toFixed(2),
+                                profitPotential: ((targetPremium - currentPremium) / currentPremium * 100).toFixed(1),
+                                riskReward: ((targetPremium - currentPremium) / (currentPremium - stopLoss)).toFixed(2)
+                            };
+                        }));
+                        
+                        // Filter only options that match our analysis signals and rank them
+                        const calls = optionsWithAnalysis
+                            .filter(opt => opt.optionType === 'CALL' && opt.matchesSignal)
+                            .sort((a, b) => b.confidence - a.confidence || b.stockScore - a.stockScore)
                             .slice(0, 10);
                         
-                        console.log('📞 Top Calls:', calls.length);
+                        console.log('📞 Top CALL Recommendations (Bullish stocks):', calls.length);
                         
-                        // Rank PUT options by IV * |Delta| * (OI/1M) score
-                        const puts = allOptions
-                            .filter(opt => opt.optionType === 'PUT')
-                            .map(opt => ({
-                                ...opt,
-                                score: parseFloat(opt.impliedVolatility || 0) * 
-                                       Math.abs(parseFloat(opt.delta || 0)) * 
-                                       (parseFloat(opt.openInterest || 0) / 1000000)
-                            }))
-                            .sort((a, b) => b.score - a.score)
+                        // Filter only PUT options that match bearish signals
+                        const puts = optionsWithAnalysis
+                            .filter(opt => opt.optionType === 'PUT' && opt.matchesSignal)
+                            .sort((a, b) => b.confidence - a.confidence || (a.stockScore - b.stockScore)) // Lower score = more bearish
                             .slice(0, 10);
                         
-                        console.log('📉 Top Puts:', puts.length);
+                        console.log('📉 Top PUT Recommendations (Bearish stocks):', puts.length);
                         
                         setTopCalls(calls);
                         setTopPuts(puts);
@@ -3344,30 +3371,47 @@
                                                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
                                                     {opt.tradingSymbol || opt.stockSymbol || 'N/A'}
                                                     <span style={{
-                                                        background: '#4CAF50',
+                                                        background: '#FF9800',
                                                         color: 'white',
-                                                        fontSize: '10px',
-                                                        padding: '2px 8px',
+                                                        fontSize: '11px',
+                                                        padding: '3px 10px',
                                                         borderRadius: '4px',
                                                         marginLeft: '8px',
                                                         fontWeight: 'bold'
-                                                    }}>LIVE</span>
+                                                    }}>🔥 BUY NOW</span>
                                                 </div>
                                                 <div style={{ fontSize: '13px', color: '#666' }}>
-                                                    {opt.underLyingSymbol || opt.stockSymbol} - {opt.expiryDate}
+                                                    {opt.underLyingSymbol || opt.stockSymbol} • Expires: {new Date(opt.expiryDate).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'})}
                                                 </div>
                                             </div>
                                             <div style={{ 
                                                 background: '#4CAF50',
                                                 color: 'white',
-                                                padding: '6px 12px',
+                                                padding: '8px 14px',
                                                 borderRadius: '20px',
-                                                fontSize: '13px',
+                                                fontSize: '14px',
                                                 fontWeight: 'bold'
                                             }}>
-                                                IV: {parseFloat(opt.impliedVolatility || 0).toFixed(1)}%
+                                                {opt.confidence || 75}% Sure
                                             </div>
                                         </div>
+                                        
+                                        {/* Recommendation Reasoning */}
+                                        {opt.reasoning && (
+                                            <div style={{
+                                                background: '#e8f5e9',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                marginBottom: '12px',
+                                                fontSize: '13px',
+                                                color: '#2e7d32',
+                                                lineHeight: '1.6',
+                                                border: '1px solid #a5d6a7'
+                                            }}>
+                                                <strong>💡 Why Buy This:</strong><br/>
+                                                {opt.reasoning}
+                                            </div>
+                                        )}
                                         
                                         <div style={{ 
                                             display: 'grid',
