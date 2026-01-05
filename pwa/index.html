@@ -1818,6 +1818,25 @@
                                 </div>
                             )}
                             
+                            {/* Graha Gochar - Astrological Impact */}
+                            <div 
+                                className="sector-card"
+                                style={{ 
+                                    borderLeftColor: '#9333ea',
+                                    background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)'
+                                }}
+                                onClick={() => {
+                                    setScreen('grahaGochar');
+                                    setSelectedSector('Graha Gochar');
+                                }}
+                            >
+                                <h3>🔮 Graha Gochar Impact</h3>
+                                <p>Planetary transits & sector analysis</p>
+                                <span className="stock-count" style={{ background: '#9333ea', color: 'white' }}>
+                                    Vedic astrology insights
+                                </span>
+                            </div>
+                            
                             {/* Browse by Sectors - Collapsible */}
                             <div 
                                 className="sector-card"
@@ -1947,6 +1966,276 @@
                                     <span className="stock-count">{SECTORS[sectorName].length} stocks</span>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                );
+            }
+            
+            // Graha Gochar Screen - Astrological Impact Analysis
+            if (screen === 'grahaGochar') {
+                const grahaGochars = [
+                    {
+                        planet: 'Guru (Jupiter)',
+                        sign: 'Vrishabha (Taurus)',
+                        period: 'May 2025 - April 2026',
+                        color: '#fbbf24',
+                        icon: '♃',
+                        impact: 'POSITIVE',
+                        strength: 'Strong',
+                        sectors: [
+                            { name: 'Banking & Finance', impact: '⬆️ Very Bullish', reason: 'Jupiter rules wealth, strong in Taurus. Expansion in banking sector, mergers expected.', examples: ['HDFCBANK', 'ICICIBANK', 'SBIN', 'AXISBANK'] },
+                            { name: 'Luxury Goods & Jewelry', impact: '⬆️ Highly Positive', reason: 'Venus-ruled Taurus + Jupiter = luxury boom. Wedding season + gold demand rising.', examples: ['TITAN', 'KALYANIJEWEL', 'PCJEWELLER'] },
+                            { name: 'Real Estate', impact: '⬆️ Bullish', reason: 'Property market expansion, good time for land/realty stocks.', examples: ['DLF', 'GODREJPROP', 'OBEROIRLTY', 'PRESTIGE'] },
+                            { name: 'Agriculture & FMCG', impact: '⬆️ Moderate Positive', reason: 'Taurus is earth sign, agriculture/food sectors benefit.', examples: ['ITC', 'BRITANNIA', 'DABUR', 'HINDUNILVR'] }
+                        ],
+                        description: 'Jupiter in Taurus brings growth in financial sectors, wealth accumulation, and luxury markets. This is a strong period for banks and high-value goods.'
+                    },
+                    {
+                        planet: 'Shani (Saturn)',
+                        sign: 'Kumbha (Aquarius)',
+                        period: 'Jan 2023 - March 2026',
+                        color: '#6366f1',
+                        icon: '♄',
+                        impact: 'TRANSFORMATIVE',
+                        strength: 'Very Strong (Own Sign)',
+                        sectors: [
+                            { name: 'Technology & IT', impact: '⬆️ Very Bullish', reason: 'Saturn in Aquarius favors innovation, AI, blockchain. Tech transformation accelerating.', examples: ['TCS', 'INFY', 'WIPRO', 'TECHM', 'HCLTECH'] },
+                            { name: 'Telecom', impact: '⬆️ Positive', reason: '5G expansion, digital infrastructure growth. Saturn in own sign strengthens.', examples: ['BHARTIARTL', 'IDEA'] },
+                            { name: 'Power & Utilities', impact: '⬆️ Steady Growth', reason: 'Saturn rules structure, Aquarius rules electricity. Renewable energy push.', examples: ['NTPC', 'POWERGRID', 'TATAPOWER', 'ADANIGREEN'] },
+                            { name: 'Aviation', impact: '⚠️ Cautious', reason: 'Aquarius rules air travel, but Saturn brings delays/restrictions. Slow recovery.', examples: ['INDIGO'] }
+                        ],
+                        description: 'Saturn in its own sign Aquarius is powerful. This period brings technological advancement, but also tests traditional systems. Long-term gains in tech sector.'
+                    },
+                    {
+                        planet: 'Rahu (North Node)',
+                        sign: 'Meena (Pisces)',
+                        period: 'Oct 2023 - May 2025',
+                        color: '#8b5cf6',
+                        icon: '☊',
+                        impact: 'VOLATILE',
+                        strength: 'Unpredictable',
+                        sectors: [
+                            { name: 'Pharma & Healthcare', impact: '⬆️ Strong Growth', reason: 'Pisces rules healing, Rahu amplifies. Medical innovation, biotech boom expected.', examples: ['SUNPHARMA', 'DRREDDY', 'CIPLA', 'DIVISLAB', 'AUROPHARMA'] },
+                            { name: 'Chemicals & Specialty Chem', impact: '⬆️ Bullish', reason: 'Pisces is water sign, Rahu brings sudden changes. Chemical sector expansion.', examples: ['PIDILITIND', 'AARTI', 'SRF', 'DEEPAKFERT'] },
+                            { name: 'Oil & Gas', impact: '⬇️ Volatile', reason: 'Pisces is water element, oil is connected. Expect price swings and uncertainty.', examples: ['RELIANCE', 'ONGC', 'BPCL', 'IOC'] },
+                            { name: 'Spirituality & Media', impact: '⬆️ Moderate', reason: 'Pisces rules spirituality, creativity. Media and entertainment sector active.', examples: ['ZEE', 'PVRINOX'] }
+                        ],
+                        description: 'Rahu in Pisces creates unconventional opportunities in pharma and healthcare. Expect sudden breakthroughs but also volatility. Good for research-based stocks.'
+                    },
+                    {
+                        planet: 'Mangal (Mars)',
+                        sign: 'Currently Transiting',
+                        period: 'Changes Every 45 Days',
+                        color: '#ef4444',
+                        icon: '♂',
+                        impact: 'SHORT-TERM',
+                        strength: 'Fast-Moving',
+                        sectors: [
+                            { name: 'Defense & Aerospace', impact: '⬆️ Bullish (Always)', reason: 'Mars rules defense, weapons, military. Strong sector regardless of transit.', examples: ['HAL', 'BEL', 'BDL'] },
+                            { name: 'Metal & Steel', impact: '⬆️ Positive', reason: 'Mars rules metals, iron, steel production. Infrastructure push benefits.', examples: ['TATASTEEL', 'JSWSTEEL', 'HINDALCO', 'VEDL'] },
+                            { name: 'Energy & Power', impact: '⬆️ Active', reason: 'Mars represents energy, fire. Power generation and distribution favored.', examples: ['NTPC', 'POWERGRID', 'ADANIGREEN'] },
+                            { name: 'Sports & Fitness', impact: '⬆️ Growing', reason: 'Mars rules sports, physical activity. Fitness industry expanding.', examples: [] }
+                        ],
+                        description: 'Mars gives short-term momentum to sectors it influences. Defense and metals are always strong with Mars energy.'
+                    }
+                ];
+
+                return (
+                    <div>
+                        <div className="header" style={{ background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)' }}>
+                            <h1>🔮 Graha Gochar Impact</h1>
+                            <p>Vedic Astrology & Stock Market Analysis</p>
+                            <div style={{
+                                background: 'rgba(255,255,255,0.15)',
+                                padding: '12px 20px',
+                                borderRadius: '10px',
+                                marginTop: '12px',
+                                fontSize: '13px',
+                                color: '#fff',
+                                lineHeight: '1.6'
+                            }}>
+                                ℹ️ This analysis combines planetary transits with market trends for educational purposes.<br/>
+                                Not investment advice • Use alongside technical analysis
+                            </div>
+                        </div>
+                        <button className="back-button" onClick={handleBack}>
+                            ← Back to Home
+                        </button>
+                        
+                        {/* Current Date & Panchang Info */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                            margin: '20px',
+                            padding: '20px',
+                            borderRadius: '15px',
+                            border: '2px solid #fbbf24',
+                            boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+                        }}>
+                            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#92400e', marginBottom: '10px' }}>
+                                📅 Current Period: January 2026
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#78350f', lineHeight: '1.8' }}>
+                                <strong>Active Transits:</strong> Jupiter in Taurus • Saturn in Aquarius • Rahu in Pisces<br/>
+                                <strong>Market Sentiment:</strong> Cautiously Optimistic • Tech & Banking sectors favored<br/>
+                                <strong>Best Trading Days:</strong> Thursday (Guru), Saturday (Shani) traditionally favorable
+                            </div>
+                        </div>
+
+                        {/* Planetary Transits */}
+                        {grahaGochars.map((graha, index) => (
+                            <div key={index} style={{
+                                background: '#fff',
+                                margin: '20px',
+                                padding: '0',
+                                borderRadius: '15px',
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                                overflow: 'hidden',
+                                border: `3px solid ${graha.color}`
+                            }}>
+                                {/* Planet Header */}
+                                <div style={{
+                                    background: `linear-gradient(135deg, ${graha.color} 0%, ${graha.color}dd 100%)`,
+                                    padding: '20px',
+                                    color: '#fff'
+                                }}>
+                                    <div style={{ fontSize: '40px', marginBottom: '10px' }}>{graha.icon}</div>
+                                    <h2 style={{ margin: '0 0 8px 0', fontSize: '22px' }}>{graha.planet}</h2>
+                                    <div style={{ fontSize: '15px', opacity: 0.95, fontWeight: '600' }}>
+                                        Transit: {graha.sign}
+                                    </div>
+                                    <div style={{ fontSize: '13px', opacity: 0.85, marginTop: '5px' }}>
+                                        Period: {graha.period}
+                                    </div>
+                                    <div style={{
+                                        display: 'inline-block',
+                                        background: 'rgba(255,255,255,0.25)',
+                                        padding: '6px 15px',
+                                        borderRadius: '20px',
+                                        marginTop: '12px',
+                                        fontSize: '13px',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {graha.impact} • Strength: {graha.strength}
+                                    </div>
+                                </div>
+
+                                {/* Description */}
+                                <div style={{
+                                    padding: '20px',
+                                    background: '#fafafa',
+                                    borderBottom: '1px solid #e5e5e5'
+                                }}>
+                                    <div style={{
+                                        fontSize: '14px',
+                                        color: '#374151',
+                                        lineHeight: '1.7',
+                                        fontStyle: 'italic'
+                                    }}>
+                                        {graha.description}
+                                    </div>
+                                </div>
+
+                                {/* Sector Impacts */}
+                                <div style={{ padding: '20px' }}>
+                                    <h3 style={{
+                                        fontSize: '17px',
+                                        color: '#1f2937',
+                                        marginBottom: '15px',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        🎯 Sector Impact Analysis:
+                                    </h3>
+                                    
+                                    {graha.sectors.map((sector, idx) => (
+                                        <div key={idx} style={{
+                                            background: sector.impact.includes('⬆️') ? '#f0fdf4' : sector.impact.includes('⬇️') ? '#fef2f2' : '#fffbeb',
+                                            padding: '15px',
+                                            marginBottom: '12px',
+                                            borderRadius: '10px',
+                                            border: sector.impact.includes('⬆️') ? '2px solid #22c55e' : sector.impact.includes('⬇️') ? '2px solid #ef4444' : '2px solid #f59e0b'
+                                        }}>
+                                            <div style={{
+                                                fontSize: '16px',
+                                                fontWeight: 'bold',
+                                                color: '#1f2937',
+                                                marginBottom: '8px'
+                                            }}>
+                                                {sector.name}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '14px',
+                                                fontWeight: '600',
+                                                color: sector.impact.includes('⬆️') ? '#16a34a' : sector.impact.includes('⬇️') ? '#dc2626' : '#ea580c',
+                                                marginBottom: '8px'
+                                            }}>
+                                                {sector.impact}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '13px',
+                                                color: '#4b5563',
+                                                lineHeight: '1.6',
+                                                marginBottom: '10px'
+                                            }}>
+                                                <strong>Why:</strong> {sector.reason}
+                                            </div>
+                                            {sector.examples.length > 0 && (
+                                                <div style={{
+                                                    marginTop: '10px'
+                                                }}>
+                                                    <div style={{
+                                                        fontSize: '12px',
+                                                        color: '#6b7280',
+                                                        marginBottom: '8px',
+                                                        fontWeight: '600'
+                                                    }}>
+                                                        Example Stocks:
+                                                    </div>
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        flexWrap: 'wrap',
+                                                        gap: '8px'
+                                                    }}>
+                                                        {sector.examples.map((stock, stockIdx) => (
+                                                            <span key={stockIdx} style={{
+                                                                background: '#fff',
+                                                                padding: '6px 12px',
+                                                                borderRadius: '6px',
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                color: '#6366f1',
+                                                                border: '1px solid #e0e7ff',
+                                                                cursor: 'pointer'
+                                                            }}>
+                                                                {stock}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Disclaimer Footer */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                            margin: '20px',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            border: '2px solid #fca5a5',
+                            fontSize: '13px',
+                            color: '#7f1d1d',
+                            lineHeight: '1.7'
+                        }}>
+                            <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                                ⚠️ Important Disclaimer:
+                            </div>
+                            <strong>Educational Content:</strong> This astrological analysis is for educational and informational purposes only.<br/>
+                            <strong>Not Financial Advice:</strong> Planetary transits should be used as one of many factors, not the sole basis for trading decisions.<br/>
+                            <strong>Risk Warning:</strong> Stock market investments carry risk. Always do your own research and consult certified financial advisors.<br/>
+                            <strong>Combine Methods:</strong> Use this alongside technical analysis, fundamental analysis, and market news for best results.
                         </div>
                     </div>
                 );
