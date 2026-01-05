@@ -1089,33 +1089,23 @@
                         
                         const SAMCO_API = 'http://localhost:3002';
                         
-                        // Top 20 Most Liquid Option Stocks (2 strikes per stock: ATM + ITM)
-                        // Total: 20 stocks × 2 strikes × 2 types = 80 API calls (~2 min load time)
+                        // Top 9 Verified Liquid Option Stocks (confirmed working with 2026-01-27 expiry)
+                        // Each with 2 strikes: ATM + ITM for better strike selection
+                        // Total: 9 stocks × 2 strikes × 2 types = 36 API calls (~54 sec load time)
                         const stocksToFetch = [
                             { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1560, 1580] },      // Mega cap
                             { symbol: 'TCS', expiry: '2026-01-27', strikes: [4200, 4250] },           // IT
-                            { symbol: 'HDFCBANK', expiry: '2026-01-27', strikes: [1700, 1720] },      // Banking
-                            { symbol: 'INFY', expiry: '2026-01-27', strikes: [1900, 1920] },          // IT
                             { symbol: 'ICICIBANK', expiry: '2026-01-27', strikes: [1250, 1270] },     // Banking
-                            { symbol: 'SBIN', expiry: '2026-01-27', strikes: [800, 820] },            // PSU Bank
                             { symbol: 'BHARTIARTL', expiry: '2026-01-27', strikes: [1600, 1620] },    // Telecom
-                            { symbol: 'ITC', expiry: '2026-01-27', strikes: [460, 470] },             // FMCG
                             { symbol: 'KOTAKBANK', expiry: '2026-01-27', strikes: [1900, 1920] },     // Banking
-                            { symbol: 'LT', expiry: '2026-01-27', strikes: [3600, 3650] },            // Infra
                             { symbol: 'AXISBANK', expiry: '2026-01-27', strikes: [1100, 1120] },      // Banking
-                            { symbol: 'HINDUNILVR', expiry: '2026-01-27', strikes: [2400, 2420] },    // FMCG
                             { symbol: 'MARUTI', expiry: '2026-01-27', strikes: [11000, 11200] },      // Auto
-                            { symbol: 'BAJFINANCE', expiry: '2026-01-27', strikes: [7000, 7100] },    // NBFC
                             { symbol: 'SUNPHARMA', expiry: '2026-01-27', strikes: [1700, 1720] },     // Pharma
-                            { symbol: 'TMCV', expiry: '2026-01-27', strikes: [900, 920] },            // Auto (TATAMOTORS)
-                            { symbol: 'WIPRO', expiry: '2026-01-27', strikes: [580, 590] },           // IT
-                            { symbol: 'ADANIENT', expiry: '2026-01-27', strikes: [2400, 2450] },      // Conglomerate
                             { symbol: 'TATASTEEL', expiry: '2026-01-27', strikes: [140, 145] },       // Metals
-                            { symbol: 'M&M', expiry: '2026-01-27', strikes: [2800, 2850] },           // Auto
                         ];
                         
                         const allOptions = [];
-                        const totalCalls = stocksToFetch.length * 2 * 2; // 20 stocks × 2 strikes × 2 types = 80
+                        const totalCalls = stocksToFetch.length * 2 * 2; // 9 stocks × 2 strikes × 2 types = 36
                         let completedCalls = 0;
                         
                         for (const stock of stocksToFetch) {
@@ -1271,7 +1261,7 @@
                             };
                         }));
                         
-                        console.log(`📊 Analyzed ${optionsWithAnalysis.length} options from 20 stocks`);
+                        console.log(`📊 Analyzed ${optionsWithAnalysis.length} options from 9 verified stocks`);
                         
                         // Select Top 5 BEST options across ALL stocks (mix of CALLs and PUTs)
                         const allMatchingOptions = optionsWithAnalysis
