@@ -1,0 +1,209 @@
+{
+  "discoveryDate": "2026-01-05T13:32:28.862Z",
+  "expiry": "2026-01-26",
+  "totalTested": 50,
+  "workingCount": 0,
+  "workingStocks": [],
+  "failedStocks": [
+    {
+      "symbol": "RELIANCE",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "TCS",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=TCS&expiryDate=2026-01-26&strikePrice=4250&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "HDFCBANK",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "INFY",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=INFY&expiryDate=2026-01-26&strikePrice=1900&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "ICICIBANK",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "HINDUNILVR",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=HINDUNILVR&expiryDate=2026-01-26&strikePrice=2400&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "ITC",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "SBIN",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=SBIN&expiryDate=2026-01-26&strikePrice=800&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "BHARTIARTL",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "KOTAKBANK",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=KOTAKBANK&expiryDate=2026-01-26&strikePrice=1900&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "LT",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "AXISBANK",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=AXISBANK&expiryDate=2026-01-26&strikePrice=1100&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "ASIANPAINT",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "MARUTI",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=MARUTI&expiryDate=2026-01-26&strikePrice=11000&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "SUNPHARMA",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "BAJFINANCE",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=BAJFINANCE&expiryDate=2026-01-26&strikePrice=7000&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "TITAN",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "WIPRO",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=WIPRO&expiryDate=2026-01-26&strikePrice=580&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "ULTRACEMCO",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "ONGC",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=ONGC&expiryDate=2026-01-26&strikePrice=250&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "NTPC",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "POWERGRID",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=POWERGRID&expiryDate=2026-01-26&strikePrice=310&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "M&M",
+      "error": "API Error: 500"
+    },
+    {
+      "symbol": "TATAMOTORS",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=TATAMOTORS&expiryDate=2026-01-26&strikePrice=900&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "TMCV",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "JSWSTEEL",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=JSWSTEEL&expiryDate=2026-01-26&strikePrice=940&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "TATASTEEL",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "HINDALCO",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=HINDALCO&expiryDate=2026-01-26&strikePrice=640&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "ADANIENT",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "ADANIPORTS",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=ADANIPORTS&expiryDate=2026-01-26&strikePrice=1200&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "COALINDIA",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "TECHM",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=TECHM&expiryDate=2026-01-26&strikePrice=1640&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "HCLTECH",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "DRREDDY",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=DRREDDY&expiryDate=2026-01-26&strikePrice=1240&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "CIPLA",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "APOLLOHOSP",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=APOLLOHOSP&expiryDate=2026-01-26&strikePrice=6900&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "DIVISLAB",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "EICHERMOT",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=EICHERMOT&expiryDate=2026-01-26&strikePrice=4900&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "HEROMOTOCO",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "BAJAJFINSV",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=BAJAJFINSV&expiryDate=2026-01-26&strikePrice=1700&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "BAJAJ-AUTO",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "GRASIM",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=GRASIM&expiryDate=2026-01-26&strikePrice=2520&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "INDUSINDBK",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "SHRIRAMFIN",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=SHRIRAMFIN&expiryDate=2026-01-26&strikePrice=2920&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "NESTLEIND",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "BRITANNIA",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=BRITANNIA&expiryDate=2026-01-26&strikePrice=4900&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "TATACONSUM",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "BPCL",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=BPCL&expiryDate=2026-01-26&strikePrice=290&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    },
+    {
+      "symbol": "IOC",
+      "error": "API Error: 400"
+    },
+    {
+      "symbol": "SBILIFE",
+      "error": "invalid json response body at https://tradeapi.samco.in/option/optionChain?exchange=NFO&searchSymbolName=SBILIFE&expiryDate=2026-01-26&strikePrice=1440&optionType=CE reason: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    }
+  ]
+}

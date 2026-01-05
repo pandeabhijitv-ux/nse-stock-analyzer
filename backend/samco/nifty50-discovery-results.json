@@ -1,0 +1,383 @@
+{
+  "date": "2026-01-05T13:42:06.023Z",
+  "expiry": "2026-01-27",
+  "totalTested": 50,
+  "working": [
+    {
+      "success": true,
+      "symbol": "ADANIENT",
+      "spotPrice": 2279.5,
+      "recommendedStrikes": [
+        2230,
+        2280
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "ADANIPORTS",
+      "spotPrice": 1493,
+      "recommendedStrikes": [
+        1460,
+        1490
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "APOLLOHOSP",
+      "spotPrice": 7083,
+      "recommendedStrikes": [
+        6940,
+        7080
+      ],
+      "testedStrike": 10000
+    },
+    {
+      "success": true,
+      "symbol": "ASIANPAINT",
+      "spotPrice": 2815.6,
+      "recommendedStrikes": [
+        2760,
+        2820
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "AXISBANK",
+      "spotPrice": 1285.8,
+      "recommendedStrikes": [
+        1260,
+        1290
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "BAJAJ-AUTO",
+      "spotPrice": 9497.5,
+      "recommendedStrikes": [
+        9310,
+        9500
+      ],
+      "testedStrike": 10000
+    },
+    {
+      "success": true,
+      "symbol": "BAJAJFINSV",
+      "spotPrice": 2039.2,
+      "recommendedStrikes": [
+        2000,
+        2040
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "BPCL",
+      "spotPrice": 377.9,
+      "recommendedStrikes": [
+        370,
+        380
+      ],
+      "testedStrike": 400
+    },
+    {
+      "success": true,
+      "symbol": "BHARTIARTL",
+      "spotPrice": 2105,
+      "recommendedStrikes": [
+        2060,
+        2110
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "CIPLA",
+      "spotPrice": 1519.8,
+      "recommendedStrikes": [
+        1490,
+        1520
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "COALINDIA",
+      "spotPrice": 427.45,
+      "recommendedStrikes": [
+        420,
+        430
+      ],
+      "testedStrike": 200
+    },
+    {
+      "success": true,
+      "symbol": "DRREDDY",
+      "spotPrice": 1250,
+      "recommendedStrikes": [
+        1230,
+        1250
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "EICHERMOT",
+      "spotPrice": 7482.5,
+      "recommendedStrikes": [
+        7330,
+        7480
+      ],
+      "testedStrike": 10000
+    },
+    {
+      "success": true,
+      "symbol": "GRASIM",
+      "spotPrice": 2848.9,
+      "recommendedStrikes": [
+        2790,
+        2850
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "HCLTECH",
+      "spotPrice": 1607.6,
+      "recommendedStrikes": [
+        1580,
+        1610
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "HDFCLIFE",
+      "spotPrice": 759.3,
+      "recommendedStrikes": [
+        740,
+        760
+      ],
+      "testedStrike": 400
+    },
+    {
+      "success": true,
+      "symbol": "HINDUNILVR",
+      "spotPrice": 2384.1,
+      "recommendedStrikes": [
+        2340,
+        2380
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "ICICIBANK",
+      "spotPrice": 1371.5,
+      "recommendedStrikes": [
+        1340,
+        1370
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "ITC",
+      "spotPrice": 349.7,
+      "recommendedStrikes": [
+        340,
+        350
+      ],
+      "testedStrike": 200
+    },
+    {
+      "success": true,
+      "symbol": "INFY",
+      "spotPrice": 1606.4,
+      "recommendedStrikes": [
+        1570,
+        1610
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "JSWSTEEL",
+      "spotPrice": 1185.9,
+      "recommendedStrikes": [
+        1160,
+        1190
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "KOTAKBANK",
+      "spotPrice": 2190.9,
+      "recommendedStrikes": [
+        2150,
+        2190
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "MARUTI",
+      "spotPrice": 17155,
+      "recommendedStrikes": [
+        16810,
+        17160
+      ],
+      "testedStrike": 10000
+    },
+    {
+      "success": true,
+      "symbol": "NTPC",
+      "spotPrice": 350.6,
+      "recommendedStrikes": [
+        340,
+        350
+      ],
+      "testedStrike": 200
+    },
+    {
+      "success": true,
+      "symbol": "NESTLEIND",
+      "spotPrice": 1314.6,
+      "recommendedStrikes": [
+        1290,
+        1310
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "ONGC",
+      "spotPrice": 238.09,
+      "recommendedStrikes": [
+        230,
+        240
+      ],
+      "testedStrike": 200
+    },
+    {
+      "success": true,
+      "symbol": "POWERGRID",
+      "spotPrice": 271.65,
+      "recommendedStrikes": [
+        270,
+        270
+      ],
+      "testedStrike": 200
+    },
+    {
+      "success": true,
+      "symbol": "RELIANCE",
+      "spotPrice": 1578.1,
+      "recommendedStrikes": [
+        1550,
+        1580
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "SBILIFE",
+      "spotPrice": 2075.6,
+      "recommendedStrikes": [
+        2030,
+        2080
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "SUNPHARMA",
+      "spotPrice": 1728.9,
+      "recommendedStrikes": [
+        1690,
+        1730
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "TCS",
+      "spotPrice": 3216.1,
+      "recommendedStrikes": [
+        3150,
+        3220
+      ],
+      "testedStrike": 1800
+    },
+    {
+      "success": true,
+      "symbol": "TATACONSUM",
+      "spotPrice": 1182.1,
+      "recommendedStrikes": [
+        1160,
+        1180
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "TATASTEEL",
+      "spotPrice": 185.72,
+      "recommendedStrikes": [
+        180,
+        190
+      ],
+      "testedStrike": 200
+    },
+    {
+      "success": true,
+      "symbol": "TECHM",
+      "spotPrice": 1596.9,
+      "recommendedStrikes": [
+        1560,
+        1600
+      ],
+      "testedStrike": 1600
+    },
+    {
+      "success": true,
+      "symbol": "ULTRACEMCO",
+      "spotPrice": 12087,
+      "recommendedStrikes": [
+        11850,
+        12090
+      ],
+      "testedStrike": 10000
+    },
+    {
+      "success": true,
+      "symbol": "WIPRO",
+      "spotPrice": 263.3,
+      "recommendedStrikes": [
+        260,
+        260
+      ],
+      "testedStrike": 200
+    }
+  ],
+  "failing": [
+    "BAJFINANCE",
+    "BRITANNIA",
+    "DIVISLAB",
+    "HDFCBANK",
+    "HEROMOTOCO",
+    "HINDALCO",
+    "INDUSINDBK",
+    "LT",
+    "M&M",
+    "SBIN",
+    "TATAMOTORS",
+    "TITAN",
+    "UPL",
+    "ZOMATO"
+  ]
+}

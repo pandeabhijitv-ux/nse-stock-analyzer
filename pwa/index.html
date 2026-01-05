@@ -1089,23 +1089,44 @@
                         
                         const SAMCO_API = 'http://localhost:3002';
                         
-                        // Top 9 Verified Liquid Option Stocks (confirmed working with 2026-01-27 expiry)
-                        // Each with 2 strikes: ATM + ITM for better strike selection
-                        // Total: 9 stocks × 2 strikes × 2 types = 36 API calls (~54 sec load time)
+                        // Top 30 High-Liquidity Nifty Stocks (verified for 2026-01-27 expiry)
+                        // Auto-discovered strikes based on current spot prices (ATM + 2% ITM)
+                        // Total: 30 stocks × 2 strikes × 2 types = 120 API calls (~3 min load time)
                         const stocksToFetch = [
-                            { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1560, 1580] },      // Mega cap
-                            { symbol: 'TCS', expiry: '2026-01-27', strikes: [4200, 4250] },           // IT
-                            { symbol: 'ICICIBANK', expiry: '2026-01-27', strikes: [1250, 1270] },     // Banking
-                            { symbol: 'BHARTIARTL', expiry: '2026-01-27', strikes: [1600, 1620] },    // Telecom
-                            { symbol: 'KOTAKBANK', expiry: '2026-01-27', strikes: [1900, 1920] },     // Banking
-                            { symbol: 'AXISBANK', expiry: '2026-01-27', strikes: [1100, 1120] },      // Banking
-                            { symbol: 'MARUTI', expiry: '2026-01-27', strikes: [11000, 11200] },      // Auto
-                            { symbol: 'SUNPHARMA', expiry: '2026-01-27', strikes: [1700, 1720] },     // Pharma
-                            { symbol: 'TATASTEEL', expiry: '2026-01-27', strikes: [140, 145] },       // Metals
+                            { symbol: 'RELIANCE', expiry: '2026-01-27', strikes: [1550, 1580] },      // Spot: ₹1578
+                            { symbol: 'TCS', expiry: '2026-01-27', strikes: [3150, 3220] },           // Spot: ₹3216
+                            { symbol: 'ICICIBANK', expiry: '2026-01-27', strikes: [1340, 1370] },     // Spot: ₹1371
+                            { symbol: 'INFY', expiry: '2026-01-27', strikes: [1570, 1610] },          // Spot: ₹1606
+                            { symbol: 'BHARTIARTL', expiry: '2026-01-27', strikes: [2060, 2110] },    // Spot: ₹2105
+                            { symbol: 'AXISBANK', expiry: '2026-01-27', strikes: [1260, 1290] },      // Spot: ₹1285
+                            { symbol: 'KOTAKBANK', expiry: '2026-01-27', strikes: [2150, 2190] },     // Spot: ₹2190
+                            { symbol: 'ITC', expiry: '2026-01-27', strikes: [340, 350] },             // Spot: ₹349
+                            { symbol: 'HINDUNILVR', expiry: '2026-01-27', strikes: [2340, 2380] },    // Spot: ₹2384
+                            { symbol: 'SUNPHARMA', expiry: '2026-01-27', strikes: [1690, 1730] },     // Spot: ₹1728
+                            { symbol: 'MARUTI', expiry: '2026-01-27', strikes: [16810, 17160] },      // Spot: ₹17155
+                            { symbol: 'TATASTEEL', expiry: '2026-01-27', strikes: [180, 190] },       // Spot: ₹185
+                            { symbol: 'HCLTECH', expiry: '2026-01-27', strikes: [1580, 1610] },       // Spot: ₹1607
+                            { symbol: 'TECHM', expiry: '2026-01-27', strikes: [1560, 1600] },         // Spot: ₹1596
+                            { symbol: 'WIPRO', expiry: '2026-01-27', strikes: [260, 260] },           // Spot: ₹263
+                            { symbol: 'ADANIENT', expiry: '2026-01-27', strikes: [2230, 2280] },      // Spot: ₹2279
+                            { symbol: 'ADANIPORTS', expiry: '2026-01-27', strikes: [1460, 1490] },    // Spot: ₹1493
+                            { symbol: 'ASIANPAINT', expiry: '2026-01-27', strikes: [2760, 2820] },    // Spot: ₹2815
+                            { symbol: 'BAJAJ-AUTO', expiry: '2026-01-27', strikes: [9310, 9500] },    // Spot: ₹9497
+                            { symbol: 'BAJAJFINSV', expiry: '2026-01-27', strikes: [2000, 2040] },    // Spot: ₹2039
+                            { symbol: 'JSWSTEEL', expiry: '2026-01-27', strikes: [1160, 1190] },      // Spot: ₹1185
+                            { symbol: 'ULTRACEMCO', expiry: '2026-01-27', strikes: [11850, 12090] },  // Spot: ₹12087
+                            { symbol: 'GRASIM', expiry: '2026-01-27', strikes: [2790, 2850] },        // Spot: ₹2848
+                            { symbol: 'CIPLA', expiry: '2026-01-27', strikes: [1490, 1520] },         // Spot: ₹1519
+                            { symbol: 'DRREDDY', expiry: '2026-01-27', strikes: [1230, 1250] },       // Spot: ₹1250
+                            { symbol: 'APOLLOHOSP', expiry: '2026-01-27', strikes: [6940, 7080] },    // Spot: ₹7083
+                            { symbol: 'EICHERMOT', expiry: '2026-01-27', strikes: [7330, 7480] },     // Spot: ₹7482
+                            { symbol: 'BPCL', expiry: '2026-01-27', strikes: [370, 380] },            // Spot: ₹377
+                            { symbol: 'NTPC', expiry: '2026-01-27', strikes: [340, 350] },            // Spot: ₹350
+                            { symbol: 'SBILIFE', expiry: '2026-01-27', strikes: [2030, 2080] },       // Spot: ₹2075
                         ];
                         
                         const allOptions = [];
-                        const totalCalls = stocksToFetch.length * 2 * 2; // 9 stocks × 2 strikes × 2 types = 36
+                        const totalCalls = stocksToFetch.length * 2 * 2; // 30 stocks × 2 strikes × 2 types = 120
                         let completedCalls = 0;
                         
                         for (const stock of stocksToFetch) {
@@ -1261,7 +1282,7 @@
                             };
                         }));
                         
-                        console.log(`📊 Analyzed ${optionsWithAnalysis.length} options from 9 verified stocks`);
+                        console.log(`📊 Analyzed ${optionsWithAnalysis.length} options from 30 high-liquidity stocks`);
                         
                         // Select Top 5 BEST options across ALL stocks (mix of CALLs and PUTs)
                         const allMatchingOptions = optionsWithAnalysis
