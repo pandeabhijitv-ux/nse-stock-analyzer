@@ -11,6 +11,7 @@ import {
 import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { generateRecommendation } from '../services/analysisEngine';
+import { FEATURES } from '../services/features';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -346,13 +347,20 @@ export default function StockDetailScreen({ route, navigation }) {
             Technical
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.optionsButton}
-          onPress={() => navigation.navigate('Options', { stock })}
-        >
-          <Ionicons name="trending-up" size={16} color="#fff" />
-          <Text style={styles.optionsButtonText}>Options</Text>
-        </TouchableOpacity>
+        {FEATURES.showOptions ? (
+          <TouchableOpacity
+            style={styles.optionsButton}
+            onPress={() => navigation.navigate('Options', { stock })}
+          >
+            <Ionicons name="trending-up" size={16} color="#fff" />
+            <Text style={styles.optionsButtonText}>Options</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={[styles.optionsButton, { backgroundColor: '#ccc' }]}> 
+            <Ionicons name="trending-up" size={16} color="#fff" />
+            <Text style={styles.optionsButtonText}>Options (Coming Soon)</Text>
+          </View>
+        )}
       </View>
 
       {/* Content */}

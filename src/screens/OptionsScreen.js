@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { analyzeOptions, getIndiaVIX } from '../services/optionsAnalysis';
+import { FEATURES } from '../services/features';
 
 const OptionsScreen = ({ route }) => {
   const { stock, technicalData } = route.params;
@@ -9,8 +10,13 @@ const OptionsScreen = ({ route }) => {
   const [analysis, setAnalysis] = useState(null);
   const [selectedTab, setSelectedTab] = useState('recommendation');
 
+
   useEffect(() => {
-    loadOptionsAnalysis();
+    if (FEATURES.showOptions) {
+      loadOptionsAnalysis();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const loadOptionsAnalysis = async () => {
@@ -25,6 +31,15 @@ const OptionsScreen = ({ route }) => {
     }
   };
 
+
+  if (!FEATURES.showOptions) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Options Trading Analysis</Text>
+        <Text style={{ fontSize: 18, color: '#888', marginTop: 20 }}>Coming Soon</Text>
+      </View>
+    );
+  }
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
