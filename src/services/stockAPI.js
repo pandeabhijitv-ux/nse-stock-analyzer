@@ -7,18 +7,17 @@ const BASE_URL = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.
 const BASE_URL_V10 = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v10/finance';
 
 // Indian NSE Sector mapping with popular stocks (Yahoo Finance uses .NS suffix for NSE)
-// Reduced to 3 stocks per sector for faster mobile loading
 export const SECTORS = {
-  'Technology': ['TCS.NS', 'INFY.NS', 'WIPRO.NS'],
-  'Banking': ['HDFCBANK.NS', 'ICICIBANK.NS', 'SBIN.NS'],
-  'Financial Services': ['BAJFINANCE.NS', 'BAJAJFINSV.NS', 'HDFCLIFE.NS'],
-  'FMCG': ['HINDUNILVR.NS', 'ITC.NS', 'NESTLEIND.NS'],
-  'Automobile': ['MARUTI.NS', 'TATAMOTORS.NS', 'M&M.NS'],
-  'Pharma': ['SUNPHARMA.NS', 'DRREDDY.NS', 'CIPLA.NS'],
-  'Energy': ['RELIANCE.NS', 'ONGC.NS', 'IOC.NS'],
-  'Metals & Mining': ['TATASTEEL.NS', 'HINDALCO.NS', 'JSWSTEEL.NS'],
-  'Infrastructure': ['LT.NS', 'ULTRACEMCO.NS', 'GRASIM.NS'],
-  'Consumer Durables': ['TITAN.NS', 'HAVELLS.NS', 'VOLTAS.NS'],
+  'Technology': ['TCS.NS', 'INFY.NS', 'WIPRO.NS', 'HCLTECH.NS', 'TECHM.NS', 'LTI.NS', 'COFORGE.NS', 'MPHASIS.NS', 'PERSISTENT.NS', 'LTTS.NS'],
+  'Banking': ['HDFCBANK.NS', 'ICICIBANK.NS', 'SBIN.NS', 'KOTAKBANK.NS', 'AXISBANK.NS', 'INDUSINDBK.NS', 'BANKBARODA.NS', 'PNB.NS', 'FEDERALBNK.NS', 'IDFCFIRSTB.NS'],
+  'Financial Services': ['BAJFINANCE.NS', 'BAJAJFINSV.NS', 'HDFCLIFE.NS', 'SBILIFE.NS', 'ICICIGI.NS', 'HDFCAMC.NS', 'MUTHOOTFIN.NS', 'CHOLAFIN.NS', 'SBICARD.NS', 'PFC.NS'],
+  'FMCG': ['HINDUNILVR.NS', 'ITC.NS', 'NESTLEIND.NS', 'BRITANNIA.NS', 'DABUR.NS', 'MARICO.NS', 'GODREJCP.NS', 'COLPAL.NS', 'TATACONSUM.NS', 'EMAMILTD.NS'],
+  'Automobile': ['MARUTI.NS', 'TATAMOTORS.NS', 'M&M.NS', 'BAJAJ-AUTO.NS', 'EICHERMOT.NS', 'HEROMOTOCO.NS', 'ASHOKLEY.NS', 'TVSMOTOR.NS', 'BALKRISIND.NS', 'MRF.NS'],
+  'Pharma': ['SUNPHARMA.NS', 'DRREDDY.NS', 'CIPLA.NS', 'DIVISLAB.NS', 'AUROPHARMA.NS', 'LUPIN.NS', 'BIOCON.NS', 'TORNTPHARM.NS', 'ALKEM.NS', 'ZYDUSLIFE.NS'],
+  'Energy': ['RELIANCE.NS', 'ONGC.NS', 'IOC.NS', 'BPCL.NS', 'HINDPETRO.NS', 'GAIL.NS', 'COALINDIA.NS', 'ADANIGREEN.NS', 'ADANIPOWER.NS', 'TATAPOWER.NS'],
+  'Metals & Mining': ['TATASTEEL.NS', 'HINDALCO.NS', 'JSWSTEEL.NS', 'VEDL.NS', 'SAIL.NS', 'JINDALSTEL.NS', 'NMDC.NS', 'HINDZINC.NS', 'NATIONALUM.NS', 'APLAPOLLO.NS'],
+  'Infrastructure': ['LT.NS', 'ULTRACEMCO.NS', 'GRASIM.NS', 'ADANIPORTS.NS', 'HINDCOPPER.NS', 'RAMCOCEM.NS', 'SHREECEM.NS', 'AMBUJACEM.NS', 'ACC.NS', 'CONCOR.NS'],
+  'Consumer Durables': ['TITAN.NS', 'HAVELLS.NS', 'VOLTAS.NS', 'WHIRLPOOL.NS', 'CROMPTON.NS', 'BATAINDIA.NS', 'SYMPHONY.NS', 'BLUESTARCO.NS', 'RAJESHEXPO.NS', 'KAJARIACER.NS'],
 };
 
 // Test backend connection

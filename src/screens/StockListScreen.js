@@ -197,6 +197,32 @@ export default function StockListScreen({ sector }) {
           </Text>
         </View>
       </View>
+      
+      <View style={styles.analysisRow}>
+        <View style={styles.analysisItem}>
+          <Text style={styles.analysisLabel}>Trend</Text>
+          <Text style={[styles.analysisValue, { 
+            color: item.technical?.trend === 'Uptrend' ? '#4CAF50' : 
+                   item.technical?.trend === 'Downtrend' ? '#F44336' : '#FFC107'
+          }]}>
+            {item.technical?.trend || 'N/A'}
+          </Text>
+        </View>
+        <View style={styles.analysisItem}>
+          <Text style={styles.analysisLabel}>MACD</Text>
+          <Text style={[styles.analysisValue, { 
+            color: item.technical?.macdSignal === 'Bullish' ? '#4CAF50' : '#F44336'
+          }]}>
+            {item.technical?.macdSignal || 'N/A'}
+          </Text>
+        </View>
+        <View style={styles.analysisItem}>
+          <Text style={styles.analysisLabel}>Volume</Text>
+          <Text style={styles.analysisValue}>
+            {item.volume ? (item.volume / 1000000).toFixed(2) + 'M' : 'N/A'}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
@@ -439,6 +465,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+  },
+  analysisRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  analysisItem: {
+    alignItems: 'center',
+  },
+  analysisLabel: {
+    fontSize: 11,
+    color: '#999',
+    marginBottom: 4,
+  },
+  analysisValue: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   retryButton: {
     marginTop: 20,
