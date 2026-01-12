@@ -65,22 +65,34 @@ export const fetchStockQuote = async (symbol) => {
     });
     
     const data = USE_PROXY ? response.data : response.data;
+    
+    // Validate response structure
+    if (!data || !data.chart || !data.chart.result || data.chart.result.length === 0) {
+      throw new Error('Invalid response structure from API');
+    }
+    
     const result = data.chart.result[0];
-    const quote = result.indicators.quote[0];
+    const quote = result.indicators?.quote?.[0];
     const meta = result.meta;
+    
+    // Validate required fields
+    if (!quote || !meta || !meta.regularMarketPrice) {
+      throw new Error('Missing required price data');
+    }
     
     return {
       symbol: symbol,
-      currentPrice: meta.regularMarketPrice,
-      previousClose: meta.previousClose,
-      change: meta.regularMarketPrice - meta.previousClose,
-      changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose) * 100,
-      volume: quote.volume[quote.volume.length - 1],
-      timestamps: result.timestamp,
-      prices: quote.close,
-      high: quote.high,
-      low: quote.low,
-      open: quote.open,
+      currentPrice: meta.regularMarketPrice || 0,
+      previousClose: meta.previousClose || meta.regularMarketPrice || 0,
+      change: (meta.regularMarketPrice || 0) - (meta.previousClose || meta.regularMarketPrice || 0),
+      changePercent: meta.previousClose ? (((meta.regularMarketPrice || 0) - meta.previousClose) / meta.previousClose) * 100 : 0,
+      volume: quote.volume?.[quote.volume.length - 1] || 0,
+      timestamps: result.timestamp || [],
+      prices: quote.close || [],
+      high: quote.high || [],
+      low: quote.low || [],
+      open: quote.open || [],
+      companyName: meta.shortName || meta.longName || symbol.replace('.NS', ''),
     };
   } catch (error) {
     console.error(`Error fetching quote for ${symbol}:`, {
@@ -110,7 +122,12 @@ export const fetchFundamentalData = async (symbol) => {
       }),
     });
     
-    const data = response.data.quoteSummary.result[0];
+    // Validate response structure
+    if (!response.data || !response.data.quoteSummary || !response.data.quoteSummary.result) {
+      throw new Error('Invalid fundamentals response structure');
+    }
+    
+    const data = response.data.quoteSummary.result[0] || {};
     const keyStats = data.defaultKeyStatistics || {};
     const financials = data.financialData || {};
     const summary = data.summaryDetail || {};

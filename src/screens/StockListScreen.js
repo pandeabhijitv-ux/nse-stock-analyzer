@@ -95,11 +95,11 @@ export default function StockListScreen({ sector }) {
     const sorted = [...stocks];
     
     if (sortType === 'score') {
-      sorted.sort((a, b) => b.overallScore - a.overallScore);
+      sorted.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
     } else if (sortType === 'price') {
-      sorted.sort((a, b) => b.currentPrice - a.currentPrice);
+      sorted.sort((a, b) => (b.currentPrice || 0) - (a.currentPrice || 0));
     } else if (sortType === 'change') {
-      sorted.sort((a, b) => b.changePercent - a.changePercent);
+      sorted.sort((a, b) => (b.changePercent || 0) - (a.changePercent || 0));
     }
     
     setStocks(sorted);
@@ -131,20 +131,22 @@ export default function StockListScreen({ sector }) {
       
       <View style={styles.stockHeader}>
         <View style={styles.stockInfo}>
-          <Text style={styles.stockSymbol}>{item.symbol}</Text>
+          <Text style={styles.stockSymbol}>{item.symbol || 'N/A'}</Text>
           <Text style={styles.stockName} numberOfLines={1}>
-            {item.companyName}
+            {item.companyName || item.symbol?.replace('.NS', '') || 'Unknown'}
           </Text>
         </View>
         
         <View style={styles.priceInfo}>
-          <Text style={styles.stockPrice}>${item.currentPrice?.toFixed(2)}</Text>
+          <Text style={styles.stockPrice}>
+            ₹{(item.currentPrice || 0).toFixed(2)}
+          </Text>
           <Text style={[
             styles.stockChange,
-            { color: item.changePercent >= 0 ? '#4CAF50' : '#F44336' }
+            { color: (item.changePercent || 0) >= 0 ? '#4CAF50' : '#F44336' }
           ]}>
-            {item.changePercent >= 0 ? '+' : ''}
-            {item.changePercent?.toFixed(2)}%
+            {(item.changePercent || 0) >= 0 ? '+' : ''}
+            {(item.changePercent || 0).toFixed(2)}%
           </Text>
         </View>
       </View>
@@ -155,17 +157,17 @@ export default function StockListScreen({ sector }) {
             style={[
               styles.scoreBarFill,
               {
-                width: `${item.overallScore}%`,
-                backgroundColor: getScoreColor(item.overallScore),
+                width: `${Math.min(100, Math.max(0, item.overallScore || 50))}%`,
+                backgroundColor: getScoreColor(item.overallScore || 50),
               },
             ]}
           />
         </View>
         <View style={styles.scoreDetails}>
-          <View style={[styles.scoreBadge, { backgroundColor: getScoreColor(item.overallScore) }]}>
-            <Text style={styles.scoreValue}>{item.overallScore}</Text>
+          <View style={[styles.scoreBadge, { backgroundColor: getScoreColor(item.overallScore || 50) }]}>
+            <Text style={styles.scoreValue}>{Math.round(item.overallScore || 50)}</Text>
           </View>
-          <Text style={styles.scoreLabel}>{getScoreLabel(item.overallScore)}</Text>
+          <Text style={styles.scoreLabel}>{getScoreLabel(item.overallScore || 50)}</Text>
         </View>
       </View>
       
