@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import * as Font from 'expo-font';
 
 import HomeScreen from './src/screens/HomeScreen';
 import StockListScreen from './src/screens/StockListScreen';
@@ -47,27 +48,34 @@ export default function App() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simple initialization - just mark as ready
-    // This prevents crash if fonts aren't loaded yet
-    const timer = setTimeout(() => {
+    async function prepare() {
       try {
-        console.log('App initializing...');
+        // Load fonts and other resources
+        await Font.loadAsync(Ionicons.font);
+        
+        // Give a small delay to ensure everything is loaded
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        console.log('App initialized successfully');
         setIsReady(true);
-        console.log('App ready!');
       } catch (err) {
         console.error('App initialization error:', err);
-        setError(err.message);
+        setError(err.message || 'Failed to load app');
+        setIsReady(true); // Still show UI even if fonts fail
       }
-    }, 100);
-    
-    return () => clearTimeout(timer);
+    }
+
+    prepare();
   }, []);
 
   if (error) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-        <Text style={{ marginTop: 10, fontSize: 14, color: '#999' }}>
+        <Text style={styles.errorText}>⚠️ Initialization Error</Text>
+        <Text style={{ marginTop: 10, fontSize: 14, color: '#666', textAlign: 'center', padding: 20 }}>
+          {error}
+        </Text>
+        <Text style={{ marginTop: 10, fontSize: 12, color: '#999' }}>
           Please restart the app
         </Text>
       </View>
@@ -79,6 +87,9 @@ export default function App() {
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#2196F3" />
         <Text style={styles.loadingText}>Loading Stock Analyzer...</Text>
+        <Text style={{ marginTop: 5, fontSize: 12, color: '#999' }}>
+          Please wait...
+        </Text>
       </View>
     );
   }
