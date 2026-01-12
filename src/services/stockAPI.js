@@ -138,22 +138,38 @@ export const fetchFundamentalData = async (symbol) => {
 
 // Fetch multiple stocks for a sector
 export const fetchSectorStocks = async (sector) => {
+  console.log('fetchSectorStocks called for:', sector);
   const symbols = SECTORS[sector] || [];
+  console.log('Symbols to fetch:', symbols);
+  
+  if (symbols.length === 0) {
+    console.warn('No symbols found for sector:', sector);
+    return [];
+  }
+  
   const promises = symbols.map(async (symbol) => {
-    const quote = await fetchStockQuote(symbol);
-    const fundamentals = await fetchFundamentalData(symbol);
-    
-    if (quote && fundamentals) {
-      return {
-        ...quote,
-        ...fundamentals,
-      };
+    try {
+      const quote = await fetchStockQuote(symbol);
+      const fundamentals = await fetchFundamentalData(symbol);
+      
+      if (quote && fundamentals) {
+        return {
+          ...quote,
+          ...fundamentals,
+        };
+      }
+      console.warn(`Missing data for ${symbol}`);
+      return null;
+    } catch (error) {
+      console.error(`Failed to fetch ${symbol}:`, error.message);
+      return null;
     }
-    return null;
   });
   
   const results = await Promise.all(promises);
-  return results.filter(stock => stock !== null);
+  const validStocks = results.filter(stock => stock !== null);
+  console.log(`Successfully fetched ${validStocks.length} out of ${symbols.length} stocks`);
+  return validStocks;
 };
 
 // Search for stocks

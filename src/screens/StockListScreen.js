@@ -24,7 +24,15 @@ export default function StockListScreen({ sector }) {
   const loadStocks = async () => {
     setLoading(true);
     try {
+      console.log('Loading stocks for sector:', sector);
       const data = await fetchSectorStocks(sector);
+      console.log('Fetched data:', data.length, 'stocks');
+      
+      if (!data || data.length === 0) {
+        console.warn('No stocks returned from API');
+        setStocks([]);
+        return;
+      }
       
       // Calculate scores for each stock
       const scoredStocks = data.map(stock => {
@@ -44,9 +52,11 @@ export default function StockListScreen({ sector }) {
       
       // Sort by overall score
       scoredStocks.sort((a, b) => b.overallScore - a.overallScore);
+      console.log('Final stocks:', scoredStocks.length);
       setStocks(scoredStocks);
     } catch (error) {
       console.error('Error loading stocks:', error);
+      setStocks([]);
     } finally {
       setLoading(false);
     }
@@ -168,6 +178,20 @@ export default function StockListScreen({ sector }) {
         <Text style={styles.loadingSubtext}>
           Fetching data and calculating fundamental & technical indicators
         </Text>
+      </View>
+    );
+  }
+
+  if (stocks.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>No stocks found</Text>
+        <Text style={styles.loadingSubtext}>
+          Unable to load {sector} stocks. Please check your connection.
+        </Text>
+        <TouchableOpacity style={styles.retryButton} onPress={loadStocks}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -383,5 +407,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
