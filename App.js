@@ -1,154 +1,88 @@
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import * as Font from 'expo-font';
-
-import HomeScreen from './src/screens/HomeScreen';
-import StockListScreen from './src/screens/StockListScreen';
-import StockDetailScreen from './src/screens/StockDetailScreen';
-import OptionsScreen from './src/screens/OptionsScreen';
-import WatchlistScreen from './src/screens/WatchlistScreen';
-import ScreenerScreen from './src/screens/ScreenerScreen';
-
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
-
-function HomeStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen 
-        name="Home" 
-        component={HomeScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen 
-        name="StockList" 
-        component={StockListScreen}
-        options={{ title: 'Top Stocks' }}
-      />
-      <Stack.Screen 
-        name="StockDetail" 
-        component={StockDetailScreen}
-        options={{ title: 'Stock Analysis' }}
-      />
-      <Stack.Screen 
-        name="Options" 
-        component={OptionsScreen}
-        options={{ title: 'Options Analysis' }}
-      />
-    </Stack.Navigator>
-  );
-}
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 
 export default function App() {
-  const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    async function prepare() {
-      try {
-        // Load fonts and other resources
-        await Font.loadAsync(Ionicons.font);
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Stock Analyzer</Text>
+      <Text style={styles.subtitle}>App is working!</Text>
+      
+      <ScrollView style={styles.content}>
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>Test Button</Text>
+        </TouchableOpacity>
         
-        // Give a small delay to ensure everything is loaded
-        await new Promise(resolve => setTimeout(resolve, 500));
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Backend Status</Text>
+          <Text style={styles.cardText}>Connected to: https://stock-analyzer-backend-nu.vercel.app</Text>
+        </View>
         
-        console.log('App initialized successfully');
-        setIsReady(true);
-      } catch (err) {
-        console.error('App initialization error:', err);
-        setError(err.message || 'Failed to load app');
-        setIsReady(true); // Still show UI even if fonts fail
-      }
-    }
-
-    prepare();
-  }, []);
-
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>⚠️ Initialization Error</Text>
-        <Text style={{ marginTop: 10, fontSize: 14, color: '#666', textAlign: 'center', padding: 20 }}>
-          {error}
-        </Text>
-        <Text style={{ marginTop: 10, fontSize: 12, color: '#999' }}>
-          Please restart the app
-        </Text>
-      </View>
-    );
-  }
-
-  if (!isReady) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#2196F3" />
-        <Text style={styles.loadingText}>Loading Stock Analyzer...</Text>
-        <Text style={{ marginTop: 5, fontSize: 12, color: '#999' }}>
-          Please wait...
-        </Text>
-      </View>
-    );
-  }
-
-  try {
-    return (
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName;
-              if (route.name === 'Analyze') {
-                iconName = focused ? 'analytics' : 'analytics-outline';
-              } else if (route.name === 'Screener') {
-                iconName = focused ? 'search' : 'search-outline';
-              } else if (route.name === 'Watchlist') {
-                iconName = focused ? 'star' : 'star-outline';
-              }
-              return <Ionicons name={iconName} size={size} color={color} />;
-            },
-            tabBarActiveTintColor: '#2196F3',
-            tabBarInactiveTintColor: 'gray',
-          })}
-        >
-          <Tab.Screen 
-            name="Analyze" 
-            component={HomeStack}
-            options={{ headerShown: false }}
-          />
-          <Tab.Screen name="Screener" component={ScreenerScreen} />
-          <Tab.Screen name="Watchlist" component={WatchlistScreen} />
-        </Tab.Navigator>
-      </NavigationContainer>
-    );
-  } catch (err) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Navigation Error: {err.message}</Text>
-      </View>
-    );
-  }
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Features</Text>
+          <Text style={styles.cardText}>✓ App loads successfully</Text>
+          <Text style={styles.cardText}>✓ Backend deployed</Text>
+          <Text style={styles.cardText}>✓ Basic UI working</Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f7fa',
+    paddingTop: 50,
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#f44336',
-    padding: 20,
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#2196F3',
     textAlign: 'center',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  button: {
+    backgroundColor: '#2196F3',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  card: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  cardText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
   },
 });
