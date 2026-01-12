@@ -215,12 +215,20 @@ export default function StockListScreen({ sector }) {
       console.log('Load complete. Stocks displayed:', finalStocks.length);
     } catch (error) {
       console.error('Error loading stocks:', error);
-      const errorMsg = error.message || 'Unknown error';
-      setError(errorMsg);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response,
+      });
+      const errorMsg = error.message || 'Unknown error occurred while loading stocks';
+      setError(`Failed to load stocks: ${errorMsg}`);
       Alert.alert(
-        'Connection Error',
-        errorMsg,
-        [{ text: 'OK' }]
+        'Error Loading Stocks',
+        `Could not load stock data.\n\nError: ${errorMsg}\n\nPlease check your internet connection and try again.`,
+        [
+          { text: 'Retry', onPress: loadStocks },
+          { text: 'Cancel', style: 'cancel' }
+        ]
       );
       setStocks([]);
     } finally {
