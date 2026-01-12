@@ -8,59 +8,134 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { SECTORS } from '../services/stockAPI';
 
 export default function HomeScreen({ onSectorPress }) {
   const handleComingSoon = (featureName) => {
     Alert.alert('Coming Soon', `${featureName} will be available soon!`);
   };
-  const sectorColors = {
-    'Technology': '#667eea',
-    'Banking': '#4facfe',
-    'Financial Services': '#43e97b',
-    'FMCG': '#fa709a',
-    'Automobile': '#f093fb',
-    'Pharma': '#30cfd0',
-    'Energy': '#fee140',
-    'Metals & Mining': '#a8edea',
-    'Infrastructure': '#ffecd2',
-    'Consumer Durables': '#ff6e7f',
-    'Options': '#764ba2',
-    'Gold & Silver': '#f7971e',
-    'Commodities': '#56ab2f',
-  };
 
-  const comingSoonFeatures = ['Options', 'Gold & Silver', 'Commodities'];
+  const analysisCategories = [
+    {
+      id: 'target-oriented',
+      name: 'Target Oriented Stocks',
+      description: 'Clear price targets with stop loss',
+      badge: 'High probability trades',
+      color: '#10b981',
+      icon: '🎯',
+    },
+    {
+      id: 'swing',
+      name: 'Swing Stocks',
+      description: 'High momentum trending stocks',
+      badge: 'Riding the wave',
+      color: '#f59e0b',
+      icon: '📈',
+    },
+    {
+      id: 'fundamentally-strong',
+      name: 'Fundamentally Strong',
+      description: 'Best P/E, ROE, debt ratios',
+      badge: 'Quality picks',
+      color: '#3b82f6',
+      icon: '💎',
+    },
+    {
+      id: 'technically-strong',
+      name: 'Technically Strong',
+      description: 'RSI, MACD, breakout patterns',
+      badge: 'Chart winners',
+      color: '#8b5cf6',
+      icon: '📊',
+    },
+    {
+      id: 'hot-stocks',
+      name: 'Hot Stocks Today',
+      description: 'Top gainers, losers, most active',
+      badge: 'Live market movers',
+      color: '#ef4444',
+      icon: '🔥',
+    },
+  ];
+
+  const comingSoonFeatures = [
+    {
+      id: 'gold-silver',
+      name: 'Gold & Silver',
+      description: 'Precious metals with astro analysis',
+      badge: 'Venus & Moon impact',
+      color: '#f59e0b',
+      icon: '🔱',
+    },
+    {
+      id: 'commodities',
+      name: 'Commodities',
+      description: 'Live gold & silver prices from API',
+      badge: 'Real-time data',
+      color: '#eab308',
+      icon: '📦',
+    },
+    {
+      id: 'options',
+      name: 'Options Trading',
+      description: 'Call & Put with entry/target/SL',
+      badge: 'Top 20 trades - 9:00-9:20 AM',
+      color: '#ec4899',
+      icon: '🎲',
+    },
+    {
+      id: 'graha-gochar',
+      name: 'Graha Gochar Impact',
+      description: 'Planetary transits & sector analysis',
+      badge: 'Vedic astrology insights',
+      color: '#a855f7',
+      icon: '🌙',
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Stock Analyzer</Text>
-        <Text style={styles.headerSubtitle}>Select a sector to analyze stocks</Text>
+        <Text style={styles.headerTitle}>📊 NSE Stock Analyzer</Text>
+        <Text style={styles.headerSubtitle}>AI-Powered Multi-Strategy Analysis</Text>
       </View>
 
       <ScrollView style={styles.scrollView}>
-        <View style={styles.sectorsContainer}>
-          {Object.keys(SECTORS).map((sector) => (
+        <View style={styles.categoriesContainer}>
+          {analysisCategories.map((category) => (
             <TouchableOpacity
-              key={sector}
-              onPress={() => onSectorPress(sector)}
-              style={[styles.sectorCard, { backgroundColor: sectorColors[sector] || '#2196F3' }]}
+              key={category.id}
+              onPress={() => onSectorPress(category.id)}
+              style={[styles.categoryCard, { borderLeftColor: category.color }]}
             >
-              <Text style={styles.sectorName}>{sector}</Text>
-              <Text style={styles.sectorCount}>10 stocks</Text>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardIcon}>{category.icon}</Text>
+                <Text style={styles.cardName}>{category.name}</Text>
+              </View>
+              <Text style={styles.cardDescription}>{category.description}</Text>
+              <View style={[styles.cardBadge, { backgroundColor: category.color }]}>
+                <Text style={styles.cardBadgeText}>{category.badge}</Text>
+              </View>
             </TouchableOpacity>
           ))}
 
           {/* Coming Soon Features */}
           {comingSoonFeatures.map((feature) => (
             <TouchableOpacity
-              key={feature}
-              onPress={() => handleComingSoon(feature)}
-              style={[styles.sectorCard, { backgroundColor: sectorColors[feature] || '#666' }]}
+              key={feature.id}
+              onPress={() => handleComingSoon(feature.name)}
+              style={[styles.categoryCard, styles.comingSoonCard, { borderLeftColor: feature.color }]}
             >
-              <Text style={styles.sectorName}>{feature}</Text>
-              <Text style={styles.comingSoonText}>Coming Soon</Text>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardIcon}>{feature.icon}</Text>
+                <Text style={styles.cardName}>{feature.name}</Text>
+              </View>
+              <Text style={styles.cardDescription}>{feature.description}</Text>
+              <View style={[styles.cardBadge, { backgroundColor: feature.color }]}>
+                <Text style={styles.cardBadgeText}>{feature.badge}</Text>
+              </View>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonBadgeText}>Coming Soon</Text>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -77,55 +152,85 @@ const styles = StyleSheet.create({
   header: {
     padding: 30,
     paddingTop: 20,
-    backgroundColor: '#1e3c72',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    backgroundColor: '#5f4de0',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 8,
+    marginBottom: 5,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: 'rgba(255,255,255,0.9)',
   },
   scrollView: {
     flex: 1,
   },
-  sectorsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  categoriesContainer: {
     padding: 15,
-    justifyContent: 'space-between',
   },
-  sectorCard: {
-    width: '48%',
-    padding: 20,
-    borderRadius: 15,
-    alignItems: 'center',
+  categoryCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 15,
-    elevation: 5,
+    borderLeftWidth: 4,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  sectorName: {
-    fontSize: 16,
+  comingSoonCard: {
+    opacity: 0.8,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cardIcon: {
+    fontSize: 24,
+    marginRight: 10,
+  },
+  cardName: {
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#1f2937',
+    flex: 1,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 10,
+    lineHeight: 20,
+  },
+  cardBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  cardBadgeText: {
+    fontSize: 12,
     color: 'white',
-    textAlign: 'center',
-    marginBottom: 5,
+    fontWeight: '600',
   },
-  sectorCount: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
+  comingSoonBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#f59e0b',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  comingSoonText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.9)',
-    fontStyle: 'italic',
+  comingSoonBadgeText: {
+    fontSize: 11,
+    color: 'white',
+    fontWeight: 'bold',
   },
 });

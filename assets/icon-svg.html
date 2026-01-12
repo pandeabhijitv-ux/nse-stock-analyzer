@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>NSE Stock Analyzer Icon</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+            background: white;
+        }
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h2>NSE Stock Analyzer App Icon</h2>
+    <canvas id="icon" width="512" height="512"></canvas>
+    <div class="instructions">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Right-click the icon above</li>
+            <li>Select "Save image as..."</li>
+            <li>Save as "icon.png" in the assets folder</li>
+        </ol>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('icon');
+        const ctx = canvas.getContext('2d');
+        
+        // Create gradient background
+        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+        gradient.addColorStop(0, '#5f4de0');
+        gradient.addColorStop(0.5, '#7c3aed');
+        gradient.addColorStop(1, '#a855f7');
+        
+        // Fill background with rounded rectangle
+        ctx.fillStyle = gradient;
+        roundRect(ctx, 0, 0, 512, 512, 80);
+        ctx.fill();
+        
+        // Draw chart grid lines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 2;
+        for (let i = 1; i < 5; i++) {
+            const y = (512 / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(60, y);
+            ctx.lineTo(452, y);
+            ctx.stroke();
+        }
+        
+        // Draw candlestick chart
+        const candleData = [
+            { x: 100, open: 300, close: 250, high: 320, low: 240, up: false },
+            { x: 160, open: 250, close: 280, high: 290, low: 240, up: true },
+            { x: 220, open: 280, close: 300, high: 310, low: 270, up: true },
+            { x: 280, open: 300, close: 270, high: 310, low: 260, up: false },
+            { x: 340, open: 270, close: 320, high: 330, low: 260, up: true },
+            { x: 400, open: 320, close: 350, high: 360, low: 310, up: true },
+        ];
+        
+        candleData.forEach(candle => {
+            const color = candle.up ? '#10b981' : '#ef4444';
+            
+            // Wick
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(candle.x, candle.high);
+            ctx.lineTo(candle.x, candle.low);
+            ctx.stroke();
+            
+            // Body
+            ctx.fillStyle = color;
+            const top = Math.min(candle.open, candle.close);
+            const height = Math.abs(candle.open - candle.close);
+            ctx.fillRect(candle.x - 20, top, 40, height || 3);
+        });
+        
+        // Draw trend line
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(80, 320);
+        ctx.lineTo(180, 280);
+        ctx.lineTo(280, 290);
+        ctx.lineTo(380, 240);
+        ctx.lineTo(450, 200);
+        ctx.stroke();
+        
+        // Add glow effect to trend line
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = 15;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        
+        // Draw title background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        roundRect(ctx, 40, 400, 432, 80, 15);
+        ctx.fill();
+        
+        // Draw title text
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('NSE', 256, 445);
+        
+        ctx.font = 'bold 32px Arial';
+        ctx.fillText('Stock Analyzer', 256, 478);
+        
+        // Draw analysis badge
+        ctx.fillStyle = '#10b981';
+        roundRect(ctx, 356, 50, 120, 40, 20);
+        ctx.fill();
+        
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('AI', 416, 77);
+        
+        // Helper function for rounded rectangles
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+    </script>
+</body>
+</html>

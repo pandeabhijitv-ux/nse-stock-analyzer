@@ -259,6 +259,34 @@ export const fetchSectorStocks = async (sector) => {
   return validStocks;
 };
 
+// Fetch all stocks from all sectors (for analysis filtering)
+export const fetchAllStocks = async () => {
+  try {
+    console.log('Fetching all stocks from all sectors...');
+    const allStocks = [];
+    const sectorNames = Object.keys(SECTORS);
+    
+    // Fetch stocks from all sectors
+    for (const sector of sectorNames) {
+      try {
+        console.log(`Fetching ${sector} stocks...`);
+        const sectorStocks = await fetchSectorStocks(sector);
+        allStocks.push(...sectorStocks);
+        console.log(`✓ ${sector}: ${sectorStocks.length} stocks added`);
+      } catch (error) {
+        console.error(`✗ Failed to fetch ${sector}:`, error.message);
+        // Continue with other sectors even if one fails
+      }
+    }
+    
+    console.log(`Total stocks fetched: ${allStocks.length}`);
+    return allStocks;
+  } catch (error) {
+    console.error('Error fetching all stocks:', error);
+    throw error;
+  }
+};
+
 // Search for stocks
 export const searchStocks = async (query) => {
   try {

@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { fetchSectorStocks, testBackendConnection } from '../services/stockAPI';
+import { fetchSectorStocks, fetchAllStocks, testBackendConnection } from '../services/stockAPI';
 import { calculateTechnicalIndicators } from '../services/technicalAnalysis';
 import { scoreFundamentals, scoreTechnical, calculateOverallScore } from '../services/analysisEngine';
 
@@ -23,6 +23,87 @@ export default function StockListScreen({ sector }) {
     loadStocks();
   }, []);
 
+  const getAnalysisCategoryTitle = (categoryId) => {
+    const titles = {
+      'target-oriented': 'Target Oriented Stocks',
+      'swing': 'Swing Stocks',
+      'fundamentally-strong': 'Fundamentally Strong',
+      'technically-strong': 'Technically Strong',
+      'hot-stocks': 'Hot Stocks Today',
+    };
+    return titles[categoryId] || categoryId;
+  };
+
+  const filterStocksByAnalysis = (allStocks, analysisType) => {
+    let filtered = [...allStocks];
+    
+    switch (analysisType) {
+      case 'target-oriented':
+        // Stocks with clear trends and good risk-reward ratios
+        // High volume, RSI between 40-70, MACD positive
+        filtered = filtered.filter(s => {
+          const rsi = s.technical?.rsi || 50;
+          const macd = s.technical?.macd?.macd || 0;
+          const volume = s.avgVolume || 0;
+          return rsi >= 40 && rsi <= 70 && macd > 0 && volume > 100000;
+        });
+        filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
+        break;
+        
+      case 'swing':
+        // High momentum stocks with strong trends
+        // MACD positive, RSI > 50, positive price change
+        filtered = filtered.filter(s => {
+          const macd = s.technical?.macd?.macd || 0;
+          const rsi = s.technical?.rsi || 50;
+          const change = s.changePercent || 0;
+          return macd > 0 && rsi > 50 && change > 0;
+        });
+        filtered.sort((a, b) => (b.changePercent || 0) - (a.changePercent || 0));
+        break;
+        
+      case 'fundamentally-strong':
+        // Best fundamental metrics
+        // Low P/E, high ROE, low debt, good profitability
+        filtered = filtered.filter(s => {
+          const pe = s.peRatio || 999;
+          const roe = s.returnOnEquity || 0;
+          const debt = s.debtToEquity || 999;
+          return pe < 30 && roe > 0.10 && debt < 2.0;
+        });
+        filtered.sort((a, b) => {
+          const scoreA = (a.returnOnEquity || 0) * 100 - (a.peRatio || 50) - (a.debtToEquity || 5);
+          const scoreB = (b.returnOnEquity || 0) * 100 - (b.peRatio || 50) - (b.debtToEquity || 5);
+          return scoreB - scoreA;
+        });
+        break;
+        
+      case 'technically-strong':
+        // Strong technical indicators
+        // RSI 40-70, MACD positive, Stochastic buy signal
+        filtered = filtered.filter(s => {
+          const rsi = s.technical?.rsi || 50;
+          const macd = s.technical?.macd?.macd || 0;
+          const stochK = s.technical?.stochastic?.k || 50;
+          return rsi >= 40 && rsi <= 70 && macd > 0 && stochK > 20 && stochK < 80;
+        });
+        filtered.sort((a, b) => (b.technicalScore || 50) - (a.technicalScore || 50));
+        break;
+        
+      case 'hot-stocks':
+        // Highest gainers today
+        filtered = filtered.filter(s => (s.changePercent || 0) !== 0);
+        filtered.sort((a, b) => Math.abs(b.changePercent || 0) - Math.abs(a.changePercent || 0));
+        break;
+        
+      default:
+        // Keep all stocks
+        filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
+    }
+    
+    return filtered.slice(0, 20); // Return top 20 stocks
+  };
+
   const loadStocks = async () => {
     setLoading(true);
     setError(null);
@@ -32,13 +113,25 @@ export default function StockListScreen({ sector }) {
       await testBackendConnection();
       console.log('Backend connection successful!');
       
-      console.log('Loading stocks for sector:', sector);
-      const data = await fetchSectorStocks(sector);
+      // Check if this is an analysis category or traditional sector
+      const isAnalysisCategory = ['target-oriented', 'swing', 'fundamentally-strong', 'technically-strong', 'hot-stocks'].includes(sector);
+      
+      console.log('Loading stocks for:', sector, '(Analysis category:', isAnalysisCategory, ')');
+      
+      let data;
+      if (isAnalysisCategory) {
+        // Fetch all stocks for analysis filtering
+        data = await fetchAllStocks();
+      } else {
+        // Fetch sector-specific stocks
+        data = await fetchSectorStocks(sector);
+      }
+      
       console.log('Fetched data:', data.length, 'stocks');
       
       if (!data || data.length === 0) {
         console.warn('No stocks returned from API');
-        setError('No stocks available for this sector');
+        setError('No stocks available');
         setStocks([]);
         return;
       }
@@ -71,10 +164,17 @@ export default function StockListScreen({ sector }) {
         }
       });
       
-      // Sort by overall score
-      scoredStocks.sort((a, b) => b.overallScore - a.overallScore);
-      console.log('Final stocks:', scoredStocks.length);
-      setStocks(scoredStocks);
+      // Apply analysis filtering if it's an analysis category
+      let finalStocks = scoredStocks;
+      if (isAnalysisCategory) {
+        finalStocks = filterStocksByAnalysis(scoredStocks, sector);
+      } else {
+        // Sort by overall score for sector view
+        finalStocks.sort((a, b) => b.overallScore - a.overallScore);
+      }
+      
+      console.log('Final stocks:', finalStocks.length);
+      setStocks(finalStocks);
     } catch (error) {
       console.error('Error loading stocks:', error);
       const errorMsg = error.message || 'Unknown error';
@@ -230,7 +330,9 @@ export default function StockListScreen({ sector }) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2196F3" />
-        <Text style={styles.loadingText}>Analyzing {sector} stocks...</Text>
+        <Text style={styles.loadingText}>
+          Analyzing {getAnalysisCategoryTitle(sector)}...
+        </Text>
         <Text style={styles.loadingSubtext}>
           Fetching data and calculating fundamental & technical indicators
         </Text>
@@ -245,7 +347,7 @@ export default function StockListScreen({ sector }) {
           {error || 'No stocks found'}
         </Text>
         <Text style={styles.loadingSubtext}>
-          {error ? 'Please check your internet connection and try again.' : `Unable to load ${sector} stocks.`}
+          {error ? 'Please check your internet connection and try again.' : `Unable to load stocks for ${getAnalysisCategoryTitle(sector)}.`}
         </Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadStocks}>
           <Text style={styles.retryButtonText}>Retry</Text>
