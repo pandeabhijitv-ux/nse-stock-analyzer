@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { fetchSectorStocks, fetchAllStocks, testBackendConnection } from '../services/stockAPI';
+import { fetchSectorStocks, fetchAllStocks, fetchETFs, fetchMutualFunds, testBackendConnection } from '../services/stockAPI';
 import { calculateTechnicalIndicators } from '../services/technicalAnalysis';
 import { scoreFundamentals, scoreTechnical, calculateOverallScore } from '../services/analysisEngine';
 
@@ -18,6 +18,8 @@ export default function StockListScreen({ sector }) {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('score'); // score, price, change
   const [error, setError] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   useEffect(() => {
     loadStocks();
@@ -31,6 +33,8 @@ export default function StockListScreen({ sector }) {
       'technically-strong': 'Technically Strong',
       'hot-stocks': 'Hot Stocks Today',
       'graha-gochar': 'Graha Gochar Impact',
+      'etf': 'ETF Analysis',
+      'mutual-funds': 'Mutual Fund Stocks',
     };
     return titles[categoryId] || categoryId;
   };
@@ -142,11 +146,19 @@ export default function StockListScreen({ sector }) {
       
       // Check if this is an analysis category or traditional sector
       const isAnalysisCategory = ['target-oriented', 'swing', 'fundamentally-strong', 'technically-strong', 'hot-stocks', 'graha-gochar'].includes(sector);
+      const isETF = sector === 'etf';
+      const isMutualFund = sector === 'mutual-funds';
       
-      console.log('Loading stocks for:', sector, '(Analysis category:', isAnalysisCategory, ')');
+      console.log('Loading stocks for:', sector, '(Analysis category:', isAnalysisCategory, ', ETF:', isETF, ', MF:', isMutualFund, ')');
       
       let data;
-      if (isAnalysisCategory) {
+      if (isETF) {
+        // Fetch ETF data
+        data = await fetchETFs();
+      } else if (isMutualFund) {
+        // Fetch Mutual Fund stocks
+        data = await fetchMutualFunds();
+      } else if (isAnalysisCategory) {
         // Fetch all stocks for analysis filtering
         data = await fetchAllStocks();
       } else {
@@ -195,13 +207,51 @@ export default function StockListScreen({ sector }) {
       let finalStocks = scoredStocks;
       if (isAnalysisCategory) {
         finalStocks = filterStocksByAnalysis(scoredStocks, sector);
+        // Progressive loading: Show first 5 immediately
+        const initial = finalStocks.slice(0, 5);
+        const remaining = finalStocks.slice(5);
+        
+        console.log('Initial stocks (showing now):', initial.length);
+        setStocks(initial);
+        setInitialLoadComplete(true);
+        setLoading(false);
+        
+        // Load remaining stocks progressively in background
+        if (remaining.length > 0) {
+          console.log('Loading remaining stocks:', remaining.length);
+          setLoadingMore(true);
+          setTimeout(() => {
+            setStocks([...initial, ...remaining]);
+            setLoadingMore(false);
+            console.log('Progressive load complete. Total:', finalStocks.length);
+          }, 500); // Small delay for smoother UX
+        }
+      } else if (isETF || isMutualFund) {
+        // For ETF/MF, show all at once (usually small list)
+        finalStocks.sort((a, b) => b.overallScore - a.overallScore);
+        setStocks(finalStocks);
+        setLoading(false);
       } else {
         // Sort by overall score for sector view
         finalStocks.sort((a, b) => b.overallScore - a.overallScore);
+        // Progressive loading for sectors too
+        const initial = finalStocks.slice(0, 5);
+        const remaining = finalStocks.slice(5);
+        
+        setStocks(initial);
+        setInitialLoadComplete(true);
+        setLoading(false);
+        
+        if (remaining.length > 0) {
+          setLoadingMore(true);
+          setTimeout(() => {
+            setStocks([...initial, ...remaining]);
+            setLoadingMore(false);
+          }, 500);
+        }
       }
       
-      console.log('Final stocks:', finalStocks.length);
-      setStocks(finalStocks);
+      console.log('Load complete. Stocks displayed:', finalStocks.length);
     } catch (error) {
       console.error('Error loading stocks:', error);
       const errorMsg = error.message || 'Unknown error';
@@ -213,7 +263,11 @@ export default function StockListScreen({ sector }) {
       );
       setStocks([]);
     } finally {
-      setLoading(false);
+      // Only set loading to false if we're not using progressive loading
+      // Progressive loading handles this in the success path
+      if (error) {
+        setLoading(false);
+      }
     }
   };
 
@@ -420,6 +474,14 @@ export default function StockListScreen({ sector }) {
         contentContainerStyle={styles.listContainer}
         refreshing={loading}
         onRefresh={loadStocks}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={styles.loadingMoreContainer}>
+              <ActivityIndicator size="small" color="#2196F3" />
+              <Text style={styles.loadingMoreText}>Loading more stocks...</Text>
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   );
@@ -626,5 +688,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  loadingMoreContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  loadingMoreText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#666',
   },
 });

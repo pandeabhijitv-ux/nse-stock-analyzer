@@ -21,6 +21,55 @@ export const SECTORS = {
   'Consumer Durables': ['TITAN.NS', 'HAVELLS.NS', 'VOLTAS.NS', 'WHIRLPOOL.NS', 'CROMPTON.NS'],
 };
 
+// Popular NSE ETFs (Exchange Traded Funds)
+export const ETF_SYMBOLS = [
+  'NIFTYBEES.NS',     // Nifty 50 ETF
+  'BANKBEES.NS',      // Nifty Bank ETF
+  'JUNIORBEES.NS',    // Nifty Next 50 ETF
+  'LIQUIDBEES.NS',    // Liquid ETF
+  'GOLDBEES.NS',      // Gold ETF
+];
+
+// Popular Mutual Fund AMC stocks (Asset Management Companies)
+export const MUTUAL_FUND_STOCKS = [
+  'HDFCAMC.NS',       // HDFC AMC
+  'NAM-INDIA.NS',     // Nippon Life AMC
+  'HDFCBANK.NS',      // HDFC Bank (MF ecosystem)
+  'ICICIGI.NS',       // ICICI Prudential
+  'SBILIFE.NS',       // SBI Life (MF ecosystem)
+];
+
+// Popular NSE ETFs (Exchange Traded Funds)
+export const ETF_SYMBOLS = [
+  'NIFTYBEES.NS',     // Nifty 50 ETF
+  'BANKBEES.NS',      // Nifty Bank ETF
+  'JUNIORBEES.NS',    // Nifty Next 50 ETF
+  'LIQUIDBEES.NS',    // Liquid ETF
+  'GOLDBEES.NS',      // Gold ETF
+  'ITBEES.NS',        // Nifty IT ETF
+  'PSUBNKBEES.NS',    // PSU Bank ETF
+  'CONSUMBEES.NS',    // Nifty Consumption ETF
+  'PHARMABEES.NS',    // Pharma ETF
+  'AUTOBEES.NS',      // Auto ETF
+];
+
+// Popular Mutual Fund Houses represented through their AMC stocks
+// Note: Direct mutual fund NAVs are harder to fetch via Yahoo Finance
+// Using AMC (Asset Management Company) stocks as proxy
+export const MUTUAL_FUND_STOCKS = [
+  'HDFCAMC.NS',       // HDFC AMC
+  'UTIAMC.NS',        // UTI AMC
+  'NAM-INDIA.NS',     // Nippon Life AMC
+  'ICICIAMC.NS',      // ICICI Prudential AMC (if available)
+  'SBIAMC.NS',        // SBI Funds Management (if available)
+  // Popular fund houses with good track record
+  'HDFCBANK.NS',      // HDFC Bank (represents HDFC MF ecosystem)
+  'ICICIGI.NS',       // ICICI (represents ICICI Prudential MF)
+  'SBILIFE.NS',       // SBI Life (represents SBI MF ecosystem)
+  'BAJAJFINSV.NS',    // Bajaj Finserv (represents Bajaj MF)
+  'AXISBANK.NS',      // Axis Bank (represents Axis MF)
+];
+
 // Test backend connection
 export const testBackendConnection = async () => {
   try {
@@ -197,10 +246,10 @@ export const fetchFundamentalData = async (symbol) => {
   }
 };
 
-// Fetch multiple stocks for a sector
-export const fetchSectorStocks = async (sector) => {
+// Fetch multiple stocks for a sector or custom symbol list
+export const fetchSectorStocks = async (sector, customSymbols = null) => {
   console.log('fetchSectorStocks called for:', sector);
-  const symbols = SECTORS[sector] || [];
+  const symbols = customSymbols || SECTORS[sector] || [];
   console.log('Symbols to fetch:', symbols);
   
   if (symbols.length === 0) {
@@ -261,20 +310,22 @@ export const fetchSectorStocks = async (sector) => {
 };
 
 // Fetch stocks from selected sectors (for analysis filtering)
-// Lighter approach: fetch only from 4 key sectors (20 stocks) instead of all 10 sectors
+// Progressive loading: fetch from multiple sectors to get ~25 stocks total
+// First 5 stocks display immediately, remaining load in background
 export const fetchAllStocks = async () => {
   try {
     console.log('Fetching stocks from key sectors for analysis...');
     const allStocks = [];
-    // Only fetch from 4 sectors for lighter/faster loading (20 stocks total)
-    const keySectors = ['Technology', 'Banking', 'Pharma', 'Energy'];
+    // Fetch from 5 sectors for progressive loading (25 stocks total)
+    // First sector loads fast (5 stocks), others load progressively
+    const keySectors = ['Technology', 'Banking', 'Pharma', 'Energy', 'FMCG'];
     
     for (const sector of keySectors) {
       try {
         console.log(`Fetching ${sector} stocks...`);
         const sectorStocks = await fetchSectorStocks(sector);
         allStocks.push(...sectorStocks);
-        console.log(`✓ ${sector}: ${sectorStocks.length} stocks added`);
+        console.log(`✓ ${sector}: ${sectorStocks.length} stocks added (Total: ${allStocks.length})`);
       } catch (error) {
         console.error(`✗ Failed to fetch ${sector}:`, error.message);
         // Continue with other sectors even if one fails
@@ -288,6 +339,28 @@ export const fetchAllStocks = async () => {
     return allStocks;
   } catch (error) {
     console.error('Error fetching stocks:', error);
+    throw error;
+  }
+};
+
+// Fetch ETF data
+export const fetchETFs = async () => {
+  try {
+    console.log('Fetching ETF data...');
+    return await fetchSectorStocks('ETF', ETF_SYMBOLS);
+  } catch (error) {
+    console.error('Error fetching ETFs:', error);
+    throw error;
+  }
+};
+
+// Fetch Mutual Fund related stocks
+export const fetchMutualFunds = async () => {
+  try {
+    console.log('Fetching Mutual Fund AMC stocks...');
+    return await fetchSectorStocks('Mutual Funds', MUTUAL_FUND_STOCKS);
+  } catch (error) {
+    console.error('Error fetching Mutual Funds:', error);
     throw error;
   }
 };
