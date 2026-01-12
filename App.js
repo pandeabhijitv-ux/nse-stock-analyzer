@@ -1,27 +1,43 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 
 export default function App() {
+  const [clicks, setClicks] = useState(0);
+
+  const handlePress = () => {
+    setClicks(clicks + 1);
+    Alert.alert('Success!', `Button clicked ${clicks + 1} times!`);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Stock Analyzer</Text>
       <Text style={styles.subtitle}>App is working!</Text>
       
       <ScrollView style={styles.content}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Test Button</Text>
+        <TouchableOpacity style={styles.button} onPress={handlePress}>
+          <Text style={styles.buttonText}>Test Button (Clicked: {clicks})</Text>
         </TouchableOpacity>
         
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Backend Status</Text>
+          <Text style={styles.cardTitle}>✓ Backend Status</Text>
           <Text style={styles.cardText}>Connected to: https://stock-analyzer-backend-nu.vercel.app</Text>
         </View>
         
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Features</Text>
+          <Text style={styles.cardTitle}>✓ Features Working</Text>
           <Text style={styles.cardText}>✓ App loads successfully</Text>
-          <Text style={styles.cardText}>✓ Backend deployed</Text>
+          <Text style={styles.cardText}>✓ Backend deployed on Vercel</Text>
           <Text style={styles.cardText}>✓ Basic UI working</Text>
+          <Text style={styles.cardText}>✓ Touch events working</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📋 Next Steps</Text>
+          <Text style={styles.cardText}>1. Add navigation</Text>
+          <Text style={styles.cardText}>2. Add sector selection</Text>
+          <Text style={styles.cardText}>3. Connect to backend API</Text>
+          <Text style={styles.cardText}>4. Display stock data</Text>
         </View>
       </ScrollView>
     </View>
