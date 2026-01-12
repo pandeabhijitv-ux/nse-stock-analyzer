@@ -66,10 +66,10 @@ export default function StockListScreen({ sector }) {
     } catch (error) {
       console.error('Error loading stocks:', error);
       const errorMsg = error.message || 'Unknown error';
-      setError(`Failed to load stocks: ${errorMsg}`);
+      setError(errorMsg);
       Alert.alert(
         'Connection Error',
-        `Unable to connect to backend server. Please check your internet connection.\n\nError: ${errorMsg}`,
+        errorMsg,
         [{ text: 'OK' }]
       );
       setStocks([]);

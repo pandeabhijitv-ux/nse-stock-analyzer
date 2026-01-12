@@ -25,12 +25,23 @@ export const SECTORS = {
 export const testBackendConnection = async () => {
   try {
     console.log('Testing backend connection:', PROXY_URL);
-    const response = await axios.get(PROXY_URL, { timeout: 5000 });
-    console.log('Backend connection test:', response.data);
+    const response = await axios.get(PROXY_URL, { 
+      timeout: 10000,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('Backend connection test successful:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Backend connection failed:', error.message);
-    throw error;
+    console.error('Backend connection failed:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      statusText: error.response?.statusText
+    });
+    throw new Error(`Backend unreachable: ${error.message}`);
   }
 };
 
@@ -177,38 +188,42 @@ export const fetchSectorStocks = async (sector) => {
   
   if (symbols.length === 0) {
     console.warn('No symbols found for sector:', sector);
-    return [];
+    throw new Error('No symbols configured for this sector');
   }
   
-  const promises = symbols.map(async (symbol) => {
+  const validStocks = [];
+  const errors = [];
+  
+  // Fetch stocks sequentially to avoid overwhelming the connection
+  for (const symbol of symbols) {
     try {
-      console.log(`Starting fetch for ${symbol}...`);
-      const [quote, fundamentals] = await Promise.all([
-        fetchStockQuote(symbol),
-        fetchFundamentalData(symbol)
-      ]);
+      console.log(`Fetching ${symbol}...`);
+      
+      const quote = await fetchStockQuote(symbol);
+      console.log(`Got quote for ${symbol}`);
+      
+      const fundamentals = await fetchFundamentalData(symbol);
+      console.log(`Got fundamentals for ${symbol}`);
       
       if (quote && fundamentals) {
-        console.log(`Successfully fetched ${symbol}`);
-        return {
+        validStocks.push({
           ...quote,
           ...fundamentals,
-        };
+        });
+        console.log(`✓ Successfully fetched ${symbol}`);
       }
-      console.warn(`Missing data for ${symbol}`);
-      return null;
     } catch (error) {
-      console.error(`Failed to fetch ${symbol}:`, error.message);
-      return null;
+      console.error(`✗ Failed to fetch ${symbol}:`, error.message);
+      errors.push({ symbol, error: error.message });
+      // Continue trying other stocks even if one fails
     }
-  });
+  }
   
-  const results = await Promise.all(promises);
-  const validStocks = results.filter(stock => stock !== null);
-  console.log(`Successfully fetched ${validStocks.length} out of ${symbols.length} stocks`);
+  console.log(`Result: ${validStocks.length}/${symbols.length} stocks fetched successfully`);
   
   if (validStocks.length === 0) {
-    throw new Error('Failed to fetch any stocks. Please check your internet connection.');
+    const errorDetails = errors.map(e => `${e.symbol}: ${e.error}`).join('; ');
+    throw new Error(`Failed to fetch any stocks. Errors: ${errorDetails}`);
   }
   
   return validStocks;
