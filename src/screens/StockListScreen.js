@@ -30,6 +30,7 @@ export default function StockListScreen({ sector }) {
       'fundamentally-strong': 'Fundamentally Strong',
       'technically-strong': 'Technically Strong',
       'hot-stocks': 'Hot Stocks Today',
+      'graha-gochar': 'Graha Gochar Impact',
     };
     return titles[categoryId] || categoryId;
   };
@@ -96,6 +97,32 @@ export default function StockListScreen({ sector }) {
         filtered.sort((a, b) => Math.abs(b.changePercent || 0) - Math.abs(a.changePercent || 0));
         break;
         
+      case 'graha-gochar':
+        // Stocks influenced by planetary transits (simplified vedic astrology)
+        // Focus on sectors: Energy (Sun), Banking (Jupiter), Technology (Mercury)
+        // Filter by good momentum and positive trends
+        filtered = filtered.filter(s => {
+          const rsi = s.technical?.rsi || 50;
+          const change = s.changePercent || 0;
+          const sector = s.sector || '';
+          const isInfluencedSector = 
+            sector.includes('Energy') || 
+            sector.includes('Bank') || 
+            sector.includes('Technology') ||
+            sector.includes('Financial');
+          return (rsi > 45 && rsi < 75) && change !== 0 && isInfluencedSector;
+        });
+        // If no sector matches, show stocks with strong momentum
+        if (filtered.length === 0) {
+          filtered = allStocks.filter(s => {
+            const rsi = s.technical?.rsi || 50;
+            const change = s.changePercent || 0;
+            return rsi > 50 && change > 0;
+          });
+        }
+        filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
+        break;
+        
       default:
         // Keep all stocks
         filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
@@ -114,7 +141,7 @@ export default function StockListScreen({ sector }) {
       console.log('Backend connection successful!');
       
       // Check if this is an analysis category or traditional sector
-      const isAnalysisCategory = ['target-oriented', 'swing', 'fundamentally-strong', 'technically-strong', 'hot-stocks'].includes(sector);
+      const isAnalysisCategory = ['target-oriented', 'swing', 'fundamentally-strong', 'technically-strong', 'hot-stocks', 'graha-gochar'].includes(sector);
       
       console.log('Loading stocks for:', sector, '(Analysis category:', isAnalysisCategory, ')');
       

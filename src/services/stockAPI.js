@@ -7,17 +7,18 @@ const BASE_URL = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.
 const BASE_URL_V10 = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v10/finance';
 
 // Indian NSE Sector mapping with popular stocks (Yahoo Finance uses .NS suffix for NSE)
+// Reduced to 5 stocks per sector for faster loading
 export const SECTORS = {
-  'Technology': ['TCS.NS', 'INFY.NS', 'WIPRO.NS', 'HCLTECH.NS', 'TECHM.NS', 'LTI.NS', 'COFORGE.NS', 'MPHASIS.NS', 'PERSISTENT.NS', 'LTTS.NS'],
-  'Banking': ['HDFCBANK.NS', 'ICICIBANK.NS', 'SBIN.NS', 'KOTAKBANK.NS', 'AXISBANK.NS', 'INDUSINDBK.NS', 'BANKBARODA.NS', 'PNB.NS', 'FEDERALBNK.NS', 'IDFCFIRSTB.NS'],
-  'Financial Services': ['BAJFINANCE.NS', 'BAJAJFINSV.NS', 'HDFCLIFE.NS', 'SBILIFE.NS', 'ICICIGI.NS', 'HDFCAMC.NS', 'MUTHOOTFIN.NS', 'CHOLAFIN.NS', 'SBICARD.NS', 'PFC.NS'],
-  'FMCG': ['HINDUNILVR.NS', 'ITC.NS', 'NESTLEIND.NS', 'BRITANNIA.NS', 'DABUR.NS', 'MARICO.NS', 'GODREJCP.NS', 'COLPAL.NS', 'TATACONSUM.NS', 'EMAMILTD.NS'],
-  'Automobile': ['MARUTI.NS', 'TATAMOTORS.NS', 'M&M.NS', 'BAJAJ-AUTO.NS', 'EICHERMOT.NS', 'HEROMOTOCO.NS', 'ASHOKLEY.NS', 'TVSMOTOR.NS', 'BALKRISIND.NS', 'MRF.NS'],
-  'Pharma': ['SUNPHARMA.NS', 'DRREDDY.NS', 'CIPLA.NS', 'DIVISLAB.NS', 'AUROPHARMA.NS', 'LUPIN.NS', 'BIOCON.NS', 'TORNTPHARM.NS', 'ALKEM.NS', 'ZYDUSLIFE.NS'],
-  'Energy': ['RELIANCE.NS', 'ONGC.NS', 'IOC.NS', 'BPCL.NS', 'HINDPETRO.NS', 'GAIL.NS', 'COALINDIA.NS', 'ADANIGREEN.NS', 'ADANIPOWER.NS', 'TATAPOWER.NS'],
-  'Metals & Mining': ['TATASTEEL.NS', 'HINDALCO.NS', 'JSWSTEEL.NS', 'VEDL.NS', 'SAIL.NS', 'JINDALSTEL.NS', 'NMDC.NS', 'HINDZINC.NS', 'NATIONALUM.NS', 'APLAPOLLO.NS'],
-  'Infrastructure': ['LT.NS', 'ULTRACEMCO.NS', 'GRASIM.NS', 'ADANIPORTS.NS', 'HINDCOPPER.NS', 'RAMCOCEM.NS', 'SHREECEM.NS', 'AMBUJACEM.NS', 'ACC.NS', 'CONCOR.NS'],
-  'Consumer Durables': ['TITAN.NS', 'HAVELLS.NS', 'VOLTAS.NS', 'WHIRLPOOL.NS', 'CROMPTON.NS', 'BATAINDIA.NS', 'SYMPHONY.NS', 'BLUESTARCO.NS', 'RAJESHEXPO.NS', 'KAJARIACER.NS'],
+  'Technology': ['TCS.NS', 'INFY.NS', 'WIPRO.NS', 'HCLTECH.NS', 'TECHM.NS'],
+  'Banking': ['HDFCBANK.NS', 'ICICIBANK.NS', 'SBIN.NS', 'KOTAKBANK.NS', 'AXISBANK.NS'],
+  'Financial Services': ['BAJFINANCE.NS', 'BAJAJFINSV.NS', 'HDFCLIFE.NS', 'SBILIFE.NS', 'ICICIGI.NS'],
+  'FMCG': ['HINDUNILVR.NS', 'ITC.NS', 'NESTLEIND.NS', 'BRITANNIA.NS', 'DABUR.NS'],
+  'Automobile': ['MARUTI.NS', 'TATAMOTORS.NS', 'M&M.NS', 'BAJAJ-AUTO.NS', 'EICHERMOT.NS'],
+  'Pharma': ['SUNPHARMA.NS', 'DRREDDY.NS', 'CIPLA.NS', 'DIVISLAB.NS', 'AUROPHARMA.NS'],
+  'Energy': ['RELIANCE.NS', 'ONGC.NS', 'IOC.NS', 'BPCL.NS', 'HINDPETRO.NS'],
+  'Metals & Mining': ['TATASTEEL.NS', 'HINDALCO.NS', 'JSWSTEEL.NS', 'VEDL.NS', 'SAIL.NS'],
+  'Infrastructure': ['LT.NS', 'ULTRACEMCO.NS', 'GRASIM.NS', 'ADANIPORTS.NS', 'HINDCOPPER.NS'],
+  'Consumer Durables': ['TITAN.NS', 'HAVELLS.NS', 'VOLTAS.NS', 'WHIRLPOOL.NS', 'CROMPTON.NS'],
 };
 
 // Test backend connection
@@ -259,15 +260,16 @@ export const fetchSectorStocks = async (sector) => {
   return validStocks;
 };
 
-// Fetch all stocks from all sectors (for analysis filtering)
+// Fetch stocks from selected sectors (for analysis filtering)
+// Lighter approach: fetch only from 4 key sectors (20 stocks) instead of all 10 sectors
 export const fetchAllStocks = async () => {
   try {
-    console.log('Fetching all stocks from all sectors...');
+    console.log('Fetching stocks from key sectors for analysis...');
     const allStocks = [];
-    const sectorNames = Object.keys(SECTORS);
+    // Only fetch from 4 sectors for lighter/faster loading (20 stocks total)
+    const keySectors = ['Technology', 'Banking', 'Pharma', 'Energy'];
     
-    // Fetch stocks from all sectors
-    for (const sector of sectorNames) {
+    for (const sector of keySectors) {
       try {
         console.log(`Fetching ${sector} stocks...`);
         const sectorStocks = await fetchSectorStocks(sector);
@@ -280,9 +282,12 @@ export const fetchAllStocks = async () => {
     }
     
     console.log(`Total stocks fetched: ${allStocks.length}`);
+    if (allStocks.length === 0) {
+      throw new Error('No stocks could be fetched. Please check your internet connection.');
+    }
     return allStocks;
   } catch (error) {
-    console.error('Error fetching all stocks:', error);
+    console.error('Error fetching stocks:', error);
     throw error;
   }
 };

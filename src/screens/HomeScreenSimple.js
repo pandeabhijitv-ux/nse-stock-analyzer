@@ -55,6 +55,14 @@ export default function HomeScreen({ onSectorPress }) {
       color: '#ef4444',
       icon: '🔥',
     },
+    {
+      id: 'graha-gochar',
+      name: 'Graha Gochar Impact',
+      description: 'Stocks influenced by planetary transits',
+      badge: 'Vedic astrology insights',
+      color: '#a855f7',
+      icon: '🌙',
+    },
   ];
 
   const comingSoonFeatures = [
@@ -81,14 +89,6 @@ export default function HomeScreen({ onSectorPress }) {
       badge: 'Top 20 trades - 9:00-9:20 AM',
       color: '#ec4899',
       icon: '🎲',
-    },
-    {
-      id: 'graha-gochar',
-      name: 'Graha Gochar Impact',
-      description: 'Planetary transits & sector analysis',
-      badge: 'Vedic astrology insights',
-      color: '#a855f7',
-      icon: '🌙',
     },
   ];
 
