@@ -45,18 +45,30 @@ export default function StockListScreen({ sector }) {
       
       // Calculate scores for each stock
       const scoredStocks = data.map(stock => {
-        const technical = calculateTechnicalIndicators(stock);
-        const fundamentalScores = scoreFundamentals(stock);
-        const technicalScore = scoreTechnical(technical);
-        const overallScore = calculateOverallScore(fundamentalScores, technicalScore);
-        
-        return {
-          ...stock,
-          technical,
-          fundamentalScores,
-          technicalScore,
-          overallScore,
-        };
+        try {
+          const technical = calculateTechnicalIndicators(stock) || {};
+          const fundamentalScores = scoreFundamentals(stock) || {};
+          const technicalScore = scoreTechnical(technical) || 50;
+          const overallScore = calculateOverallScore(fundamentalScores, technicalScore) || 50;
+          
+          return {
+            ...stock,
+            technical,
+            fundamentalScores,
+            technicalScore,
+            overallScore,
+          };
+        } catch (error) {
+          console.error('Error calculating scores for stock:', stock.symbol, error);
+          // Return stock with default scores if calculation fails
+          return {
+            ...stock,
+            technical: {},
+            fundamentalScores: {},
+            technicalScore: 50,
+            overallScore: 50,
+          };
+        }
       });
       
       // Sort by overall score
