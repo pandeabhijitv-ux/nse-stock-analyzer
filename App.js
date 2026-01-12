@@ -51,8 +51,11 @@ export default function App() {
     // This prevents crash if fonts aren't loaded yet
     const timer = setTimeout(() => {
       try {
+        console.log('App initializing...');
         setIsReady(true);
+        console.log('App ready!');
       } catch (err) {
+        console.error('App initialization error:', err);
         setError(err.message);
       }
     }, 100);
@@ -64,6 +67,9 @@ export default function App() {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>Error: {error}</Text>
+        <Text style={{ marginTop: 10, fontSize: 14, color: '#999' }}>
+          Please restart the app
+        </Text>
       </View>
     );
   }
@@ -72,40 +78,48 @@ export default function App() {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#2196F3" />
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={styles.loadingText}>Loading Stock Analyzer...</Text>
       </View>
     );
   }
 
-  return (
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName;
-            if (route.name === 'Analyze') {
-              iconName = focused ? 'analytics' : 'analytics-outline';
-            } else if (route.name === 'Screener') {
-              iconName = focused ? 'search' : 'search-outline';
-            } else if (route.name === 'Watchlist') {
-              iconName = focused ? 'star' : 'star-outline';
-            }
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: '#2196F3',
-          tabBarInactiveTintColor: 'gray',
-        })}
-      >
-        <Tab.Screen 
-          name="Analyze" 
-          component={HomeStack}
-          options={{ headerShown: false }}
-        />
-        <Tab.Screen name="Screener" component={ScreenerScreen} />
-        <Tab.Screen name="Watchlist" component={WatchlistScreen} />
-      </Tab.Navigator>
-    </NavigationContainer>
-  );
+  try {
+    return (
+      <NavigationContainer>
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName;
+              if (route.name === 'Analyze') {
+                iconName = focused ? 'analytics' : 'analytics-outline';
+              } else if (route.name === 'Screener') {
+                iconName = focused ? 'search' : 'search-outline';
+              } else if (route.name === 'Watchlist') {
+                iconName = focused ? 'star' : 'star-outline';
+              }
+              return <Ionicons name={iconName} size={size} color={color} />;
+            },
+            tabBarActiveTintColor: '#2196F3',
+            tabBarInactiveTintColor: 'gray',
+          })}
+        >
+          <Tab.Screen 
+            name="Analyze" 
+            component={HomeStack}
+            options={{ headerShown: false }}
+          />
+          <Tab.Screen name="Screener" component={ScreenerScreen} />
+          <Tab.Screen name="Watchlist" component={WatchlistScreen} />
+        </Tab.Navigator>
+      </NavigationContainer>
+    );
+  } catch (err) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Navigation Error: {err.message}</Text>
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,49 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SECTORS } from '../services/stockAPI';
 
 export default function HomeScreen({ navigation }) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Simple initialization check
+    try {
+      if (SECTORS && Object.keys(SECTORS).length > 0) {
+        setIsLoading(false);
+      } else {
+        setError('Unable to load sectors');
+        setIsLoading(false);
+      }
+    } catch (err) {
+      setError(err.message);
+      setIsLoading(false);
+    }
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#2196F3" />
+        <Text style={{ marginTop: 10, color: '#666' }}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <Text style={{ color: '#f44336', fontSize: 16, textAlign: 'center' }}>
+          Error: {error}
+        </Text>
+      </View>
+    );
+  }
   const sectorIcons = {
     'Technology': 'hardware-chip',
     'Healthcare': 'medkit',

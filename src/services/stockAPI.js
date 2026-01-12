@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://query1.finance.yahoo.com/v8/finance';
-const BASE_URL_V10 = 'https://query1.finance.yahoo.com/v10/finance';
+// Use proxy server if available, otherwise direct Yahoo Finance (may fail on mobile)
+const USE_PROXY = true; // Set to true when you deploy the proxy server
+const PROXY_URL = 'https://your-proxy-server.vercel.app'; // Replace with your deployed proxy URL
+const BASE_URL = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v8/finance';
+const BASE_URL_V10 = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v10/finance';
 
 // Indian NSE Sector mapping with popular stocks (Yahoo Finance uses .NS suffix for NSE)
 export const SECTORS = {
@@ -20,14 +23,19 @@ export const SECTORS = {
 // Fetch stock quote data
 export const fetchStockQuote = async (symbol) => {
   try {
-    const response = await axios.get(`${BASE_URL}/chart/${symbol}`, {
+    const url = USE_PROXY 
+      ? `${PROXY_URL}/api/quote/${symbol}`
+      : `${BASE_URL}/chart/${symbol}`;
+    
+    const response = await axios.get(url, USE_PROXY ? {} : {
       params: {
         interval: '1d',
         range: '1y',
       },
     });
     
-    const result = response.data.chart.result[0];
+    const data = USE_PROXY ? response.data : response.data;
+    const result = data.chart.result[0];
     const quote = result.indicators.quote[0];
     const meta = result.meta;
     
@@ -53,7 +61,11 @@ export const fetchStockQuote = async (symbol) => {
 // Fetch fundamental data
 export const fetchFundamentalData = async (symbol) => {
   try {
-    const response = await axios.get(`${BASE_URL_V10}/quoteSummary/${symbol}`, {
+    const url = USE_PROXY
+      ? `${PROXY_URL}/api/fundamentals/${symbol}`
+      : `${BASE_URL_V10}/quoteSummary/${symbol}`;
+    
+    const response = await axios.get(url, USE_PROXY ? {} : {
       params: {
         modules: 'defaultKeyStatistics,financialData,summaryDetail,price,summaryProfile',
       },
