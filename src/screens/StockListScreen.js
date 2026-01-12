@@ -8,13 +8,11 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { fetchSectorStocks } from '../services/stockAPI';
 import { calculateTechnicalIndicators } from '../services/technicalAnalysis';
 import { scoreFundamentals, scoreTechnical, calculateOverallScore } from '../services/analysisEngine';
 
-export default function StockListScreen({ route, navigation }) {
-  const { sector } = route.params;
+export default function StockListScreen({ sector }) {
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('score'); // score, price, change
@@ -88,7 +86,6 @@ export default function StockListScreen({ route, navigation }) {
   const renderStockItem = ({ item, index }) => (
     <TouchableOpacity
       style={styles.stockCard}
-      onPress={() => navigation.navigate('StockDetail', { stock: item })}
     >
       <View style={styles.rankBadge}>
         <Text style={styles.rankText}>#{index + 1}</Text>

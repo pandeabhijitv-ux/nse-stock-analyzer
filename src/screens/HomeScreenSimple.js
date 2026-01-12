@@ -6,10 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { SECTORS } from '../services/stockAPI';
 
 export default function HomeScreen({ onSectorPress }) {
+  const handleComingSoon = (featureName) => {
+    Alert.alert('Coming Soon', `${featureName} will be available soon!`);
+  };
   const sectorColors = {
     'Technology': '#667eea',
     'Banking': '#4facfe',
@@ -21,7 +25,12 @@ export default function HomeScreen({ onSectorPress }) {
     'Metals & Mining': '#a8edea',
     'Infrastructure': '#ffecd2',
     'Consumer Durables': '#ff6e7f',
+    'Options': '#764ba2',
+    'Gold & Silver': '#f7971e',
+    'Commodities': '#56ab2f',
   };
+
+  const comingSoonFeatures = ['Options', 'Gold & Silver', 'Commodities'];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -40,6 +49,18 @@ export default function HomeScreen({ onSectorPress }) {
             >
               <Text style={styles.sectorName}>{sector}</Text>
               <Text style={styles.sectorCount}>{SECTORS[sector].length} stocks</Text>
+            </TouchableOpacity>
+          ))}
+
+          {/* Coming Soon Features */}
+          {comingSoonFeatures.map((feature) => (
+            <TouchableOpacity
+              key={feature}
+              onPress={() => handleComingSoon(feature)}
+              style={[styles.sectorCard, { backgroundColor: sectorColors[feature] || '#666' }]}
+            >
+              <Text style={styles.sectorName}>{feature}</Text>
+              <Text style={styles.comingSoonText}>Coming Soon</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -101,5 +122,10 @@ const styles = StyleSheet.create({
   sectorCount: {
     fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
+  },
+  comingSoonText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.9)',
+    fontStyle: 'italic',
   },
 });
