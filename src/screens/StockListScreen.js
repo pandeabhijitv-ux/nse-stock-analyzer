@@ -38,89 +38,111 @@ export default function StockListScreen({ sector }) {
   };
 
   const filterStocksByAnalysis = (allStocks, analysisType) => {
+    console.log(`Filtering ${allStocks.length} stocks for ${analysisType}`);
     let filtered = [...allStocks];
     
     switch (analysisType) {
       case 'target-oriented':
         // Stocks with clear trends and good risk-reward ratios
-        // High volume, RSI between 40-70, MACD positive
+        // Prefer RSI between 40-70, MACD positive, decent volume
         filtered = filtered.filter(s => {
           const rsi = s.technical?.rsi || 50;
           const macd = s.technical?.macd?.macd || 0;
-          const volume = s.avgVolume || 0;
-          return rsi >= 40 && rsi <= 70 && macd > 0 && volume > 100000;
+          const volume = s.volume || s.avgVolume || 0;
+          // More lenient: accept if at least one condition is good
+          const goodRsi = rsi >= 35 && rsi <= 75;
+          const goodMacd = macd > 0;
+          const goodVolume = volume > 50000;
+          return goodRsi || goodMacd || goodVolume;
         });
         filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
         break;
         
       case 'swing':
         // High momentum stocks with strong trends
-        // MACD positive, RSI > 50, positive price change
+        // Prefer positive MACD, RSI > 45, or positive price change
         filtered = filtered.filter(s => {
           const macd = s.technical?.macd?.macd || 0;
           const rsi = s.technical?.rsi || 50;
           const change = s.changePercent || 0;
-          return macd > 0 && rsi > 50 && change > 0;
+          // Accept if any condition is met
+          return macd > 0 || rsi > 45 || change > 0;
         });
         filtered.sort((a, b) => (b.changePercent || 0) - (a.changePercent || 0));
         break;
         
       case 'fundamentally-strong':
-        // Best fundamental metrics
-        // Low P/E, high ROE, low debt, good profitability
+        // Best fundamental metrics (but lenient for missing data)
+        // Prefer low P/E, high ROE, low debt, but don't reject nulls
         filtered = filtered.filter(s => {
-          const pe = s.peRatio || 999;
-          const roe = s.returnOnEquity || 0;
-          const debt = s.debtToEquity || 999;
-          return pe < 30 && roe > 0.10 && debt < 2.0;
+          const pe = s.peRatio;
+          const roe = s.returnOnEquity;
+          const debt = s.debtToEquity;
+          
+          // Accept if fundamentals are missing OR if they're good
+          const goodPe = pe === null || pe === undefined || (pe > 0 && pe < 40);
+          const goodRoe = roe === null || roe === undefined || roe > 0.08;
+          const goodDebt = debt === null || debt === undefined || debt < 3.0;
+          
+          // Accept if at least 2 out of 3 conditions are met (or missing)
+          const score = (goodPe ? 1 : 0) + (goodRoe ? 1 : 0) + (goodDebt ? 1 : 0);
+          return score >= 2;
         });
-        filtered.sort((a, b) => {
-          const scoreA = (a.returnOnEquity || 0) * 100 - (a.peRatio || 50) - (a.debtToEquity || 5);
-          const scoreB = (b.returnOnEquity || 0) * 100 - (b.peRatio || 50) - (b.debtToEquity || 5);
-          return scoreB - scoreA;
-        });
+        filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
         break;
         
       case 'technically-strong':
-        // Strong technical indicators
-        // RSI 40-70, MACD positive, Stochastic buy signal
+        // Strong technical indicators (more lenient)
+        // Prefer RSI 35-75, positive MACD, or good stochastic
         filtered = filtered.filter(s => {
           const rsi = s.technical?.rsi || 50;
           const macd = s.technical?.macd?.macd || 0;
           const stochK = s.technical?.stochastic?.k || 50;
-          return rsi >= 40 && rsi <= 70 && macd > 0 && stochK > 20 && stochK < 80;
+          
+          const goodRsi = rsi >= 35 && rsi <= 75;
+          const goodMacd = macd > 0;
+          const goodStoch = stochK > 20 && stochK < 80;
+          
+          // Accept if at least one indicator is good
+          return goodRsi || goodMacd || goodStoch;
         });
         filtered.sort((a, b) => (b.technicalScore || 50) - (a.technicalScore || 50));
         break;
         
       case 'hot-stocks':
-        // Highest gainers today
+        // Highest movers today (gainers or losers)
         filtered = filtered.filter(s => (s.changePercent || 0) !== 0);
+        if (filtered.length === 0) {
+          // If no changes, show all stocks
+          filtered = allStocks;
+        }
         filtered.sort((a, b) => Math.abs(b.changePercent || 0) - Math.abs(a.changePercent || 0));
         break;
         
       case 'graha-gochar':
         // Stocks influenced by planetary transits (simplified vedic astrology)
         // Focus on sectors: Energy (Sun), Banking (Jupiter), Technology (Mercury)
-        // Filter by good momentum and positive trends
         filtered = filtered.filter(s => {
           const rsi = s.technical?.rsi || 50;
           const change = s.changePercent || 0;
           const sector = s.sector || '';
           const isInfluencedSector = 
-            sector.includes('Energy') || 
-            sector.includes('Bank') || 
-            sector.includes('Technology') ||
-            sector.includes('Financial');
-          return (rsi > 45 && rsi < 75) && change !== 0 && isInfluencedSector;
+            sector.toLowerCase().includes('energy') || 
+            sector.toLowerCase().includes('bank') || 
+            sector.toLowerCase().includes('technology') ||
+            sector.toLowerCase().includes('financial');
+          return (rsi > 40 && rsi < 80) || isInfluencedSector;
         });
-        // If no sector matches, show stocks with strong momentum
-        if (filtered.length === 0) {
+        // If too few matches, show all stocks with decent momentum
+        if (filtered.length < 5) {
           filtered = allStocks.filter(s => {
             const rsi = s.technical?.rsi || 50;
-            const change = s.changePercent || 0;
-            return rsi > 50 && change > 0;
+            return rsi > 40 && rsi < 70;
           });
+        }
+        // If still no matches, show all
+        if (filtered.length === 0) {
+          filtered = allStocks;
         }
         filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
         break;
@@ -130,6 +152,7 @@ export default function StockListScreen({ sector }) {
         filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
     }
     
+    console.log(`After filtering: ${filtered.length} stocks match ${analysisType}`);
     return filtered.slice(0, 20); // Return top 20 stocks
   };
 
@@ -205,10 +228,24 @@ export default function StockListScreen({ sector }) {
       let finalStocks = scoredStocks;
       if (isAnalysisCategory) {
         finalStocks = filterStocksByAnalysis(scoredStocks, sector);
+        // Fallback: if filtering resulted in 0 stocks, show all stocks
+        if (finalStocks.length === 0) {
+          console.warn(`No stocks matched ${sector} filter, showing all stocks`);
+          finalStocks = scoredStocks;
+        }
       }
       
       // Sort by overall score
       finalStocks.sort((a, b) => b.overallScore - a.overallScore);
+      
+      // Final check
+      if (finalStocks.length === 0) {
+        console.warn('Final stocks list is empty');
+        setError('No stocks available for this category');
+        setStocks([]);
+        setLoading(false);
+        return;
+      }
       
       setStocks(finalStocks);
       setLoading(false);
