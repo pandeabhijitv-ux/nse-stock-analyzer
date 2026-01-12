@@ -27,13 +27,20 @@ app.get('/api/quote/:symbol', async (req, res) => {
         interval: '1d',
         range: '1y',
       },
-      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json',
+      },
+      timeout: 15000,
     });
     
     res.json(response.data);
   } catch (error) {
-    console.error(`Error fetching quote for ${req.params.symbol}:`, error.message);
-    res.status(500).json({ error: error.message });
+    console.error(`Error fetching quote for ${req.params.symbol}:`, error.message, error.response?.status);
+    res.status(error.response?.status || 500).json({ 
+      error: error.message,
+      details: error.response?.data 
+    });
   }
 });
 
@@ -45,13 +52,20 @@ app.get('/api/fundamentals/:symbol', async (req, res) => {
       params: {
         modules: 'defaultKeyStatistics,financialData,summaryDetail,price,summaryProfile',
       },
-      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json',
+      },
+      timeout: 15000,
     });
     
     res.json(response.data);
   } catch (error) {
-    console.error(`Error fetching fundamentals for ${req.params.symbol}:`, error.message);
-    res.status(500).json({ error: error.message });
+    console.error(`Error fetching fundamentals for ${req.params.symbol}:`, error.message, error.response?.status);
+    res.status(error.response?.status || 500).json({ 
+      error: error.message,
+      details: error.response?.data 
+    });
   }
 });
 
