@@ -202,8 +202,22 @@ export const fetchSectorStocks = async (sector) => {
       const quote = await fetchStockQuote(symbol);
       console.log(`Got quote for ${symbol}`);
       
-      const fundamentals = await fetchFundamentalData(symbol);
-      console.log(`Got fundamentals for ${symbol}`);
+      // Try to get fundamentals, but don't fail if it doesn't work
+      let fundamentals = null;
+      try {
+        fundamentals = await fetchFundamentalData(symbol);
+        console.log(`Got fundamentals for ${symbol}`);
+      } catch (fundError) {
+        console.warn(`Could not fetch fundamentals for ${symbol}, using quote data only`);
+        // Create basic fundamental data from quote
+        fundamentals = {
+          symbol: symbol,
+          companyName: symbol.replace('.NS', ''),
+          sector: sector,
+          peRatio: null,
+          marketCap: null,
+        };
+      }
       
       if (quote && fundamentals) {
         validStocks.push({
