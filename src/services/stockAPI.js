@@ -7,18 +7,33 @@ const BASE_URL = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.
 const BASE_URL_V10 = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v10/finance';
 
 // Indian NSE Sector mapping with popular stocks (Yahoo Finance uses .NS suffix for NSE)
+// Reduced to 3 stocks per sector for faster mobile loading
 export const SECTORS = {
-  'Technology': ['TCS.NS', 'INFY.NS', 'WIPRO.NS', 'HCLTECH.NS', 'TECHM.NS', 'LTI.NS', 'COFORGE.NS', 'MINDTREE.NS', 'MPHASIS.NS', 'PERSISTENT.NS'],
-  'Banking': ['HDFCBANK.NS', 'ICICIBANK.NS', 'SBIN.NS', 'KOTAKBANK.NS', 'AXISBANK.NS', 'INDUSINDBK.NS', 'BANKBARODA.NS', 'PNB.NS', 'FEDERALBNK.NS', 'IDFCFIRSTB.NS'],
-  'Financial Services': ['BAJFINANCE.NS', 'BAJAJFINSV.NS', 'HDFCLIFE.NS', 'SBILIFE.NS', 'ICICIGI.NS', 'HDFCAMC.NS', 'MUTHOOTFIN.NS', 'CHOLAFIN.NS', 'M&MFIN.NS', 'PFC.NS'],
-  'FMCG': ['HINDUNILVR.NS', 'ITC.NS', 'NESTLEIND.NS', 'BRITANNIA.NS', 'DABUR.NS', 'MARICO.NS', 'GODREJCP.NS', 'COLPAL.NS', 'TATACONSUM.NS', 'EMAMILTD.NS'],
-  'Automobile': ['MARUTI.NS', 'TATAMOTORS.NS', 'M&M.NS', 'BAJAJ-AUTO.NS', 'EICHERMOT.NS', 'HEROMOTOCO.NS', 'ASHOKLEY.NS', 'TVSMOTOR.NS', 'BALKRISIND.NS', 'MRF.NS'],
-  'Pharma': ['SUNPHARMA.NS', 'DRREDDY.NS', 'CIPLA.NS', 'DIVISLAB.NS', 'AUROPHARMA.NS', 'LUPIN.NS', 'BIOCON.NS', 'TORNTPHARM.NS', 'ALKEM.NS', 'CADILAHC.NS'],
-  'Energy': ['RELIANCE.NS', 'ONGC.NS', 'IOC.NS', 'BPCL.NS', 'HINDPETRO.NS', 'GAIL.NS', 'COALINDIA.NS', 'ADANIGREEN.NS', 'ADANIPOWER.NS', 'TATAPOWER.NS'],
-  'Metals & Mining': ['TATASTEEL.NS', 'HINDALCO.NS', 'JSWSTEEL.NS', 'VEDL.NS', 'SAIL.NS', 'JINDALSTEL.NS', 'NMDC.NS', 'HINDZINC.NS', 'NATIONALUM.NS', 'APLAPOLLO.NS'],
-  'Infrastructure': ['LT.NS', 'ULTRACEMCO.NS', 'GRASIM.NS', 'ADANIPORTS.NS', 'HINDCOPPER.NS', 'RAMCOCEM.NS', 'SHREECEM.NS', 'AMBUJACEM.NS', 'ACC.NS', 'CONCOR.NS'],
-  'Consumer Durables': ['TITAN.NS', 'HAVELLS.NS', 'VOLTAS.NS', 'WHIRLPOOL.NS', 'CROMPTON.NS', 'BATAINDIA.NS', 'SYMPHONY.NS', 'BLUESTARCO.NS', 'RAJESHEXPO.NS', 'KAJARIACER.NS'],
+  'Technology': ['TCS.NS', 'INFY.NS', 'WIPRO.NS'],
+  'Banking': ['HDFCBANK.NS', 'ICICIBANK.NS', 'SBIN.NS'],
+  'Financial Services': ['BAJFINANCE.NS', 'BAJAJFINSV.NS', 'HDFCLIFE.NS'],
+  'FMCG': ['HINDUNILVR.NS', 'ITC.NS', 'NESTLEIND.NS'],
+  'Automobile': ['MARUTI.NS', 'TATAMOTORS.NS', 'M&M.NS'],
+  'Pharma': ['SUNPHARMA.NS', 'DRREDDY.NS', 'CIPLA.NS'],
+  'Energy': ['RELIANCE.NS', 'ONGC.NS', 'IOC.NS'],
+  'Metals & Mining': ['TATASTEEL.NS', 'HINDALCO.NS', 'JSWSTEEL.NS'],
+  'Infrastructure': ['LT.NS', 'ULTRACEMCO.NS', 'GRASIM.NS'],
+  'Consumer Durables': ['TITAN.NS', 'HAVELLS.NS', 'VOLTAS.NS'],
 };
+
+// Test backend connection
+export const testBackendConnection = async () => {
+  try {
+    console.log('Testing backend connection:', PROXY_URL);
+    const response = await axios.get(PROXY_URL, { timeout: 5000 });
+    console.log('Backend connection test:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Backend connection failed:', error.message);
+    throw error;
+  }
+};
+
 
 // Fetch stock quote data
 export const fetchStockQuote = async (symbol) => {
@@ -27,12 +42,16 @@ export const fetchStockQuote = async (symbol) => {
       ? `${PROXY_URL}/api/quote/${symbol}`
       : `${BASE_URL}/chart/${symbol}`;
     
-    const response = await axios.get(url, USE_PROXY ? {} : {
-      params: {
-        interval: '1d',
-        range: '1y',
-      },
-    });
+    console.log('Fetching quote for:', symbol, 'from:', url);
+    const response = await axios.get(url, {
+      timeout: 15000,
+      ...(USE_PROXY ? {} : {
+        params: {
+          interval: '1d',
+          range: '1y',
+        },
+      }),
+    };
     
     const data = USE_PROXY ? response.data : response.data;
     const result = data.chart.result[0];
@@ -65,11 +84,15 @@ export const fetchFundamentalData = async (symbol) => {
       ? `${PROXY_URL}/api/fundamentals/${symbol}`
       : `${BASE_URL_V10}/quoteSummary/${symbol}`;
     
-    const response = await axios.get(url, USE_PROXY ? {} : {
-      params: {
-        modules: 'defaultKeyStatistics,financialData,summaryDetail,price,summaryProfile',
-      },
-    });
+    console.log('Fetching fundamentals for:', symbol);
+    const response = await axios.get(url, {
+      timeout: 15000,
+      ...(USE_PROXY ? {} : {
+        params: {
+          modules: 'defaultKeyStatistics,financialData,summaryDetail,price,summaryProfile',
+        },
+      }),
+    };
     
     const data = response.data.quoteSummary.result[0];
     const keyStats = data.defaultKeyStatistics || {};

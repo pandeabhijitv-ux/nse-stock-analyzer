@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
+  Alert,
 } from 'react-native';
-import { fetchSectorStocks } from '../services/stockAPI';
+import { fetchSectorStocks, testBackendConnection } from '../services/stockAPI';
 import { calculateTechnicalIndicators } from '../services/technicalAnalysis';
 import { scoreFundamentals, scoreTechnical, calculateOverallScore } from '../services/analysisEngine';
 
@@ -16,6 +17,7 @@ export default function StockListScreen({ sector }) {
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('score'); // score, price, change
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadStocks();
@@ -23,13 +25,20 @@ export default function StockListScreen({ sector }) {
 
   const loadStocks = async () => {
     setLoading(true);
+    setError(null);
     try {
+      // First test backend connection
+      console.log('Testing backend connection...');
+      await testBackendConnection();
+      console.log('Backend connection successful!');
+      
       console.log('Loading stocks for sector:', sector);
       const data = await fetchSectorStocks(sector);
       console.log('Fetched data:', data.length, 'stocks');
       
       if (!data || data.length === 0) {
         console.warn('No stocks returned from API');
+        setError('No stocks available for this sector');
         setStocks([]);
         return;
       }
@@ -56,6 +65,13 @@ export default function StockListScreen({ sector }) {
       setStocks(scoredStocks);
     } catch (error) {
       console.error('Error loading stocks:', error);
+      const errorMsg = error.message || 'Unknown error';
+      setError(`Failed to load stocks: ${errorMsg}`);
+      Alert.alert(
+        'Connection Error',
+        `Unable to connect to backend server. Please check your internet connection.\n\nError: ${errorMsg}`,
+        [{ text: 'OK' }]
+      );
       setStocks([]);
     } finally {
       setLoading(false);
@@ -185,9 +201,11 @@ export default function StockListScreen({ sector }) {
   if (stocks.length === 0) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>No stocks found</Text>
+        <Text style={styles.loadingText}>
+          {error || 'No stocks found'}
+        </Text>
         <Text style={styles.loadingSubtext}>
-          Unable to load {sector} stocks. Please check your connection.
+          {error ? 'Please check your internet connection and try again.' : `Unable to load ${sector} stocks.`}
         </Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadStocks}>
           <Text style={styles.retryButtonText}>Retry</Text>

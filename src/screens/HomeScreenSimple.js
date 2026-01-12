@@ -48,7 +48,7 @@ export default function HomeScreen({ onSectorPress }) {
               style={[styles.sectorCard, { backgroundColor: sectorColors[sector] || '#2196F3' }]}
             >
               <Text style={styles.sectorName}>{sector}</Text>
-              <Text style={styles.sectorCount}>{SECTORS[sector].length} stocks</Text>
+              <Text style={styles.sectorCount}>3 stocks</Text>
             </TouchableOpacity>
           ))}
 
