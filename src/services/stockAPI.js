@@ -39,37 +39,6 @@ export const MUTUAL_FUND_STOCKS = [
   'SBILIFE.NS',       // SBI Life (MF ecosystem)
 ];
 
-// Popular NSE ETFs (Exchange Traded Funds)
-export const ETF_SYMBOLS = [
-  'NIFTYBEES.NS',     // Nifty 50 ETF
-  'BANKBEES.NS',      // Nifty Bank ETF
-  'JUNIORBEES.NS',    // Nifty Next 50 ETF
-  'LIQUIDBEES.NS',    // Liquid ETF
-  'GOLDBEES.NS',      // Gold ETF
-  'ITBEES.NS',        // Nifty IT ETF
-  'PSUBNKBEES.NS',    // PSU Bank ETF
-  'CONSUMBEES.NS',    // Nifty Consumption ETF
-  'PHARMABEES.NS',    // Pharma ETF
-  'AUTOBEES.NS',      // Auto ETF
-];
-
-// Popular Mutual Fund Houses represented through their AMC stocks
-// Note: Direct mutual fund NAVs are harder to fetch via Yahoo Finance
-// Using AMC (Asset Management Company) stocks as proxy
-export const MUTUAL_FUND_STOCKS = [
-  'HDFCAMC.NS',       // HDFC AMC
-  'UTIAMC.NS',        // UTI AMC
-  'NAM-INDIA.NS',     // Nippon Life AMC
-  'ICICIAMC.NS',      // ICICI Prudential AMC (if available)
-  'SBIAMC.NS',        // SBI Funds Management (if available)
-  // Popular fund houses with good track record
-  'HDFCBANK.NS',      // HDFC Bank (represents HDFC MF ecosystem)
-  'ICICIGI.NS',       // ICICI (represents ICICI Prudential MF)
-  'SBILIFE.NS',       // SBI Life (represents SBI MF ecosystem)
-  'BAJAJFINSV.NS',    // Bajaj Finserv (represents Bajaj MF)
-  'AXISBANK.NS',      // Axis Bank (represents Axis MF)
-];
-
 // Test backend connection
 export const testBackendConnection = async () => {
   try {
