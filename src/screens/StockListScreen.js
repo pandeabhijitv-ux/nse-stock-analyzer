@@ -18,8 +18,6 @@ export default function StockListScreen({ sector }) {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('score'); // score, price, change
   const [error, setError] = useState(null);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   useEffect(() => {
     loadStocks();
@@ -207,50 +205,13 @@ export default function StockListScreen({ sector }) {
       let finalStocks = scoredStocks;
       if (isAnalysisCategory) {
         finalStocks = filterStocksByAnalysis(scoredStocks, sector);
-        // Progressive loading: Show first 5 immediately
-        const initial = finalStocks.slice(0, 5);
-        const remaining = finalStocks.slice(5);
-        
-        console.log('Initial stocks (showing now):', initial.length);
-        setStocks(initial);
-        setInitialLoadComplete(true);
-        setLoading(false);
-        
-        // Load remaining stocks progressively in background
-        if (remaining.length > 0) {
-          console.log('Loading remaining stocks:', remaining.length);
-          setLoadingMore(true);
-          setTimeout(() => {
-            setStocks([...initial, ...remaining]);
-            setLoadingMore(false);
-            console.log('Progressive load complete. Total:', finalStocks.length);
-          }, 500); // Small delay for smoother UX
-        }
-      } else if (isETF || isMutualFund) {
-        // For ETF/MF, show all at once (usually small list)
-        finalStocks.sort((a, b) => b.overallScore - a.overallScore);
-        setStocks(finalStocks);
-        setLoading(false);
-      } else {
-        // Sort by overall score for sector view
-        finalStocks.sort((a, b) => b.overallScore - a.overallScore);
-        // Progressive loading for sectors too
-        const initial = finalStocks.slice(0, 5);
-        const remaining = finalStocks.slice(5);
-        
-        setStocks(initial);
-        setInitialLoadComplete(true);
-        setLoading(false);
-        
-        if (remaining.length > 0) {
-          setLoadingMore(true);
-          setTimeout(() => {
-            setStocks([...initial, ...remaining]);
-            setLoadingMore(false);
-          }, 500);
-        }
       }
       
+      // Sort by overall score
+      finalStocks.sort((a, b) => b.overallScore - a.overallScore);
+      
+      setStocks(finalStocks);
+      setLoading(false);
       console.log('Load complete. Stocks displayed:', finalStocks.length);
     } catch (error) {
       console.error('Error loading stocks:', error);
@@ -263,11 +224,7 @@ export default function StockListScreen({ sector }) {
       );
       setStocks([]);
     } finally {
-      // Only set loading to false if we're not using progressive loading
-      // Progressive loading handles this in the success path
-      if (error) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -474,14 +431,6 @@ export default function StockListScreen({ sector }) {
         contentContainerStyle={styles.listContainer}
         refreshing={loading}
         onRefresh={loadStocks}
-        ListFooterComponent={
-          loadingMore ? (
-            <View style={styles.loadingMoreContainer}>
-              <ActivityIndicator size="small" color="#2196F3" />
-              <Text style={styles.loadingMoreText}>Loading more stocks...</Text>
-            </View>
-          ) : null
-        }
       />
     </SafeAreaView>
   );
@@ -688,14 +637,5 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  loadingMoreContainer: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  loadingMoreText: {
-    marginTop: 10,
-    fontSize: 14,
-    color: '#666',
   },
 });

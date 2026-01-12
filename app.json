@@ -31,7 +31,7 @@
         "ACCESS_NETWORK_STATE"
       ],
       "usesCleartextTraffic": true,
-      "versionCode": 3
+      "versionCode": 4
     },
     "extra": {
       "eas": {
