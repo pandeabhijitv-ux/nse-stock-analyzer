@@ -4,11 +4,8 @@
     "slug": "nse-stock-analyzer",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
       "backgroundColor": "#667eea"
     },
     "assetBundlePatterns": [
@@ -21,20 +18,19 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#667eea"
       },
       "package": "com.nsestockanalyzer.mobile",
-      "permissions": ["INTERNET"],
+      "permissions": [
+        "INTERNET"
+      ],
       "versionCode": 1
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "YOUR_PROJECT_ID_HERE"
+        "projectId": "b3b4110e-c382-471b-b65d-6ccb9e500a0d"
       }
-    }
+    },
+    "owner": "pande.abhijit.v"
   }
 }

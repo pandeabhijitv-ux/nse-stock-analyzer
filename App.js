@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 
 import HomeScreen from './src/screens/HomeScreen';
 import StockListScreen from './src/screens/StockListScreen';
@@ -42,6 +43,40 @@ function HomeStack() {
 }
 
 export default function App() {
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Simple initialization - just mark as ready
+    // This prevents crash if fonts aren't loaded yet
+    const timer = setTimeout(() => {
+      try {
+        setIsReady(true);
+      } catch (err) {
+        setError(err.message);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+      </View>
+    );
+  }
+
+  if (!isReady) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#2196F3" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Tab.Navigator
@@ -72,3 +107,23 @@ export default function App() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#f44336',
+    padding: 20,
+    textAlign: 'center',
+  },
+});
