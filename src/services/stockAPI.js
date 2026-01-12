@@ -51,7 +51,7 @@ export const fetchStockQuote = async (symbol) => {
           range: '1y',
         },
       }),
-    };
+    });
     
     const data = USE_PROXY ? response.data : response.data;
     const result = data.chart.result[0];
@@ -72,8 +72,13 @@ export const fetchStockQuote = async (symbol) => {
       open: quote.open,
     };
   } catch (error) {
-    console.error(`Error fetching quote for ${symbol}:`, error.message);
-    return null;
+    console.error(`Error fetching quote for ${symbol}:`, {
+      message: error.message,
+      code: error.code,
+      response: error.response?.status,
+      url: error.config?.url
+    });
+    throw error;
   }
 };
 
@@ -92,7 +97,7 @@ export const fetchFundamentalData = async (symbol) => {
           modules: 'defaultKeyStatistics,financialData,summaryDetail,price,summaryProfile',
         },
       }),
-    };
+    });
     
     const data = response.data.quoteSummary.result[0];
     const keyStats = data.defaultKeyStatistics || {};
@@ -154,8 +159,13 @@ export const fetchFundamentalData = async (symbol) => {
       recommendationKey: financials.recommendationKey || null,
     };
   } catch (error) {
-    console.error(`Error fetching fundamentals for ${symbol}:`, error.message);
-    return null;
+    console.error(`Error fetching fundamentals for ${symbol}:`, {
+      message: error.message,
+      code: error.code,
+      response: error.response?.status,
+      url: error.config?.url
+    });
+    throw error;
   }
 };
 
@@ -172,10 +182,14 @@ export const fetchSectorStocks = async (sector) => {
   
   const promises = symbols.map(async (symbol) => {
     try {
-      const quote = await fetchStockQuote(symbol);
-      const fundamentals = await fetchFundamentalData(symbol);
+      console.log(`Starting fetch for ${symbol}...`);
+      const [quote, fundamentals] = await Promise.all([
+        fetchStockQuote(symbol),
+        fetchFundamentalData(symbol)
+      ]);
       
       if (quote && fundamentals) {
+        console.log(`Successfully fetched ${symbol}`);
         return {
           ...quote,
           ...fundamentals,
@@ -192,6 +206,11 @@ export const fetchSectorStocks = async (sector) => {
   const results = await Promise.all(promises);
   const validStocks = results.filter(stock => stock !== null);
   console.log(`Successfully fetched ${validStocks.length} out of ${symbols.length} stocks`);
+  
+  if (validStocks.length === 0) {
+    throw new Error('Failed to fetch any stocks. Please check your internet connection.');
+  }
+  
   return validStocks;
 };
 
