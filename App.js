@@ -50,6 +50,7 @@ export default function App() {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         <StockListScreen 
+          key={selectedSector} // Force remount when sector changes
           sector={selectedSector} 
           onStockPress={navigateToDetail}
         />

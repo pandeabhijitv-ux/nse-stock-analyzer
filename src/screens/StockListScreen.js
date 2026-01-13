@@ -20,8 +20,11 @@ export default function StockListScreen({ sector, onStockPress }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Reset stocks when sector changes to force fresh filtering
+    setStocks([]);
+    setLoading(true);
     loadStocks();
-  }, [sector]); // Only reload when sector changes
+  }, [sector]); // Reload when sector changes
 
   const getAnalysisCategoryTitle = (categoryId) => {
     const titles = {
@@ -223,6 +226,9 @@ export default function StockListScreen({ sector, onStockPress }) {
   const loadStocks = async () => {
     setLoading(true);
     setError(null);
+    console.log(`\n🔄 LOADING STOCKS FOR: ${sector}`);
+    console.log(`Time: ${new Date().toLocaleTimeString()}`);
+    
     try {
       // First test backend connection
       console.log('Testing backend connection...');
