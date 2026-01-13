@@ -72,7 +72,7 @@ export const fetchStockQuote = async (symbol) => {
     
     console.log('Fetching quote for:', symbol, 'from:', url);
     const response = await axios.get(url, {
-      timeout: 15000,
+      timeout: 8000,
       ...(USE_PROXY ? {} : {
         params: {
           interval: '1d',
@@ -131,7 +131,7 @@ export const fetchFundamentalData = async (symbol) => {
     
     console.log('Fetching fundamentals for:', symbol);
     const response = await axios.get(url, {
-      timeout: 15000,
+      timeout: 8000,
       ...(USE_PROXY ? {} : {
         params: {
           modules: 'defaultKeyStatistics,financialData,summaryDetail,price,summaryProfile',
@@ -214,6 +214,22 @@ export const fetchFundamentalData = async (symbol) => {
   }
 };
 
+// Simple in-memory cache
+const stockCache = new Map();
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+
+const getCachedStock = (symbol) => {
+  const cached = stockCache.get(symbol);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+};
+
+const setCachedStock = (symbol, data) => {
+  stockCache.set(symbol, { data, timestamp: Date.now() });
+};
+
 // Fetch multiple stocks for a sector or custom symbol list
 export const fetchSectorStocks = async (sector, customSymbols = null) => {
   console.log('fetchSectorStocks called for:', sector);
@@ -225,11 +241,15 @@ export const fetchSectorStocks = async (sector, customSymbols = null) => {
     throw new Error('No symbols configured for this sector');
   }
   
-  const validStocks = [];
-  const errors = [];
-  
-  // Fetch stocks sequentially to avoid overwhelming the connection
-  for (const symbol of symbols) {
+  // Fetch all stocks in parallel for much faster loading
+  const stockPromises = symbols.map(async (symbol) => {
+    // Check cache first
+    const cached = getCachedStock(symbol);
+    if (cached) {
+      console.log(`Using cached data for ${symbol}`);
+      return cached;
+    }
+
     try {
       console.log(`Fetching ${symbol}...`);
       
@@ -260,25 +280,31 @@ export const fetchSectorStocks = async (sector, customSymbols = null) => {
         };
       }
       
-      if (quote && fundamentals) {
-        validStocks.push({
-          ...quote,
-          ...fundamentals,
-        });
-        console.log(`✓ Successfully fetched ${symbol}`);
-      }
+      const stockData = {
+        ...quote,
+        ...fundamentals,
+      };
+      
+      // Cache the result
+      setCachedStock(symbol, stockData);
+      console.log(`✓ Successfully fetched ${symbol}`);
+      return stockData;
     } catch (error) {
       console.error(`✗ Failed to fetch ${symbol}:`, error.message);
-      errors.push({ symbol, error: error.message });
-      // Continue trying other stocks even if one fails
+      return null; // Return null for failed fetches
     }
-  }
+  });
+  
+  // Wait for all parallel fetches to complete
+  const results = await Promise.allSettled(stockPromises);
+  const validStocks = results
+    .filter(r => r.status === 'fulfilled' && r.value !== null)
+    .map(r => r.value);
   
   console.log(`Result: ${validStocks.length}/${symbols.length} stocks fetched successfully`);
   
   if (validStocks.length === 0) {
-    const errorDetails = errors.map(e => `${e.symbol}: ${e.error}`).join('; ');
-    throw new Error(`Failed to fetch any stocks. Errors: ${errorDetails}`);
+    throw new Error('Failed to fetch any stocks. Please check your connection.');
   }
   
   return validStocks;
@@ -289,20 +315,24 @@ export const fetchAllStocks = async () => {
   try {
     console.log('Fetching stocks from key sectors for analysis...');
     const allStocks = [];
-    // Fetch from 5 key sectors (50 stocks total - 10 per sector)
-    const keySectors = ['Technology', 'Banking', 'Pharma', 'Energy', 'FMCG'];
+    // Fetch from 3 key sectors for faster loading (30 stocks total)
+    const keySectors = ['Technology', 'Banking', 'FMCG'];
     
-    for (const sector of keySectors) {
+    // Fetch sectors in parallel for speed
+    const sectorPromises = keySectors.map(async (sector) => {
       try {
         console.log(`Fetching ${sector} stocks...`);
         const sectorStocks = await fetchSectorStocks(sector);
-        allStocks.push(...sectorStocks);
-        console.log(`✓ ${sector}: ${sectorStocks.length} stocks added (Total: ${allStocks.length})`);
+        console.log(`✓ ${sector}: ${sectorStocks.length} stocks fetched`);
+        return sectorStocks;
       } catch (error) {
         console.error(`✗ Failed to fetch ${sector}:`, error.message);
-        // Continue with other sectors even if one fails
+        return []; // Return empty array for failed sectors
       }
-    }
+    });
+    
+    const results = await Promise.all(sectorPromises);
+    results.forEach(stocks => allStocks.push(...stocks));
     
     console.log(`Total stocks fetched: ${allStocks.length}`);
     if (allStocks.length === 0) {

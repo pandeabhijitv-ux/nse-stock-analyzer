@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,7 @@ export default function StockListScreen({ sector, onStockPress }) {
 
   useEffect(() => {
     loadStocks();
-  }, []);
+  }, [sector]); // Only reload when sector changes
 
   const getAnalysisCategoryTitle = (categoryId) => {
     const titles = {
@@ -347,7 +347,8 @@ export default function StockListScreen({ sector, onStockPress }) {
     return 'Very Poor';
   };
 
-  const renderStockItem = ({ item, index }) => (
+  // Memoized render function for better performance
+  const renderStockItem = useCallback(({ item, index }) => (
     <TouchableOpacity
       style={styles.stockCard}
       onPress={() => onStockPress && onStockPress(item, sector)}
@@ -451,7 +452,7 @@ export default function StockListScreen({ sector, onStockPress }) {
         </View>
       </View>
     </TouchableOpacity>
-  );
+  ), [sector, onStockPress]);
 
   if (loading) {
     return (
@@ -520,6 +521,15 @@ export default function StockListScreen({ sector, onStockPress }) {
         contentContainerStyle={styles.listContainer}
         refreshing={loading}
         onRefresh={loadStocks}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
+        getItemLayout={(data, index) => ({
+          length: 180,
+          offset: 180 * index,
+          index,
+        })}
       />
     </SafeAreaView>
   );

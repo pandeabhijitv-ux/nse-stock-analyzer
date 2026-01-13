@@ -9,7 +9,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { Ionicons } from '@expo/vector-icons';
 import { generateRecommendation } from '../services/analysisEngine';
 import { FEATURES } from '../services/features';
 
@@ -145,12 +144,12 @@ export default function StockDetailScreen({ route, navigation }) {
       {/* Category Scores */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Score Breakdown</Text>
-        {renderScoreBar('Valuation', stock.fundamentalScores.valuation)}
-        {renderScoreBar('Profitability', stock.fundamentalScores.profitability)}
-        {renderScoreBar('Growth', stock.fundamentalScores.growth)}
-        {renderScoreBar('Financial Health', stock.fundamentalScores.financialHealth)}
-        {renderScoreBar('Dividend', stock.fundamentalScores.dividend)}
-        {renderScoreBar('Technical', stock.technicalScore.overall)}
+        {renderScoreBar('Valuation', stock.fundamentalScores?.valuation || 0)}
+        {renderScoreBar('Profitability', stock.fundamentalScores?.profitability || 0)}
+        {renderScoreBar('Growth', stock.fundamentalScores?.growth || 0)}
+        {renderScoreBar('Financial Health', stock.fundamentalScores?.financialHealth || 0)}
+        {renderScoreBar('Dividend', stock.fundamentalScores?.dividend || 0)}
+        {renderScoreBar('Technical', stock.technicalScore?.overall || stock.technicalScore || 0)}
       </View>
 
       {/* Price Chart */}
@@ -307,10 +306,10 @@ export default function StockDetailScreen({ route, navigation }) {
         {/* Technical Score Breakdown */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Technical Score Breakdown</Text>
-          {renderScoreBar('Momentum', stock.technicalScore.momentum)}
-          {renderScoreBar('Trend', stock.technicalScore.trend)}
-          {renderScoreBar('Volatility', stock.technicalScore.volatility)}
-          {renderScoreBar('Volume', stock.technicalScore.volume)}
+          {renderScoreBar('Momentum', stock.technicalScore?.momentum || 0)}
+          {renderScoreBar('Trend', stock.technicalScore?.trend || 0)}
+          {renderScoreBar('Volatility', stock.technicalScore?.volatility || 0)}
+          {renderScoreBar('Volume', stock.technicalScore?.volume || 0)}
         </View>
       </View>
     );
@@ -556,6 +555,7 @@ export default function StockDetailScreen({ route, navigation }) {
     const macd = stock.technical?.macd?.macd || 0;
     const trend = stock.technical?.trend || 'Neutral';
     const changePercent = stock.changePercent || 0;
+    const technicalScore = stock.technicalScore?.overall || stock.technicalScore || 50;
 
     // Simple pattern detection
     let patterns = [];
@@ -619,6 +619,7 @@ export default function StockDetailScreen({ route, navigation }) {
 
   // Valuation tab for Fundamentally Strong stocks
   const renderValuation = () => {
+    const fundScore = stock.fundamentalScores?.overall || 50;
     return (
       <View style={styles.tabContent}>
         <View style={styles.card}>
@@ -635,7 +636,7 @@ export default function StockDetailScreen({ route, navigation }) {
             • P/E Ratio: {stock.peRatio ? (stock.peRatio < 20 ? 'Undervalued' : stock.peRatio < 30 ? 'Fair' : 'Overvalued') : 'N/A'}
           </Text>
           <Text style={styles.analysisText}>
-            • Based on fundamental analysis, the stock shows {stock.fundamentalScores?.overall >= 70 ? 'strong' : 'moderate'} value proposition.
+            • Based on fundamental analysis, the stock shows {fundScore >= 70 ? 'strong' : 'moderate'} value proposition.
           </Text>
         </View>
       </View>
@@ -697,7 +698,7 @@ export default function StockDetailScreen({ route, navigation }) {
             <Text style={styles.headerIndustry}>{stock.industry}</Text>
           </View>
           <View style={styles.headerPrice}>
-            <Text style={styles.price}>${stock.currentPrice?.toFixed(2)}</Text>
+            <Text style={styles.price}>₹{stock.currentPrice?.toFixed(2)}</Text>
             <Text style={[
               styles.change,
               { color: stock.changePercent >= 0 ? '#4CAF50' : '#F44336' }

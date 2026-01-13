@@ -1,13 +1,24 @@
 // Calculate all technical indicators
 
+// Memoization cache for expensive calculations
+const technicalCache = new Map();
+const TECH_CACHE_SIZE = 100;
+
+const getTechnicalCacheKey = (symbol, prices) => {
+  // Use last price and length as key (fast but effective)
+  return `${symbol}_${prices.length}_${prices[prices.length - 1]}`;
+};
+
 // Simple Moving Average
 export const calculateSMA = (data, period) => {
+  // Limit data points for performance (use last 100 days max)
+  const limitedData = data.length > 100 ? data.slice(-100) : data;
   const sma = [];
-  for (let i = 0; i < data.length; i++) {
+  for (let i = 0; i < limitedData.length; i++) {
     if (i < period - 1) {
       sma.push(null);
     } else {
-      const sum = data.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+      const sum = limitedData.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
       sma.push(sum / period);
     }
   }
@@ -203,28 +214,39 @@ export const detectTrend = (prices, shortPeriod = 20, longPeriod = 50) => {
 
 // Calculate all technical indicators for a stock
 export const calculateTechnicalIndicators = (stockData) => {
-  const { prices, high, low, volume } = stockData;
+  const { symbol, prices, high, low, volume } = stockData;
   
   if (!prices || prices.length < 50) {
     return null;
   }
   
-  const rsi = calculateRSI(prices, 14);
-  const macd = calculateMACD(prices);
-  const bollingerBands = calculateBollingerBands(prices, 20, 2);
-  const atr = calculateATR(high, low, prices, 14);
-  const stochastic = calculateStochastic(high, low, prices, 14);
-  const supportResistance = calculateSupportResistance(prices, 5);
-  const volumeAnalysis = analyzeVolume(volume, 20);
-  const trend = detectTrend(prices, 20, 50);
+  // Check cache first
+  const cacheKey = getTechnicalCacheKey(symbol || 'unknown', prices);
+  if (technicalCache.has(cacheKey)) {
+    return technicalCache.get(cacheKey);
+  }
   
-  const sma20 = calculateSMA(prices, 20);
-  const sma50 = calculateSMA(prices, 50);
-  const sma200 = calculateSMA(prices, 200);
-  const ema12 = calculateEMA(prices, 12);
-  const ema26 = calculateEMA(prices, 26);
+  // Limit data to last 100 points for performance
+  const limitedPrices = prices.length > 100 ? prices.slice(-100) : prices;
+  const limitedHigh = high && high.length > 100 ? high.slice(-100) : high;
+  const limitedLow = low && low.length > 100 ? low.slice(-100) : low;
+  const limitedVolume = volume && Array.isArray(volume) && volume.length > 100 ? volume.slice(-100) : volume;
   
-  return {
+  const rsi = calculateRSI(limitedPrices, 14);
+  const macd = calculateMACD(limitedPrices);
+  const bollingerBands = calculateBollingerBands(limitedPrices, 20, 2);
+  const atr = calculateATR(limitedHigh, limitedLow, limitedPrices, 14);
+  const stochastic = calculateStochastic(limitedHigh, limitedLow, limitedPrices, 14);
+  const supportResistance = calculateSupportResistance(limitedPrices, 5);
+  const volumeAnalysis = analyzeVolume(limitedVolume, 20);
+  const trend = detectTrend(limitedPrices, 20, 50);
+  
+  const sma20 = calculateSMA(limitedPrices, 20);
+  const sma50 = calculateSMA(limitedPrices, 50);
+  const ema12 = calculateEMA(limitedPrices, 12);
+  const ema26 = calculateEMA(limitedPrices, 26);
+  
+  const result = {
     rsi: rsi,
     rsiSignal: rsi > 70 ? 'Overbought' : rsi < 30 ? 'Oversold' : 'Neutral',
     
@@ -232,8 +254,8 @@ export const calculateTechnicalIndicators = (stockData) => {
     macdSignal: macd.histogram > 0 ? 'Bullish' : 'Bearish',
     
     bollingerBands: bollingerBands,
-    bbSignal: prices[prices.length - 1] > bollingerBands.upper ? 'Overbought' : 
-              prices[prices.length - 1] < bollingerBands.lower ? 'Oversold' : 'Neutral',
+    bbSignal: limitedPrices[limitedPrices.length - 1] > bollingerBands.upper ? 'Overbought' : 
+              limitedPrices[limitedPrices.length - 1] < bollingerBands.lower ? 'Oversold' : 'Neutral',
     
     atr: atr,
     
@@ -249,9 +271,17 @@ export const calculateTechnicalIndicators = (stockData) => {
     movingAverages: {
       sma20: sma20[sma20.length - 1],
       sma50: sma50[sma50.length - 1],
-      sma200: sma200[sma200.length - 1],
       ema12: ema12[ema12.length - 1],
       ema26: ema26[ema26.length - 1],
     },
   };
+  
+  // Cache the result (limit cache size)
+  if (technicalCache.size >= TECH_CACHE_SIZE) {
+    const firstKey = technicalCache.keys().next().value;
+    technicalCache.delete(firstKey);
+  }
+  technicalCache.set(cacheKey, result);
+  
+  return result;
 };
