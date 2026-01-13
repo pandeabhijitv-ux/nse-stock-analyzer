@@ -88,62 +88,76 @@ export default function StockListScreen({ sector, onStockPress }) {
     
     switch (analysisType) {
       case 'target-oriented':
-        // Stocks with clear trends and good risk-reward - balanced filter
+        // Stocks with clear upside potential and good overall score
         filtered = filtered.filter(s => {
           const rsi = s.technical?.rsi || 50;
           const macd = s.technical?.macd?.macd || 0;
           const score = s.overallScore || 50;
-          // Accept stocks with good overall score OR good technicals
-          return score >= 60 || (rsi >= 40 && rsi <= 70 && macd > 0);
+          const upside = s.upsidePercent || 0;
+          // Must have good upside potential (>5%) AND good score/technicals
+          return upside > 5 && (score >= 65 || (rsi >= 45 && rsi <= 65 && macd > 0));
         });
-        filtered.sort((a, b) => (b.categoryScore || 0) - (a.categoryScore || 0));
+        filtered.sort((a, b) => (b.upsidePercent || 0) - (a.upsidePercent || 0));
         break;
         
       case 'swing':
-        // High momentum stocks - must have good movement
+        // High momentum stocks with volatility
         filtered = filtered.filter(s => {
           const macd = s.technical?.macd?.macd || 0;
           const rsi = s.technical?.rsi || 50;
           const change = Math.abs(s.changePercent || 0);
-          // Must have momentum: significant price change OR strong MACD
-          return change > 0.5 || (macd > 0 && rsi > 50);
+          const histogram = s.technical?.macd?.histogram || 0;
+          // Must have strong momentum indicators
+          return (change > 1) || (macd > 0 && rsi > 55 && histogram > 0);
         });
-        filtered.sort((a, b) => (b.categoryScore || 0) - (a.categoryScore || 0));
+        filtered.sort((a, b) => Math.abs(b.changePercent || 0) - Math.abs(a.changePercent || 0));
         break;
         
       case 'fundamentally-strong':
-        // Best fundamental metrics - focus on known good fundamentals
+        // Best fundamental metrics only
         filtered = filtered.filter(s => {
           const pe = s.peRatio;
           const roe = s.returnOnEquity;
           const profitMargin = s.profitMargin;
-          const score = s.overallScore || 50;
+          const fundamentalScore = s.fundamentalScores?.overall || 0;
           
-          // Prefer stocks with actual good fundamentals OR high overall score
+          // Must have good fundamentals (not just overall score)
           const hasFundamentals = pe !== null && pe !== undefined;
           if (hasFundamentals) {
-            return (pe > 0 && pe < 35) || score >= 65;
+            // Good PE (<25), or good ROE (>15%), or good profit margin (>10%)
+            const goodPE = pe > 0 && pe < 25;
+            const goodROE = roe && roe > 0.15;
+            const goodMargin = profitMargin && profitMargin > 0.10;
+            return goodPE || goodROE || goodMargin || fundamentalScore >= 70;
           }
-          // If no fundamentals, accept only high scorers
-          return score >= 70;
+          return false; // Skip stocks without fundamentals
         });
-        filtered.sort((a, b) => (b.categoryScore || 0) - (a.categoryScore || 0));
+        filtered.sort((a, b) => {
+          const scoreA = (a.fundamentalScores?.overall || 0);
+          const scoreB = (b.fundamentalScores?.overall || 0);
+          return scoreB - scoreA;
+        });
         break;
         
       case 'technically-strong':
-        // Strong technical indicators - must have good technicals
+        // Strong technical patterns and indicators
         filtered = filtered.filter(s => {
           const rsi = s.technical?.rsi || 50;
           const macd = s.technical?.macd?.macd || 0;
+          const signal = s.technical?.macd?.signal || 0;
+          const trend = s.technical?.trend || '';
           const technicalScore = s.technicalScore || 50;
           
-          // Must have strong technical score OR multiple good indicators
-          const goodRsi = rsi >= 45 && rsi <= 70;
-          const goodMacd = macd > 0;
+          // Must have strong technical setup
+          const bullishMACD = macd > signal && macd > 0;
+          const goodRSI = rsi >= 50 && rsi <= 70;
+          const uptrend = trend === 'Uptrend';
           
-          return technicalScore >= 60 || (goodRsi && goodMacd);
+          // At least 2 of 3 conditions must be true, OR high technical score
+          const conditions = [bullishMACD, goodRSI, uptrend].filter(Boolean).length;
+          return conditions >= 2 || technicalScore >= 70;
         });
-        filtered.sort((a, b) => (b.categoryScore || 0) - (a.categoryScore || 0));
+        filtered.sort((a, b) => (b.technicalScore || 0) - (a.technicalScore || 0));
         break;
         
       case 'hot-stocks':

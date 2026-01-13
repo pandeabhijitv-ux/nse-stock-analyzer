@@ -202,14 +202,92 @@ export const detectTrend = (prices, shortPeriod = 20, longPeriod = 50) => {
   
   const currentShort = shortSMA[shortSMA.length - 1];
   const currentLong = longSMA[longSMA.length - 1];
+  const prevShort = shortSMA[shortSMA.length - 2];
+  const prevLong = longSMA[longSMA.length - 2];
   
-  if (currentShort > currentLong) {
+  // Check for golden cross or death cross
+  const goldenCross = prevShort <= prevLong && currentShort > currentLong;
+  const deathCross = prevShort >= prevLong && currentShort < currentLong;
+  
+  if (goldenCross) {
+    return 'Strong Uptrend';
+  } else if (deathCross) {
+    return 'Strong Downtrend';
+  } else if (currentShort > currentLong) {
     return 'Uptrend';
   } else if (currentShort < currentLong) {
     return 'Downtrend';
   } else {
     return 'Sideways';
   }
+};
+
+// Pattern Detection
+export const detectPatterns = (prices, high, low) => {
+  const patterns = [];
+  const len = prices.length;
+  
+  if (len < 5) return patterns;
+  
+  // Get recent data
+  const recentPrices = prices.slice(-5);
+  const recentHigh = high?.slice(-5) || recentPrices;
+  const recentLow = low?.slice(-5) || recentPrices;
+  
+  // Bullish Engulfing
+  if (recentPrices[3] > recentPrices[2] && 
+      recentPrices[4] > recentPrices[3] &&
+      recentPrices[4] > recentPrices[2] * 1.02) {
+    patterns.push('Bullish Engulfing');
+  }
+  
+  // Bearish Engulfing
+  if (recentPrices[3] < recentPrices[2] && 
+      recentPrices[4] < recentPrices[3] &&
+      recentPrices[4] < recentPrices[2] * 0.98) {
+    patterns.push('Bearish Engulfing');
+  }
+  
+  // Morning Star (Bullish reversal)
+  if (recentPrices[0] > recentPrices[1] &&
+      recentPrices[1] > recentPrices[2] &&
+      recentPrices[3] < recentPrices[2] &&
+      recentPrices[4] > recentPrices[1]) {
+    patterns.push('Morning Star');
+  }
+  
+  // Evening Star (Bearish reversal)
+  if (recentPrices[0] < recentPrices[1] &&
+      recentPrices[1] < recentPrices[2] &&
+      recentPrices[3] > recentPrices[2] &&
+      recentPrices[4] < recentPrices[1]) {
+    patterns.push('Evening Star');
+  }
+  
+  // Doji (Indecision)
+  const lastPrice = recentPrices[4];
+  const lastHigh = recentHigh[4];
+  const lastLow = recentLow[4];
+  const bodySize = Math.abs(lastPrice - recentPrices[3]);
+  const rangeSize = lastHigh - lastLow;
+  
+  if (rangeSize > 0 && bodySize / rangeSize < 0.1) {
+    patterns.push('Doji');
+  }
+  
+  // Hammer (Bullish reversal)
+  const lowerWick = lastPrice - lastLow;
+  const upperWick = lastHigh - lastPrice;
+  if (lowerWick > bodySize * 2 && upperWick < bodySize) {
+    patterns.push('Hammer');
+  }
+  
+  // Shooting Star (Bearish reversal)
+  if (upperWick > bodySize * 2 && lowerWick < bodySize) {
+    patterns.push('Shooting Star');
+  }
+  
+  return patterns.length > 0 ? patterns : ['No Clear Pattern'];
 };
 
 // Calculate all technical indicators for a stock
@@ -240,6 +318,7 @@ export const calculateTechnicalIndicators = (stockData) => {
   const supportResistance = calculateSupportResistance(limitedPrices, 5);
   const volumeAnalysis = analyzeVolume(limitedVolume, 20);
   const trend = detectTrend(limitedPrices, 20, 50);
+  const patterns = detectPatterns(limitedPrices, limitedHigh, limitedLow);
   
   const sma20 = calculateSMA(limitedPrices, 20);
   const sma50 = calculateSMA(limitedPrices, 50);
@@ -267,6 +346,8 @@ export const calculateTechnicalIndicators = (stockData) => {
     volumeAnalysis: volumeAnalysis,
     
     trend: trend,
+    
+    patterns: patterns, // Add detected patterns
     
     movingAverages: {
       sma20: sma20[sma20.length - 1],

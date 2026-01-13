@@ -214,21 +214,56 @@ export const fetchFundamentalData = async (symbol) => {
   }
 };
 
-// Simple in-memory cache
+// Day-based category-specific cache
 const stockCache = new Map();
-const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+const fundamentalCache = new Map();
+const technicalCache = new Map();
 
-const getCachedStock = (symbol) => {
-  const cached = stockCache.get(symbol);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+// Get start of current day timestamp
+const getStartOfDay = () => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now.getTime();
+};
+
+const getCachedStock = (symbol, cacheType = 'quote') => {
+  const cache = cacheType === 'fundamental' ? fundamentalCache : 
+                cacheType === 'technical' ? technicalCache : stockCache;
+  const cached = cache.get(symbol);
+  
+  // Cache valid until end of day (midnight)
+  if (cached && cached.timestamp >= getStartOfDay()) {
+    console.log(`Using cached ${cacheType} data for ${symbol}`);
     return cached.data;
   }
   return null;
 };
 
-const setCachedStock = (symbol, data) => {
-  stockCache.set(symbol, { data, timestamp: Date.now() });
+const setCachedStock = (symbol, data, cacheType = 'quote') => {
+  const cache = cacheType === 'fundamental' ? fundamentalCache : 
+                cacheType === 'technical' ? technicalCache : stockCache;
+  cache.set(symbol, { data, timestamp: Date.now() });
 };
+
+// Clear all caches at midnight
+const scheduleNightlyCacheClear = () => {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  const msUntilMidnight = tomorrow.getTime() - now.getTime();
+  
+  setTimeout(() => {
+    console.log('Clearing all caches at midnight...');
+    stockCache.clear();
+    fundamentalCache.clear();
+    technicalCache.clear();
+    scheduleNightlyCacheClear(); // Schedule for next day
+  }, msUntilMidnight);
+};
+
+// Initialize nightly cache clearing
+scheduleNightlyCacheClear();
 
 // Fetch multiple stocks for a sector or custom symbol list
 export const fetchSectorStocks = async (sector, customSymbols = null) => {
@@ -243,10 +278,9 @@ export const fetchSectorStocks = async (sector, customSymbols = null) => {
   
   // Fetch all stocks in parallel for much faster loading
   const stockPromises = symbols.map(async (symbol) => {
-    // Check cache first
-    const cached = getCachedStock(symbol);
+    // Check cache first (quote data)
+    const cached = getCachedStock(symbol, 'quote');
     if (cached) {
-      console.log(`Using cached data for ${symbol}`);
       return cached;
     }
 
@@ -285,8 +319,11 @@ export const fetchSectorStocks = async (sector, customSymbols = null) => {
         ...fundamentals,
       };
       
-      // Cache the result
-      setCachedStock(symbol, stockData);
+      // Cache the result - separate caches for quote, fundamental, and technical
+      setCachedStock(symbol, stockData, 'quote');
+      if (fundamentals && fundamentals.peRatio !== null) {
+        setCachedStock(symbol, fundamentals, 'fundamental');
+      }
       console.log(`✓ Successfully fetched ${symbol}`);
       return stockData;
     } catch (error) {
@@ -313,28 +350,47 @@ export const fetchSectorStocks = async (sector, customSymbols = null) => {
 // Fetch stocks from selected sectors (for analysis filtering)
 export const fetchAllStocks = async () => {
   try {
-    console.log('Fetching stocks from key sectors for analysis...');
-    const allStocks = [];
-    // Fetch from 3 key sectors for faster loading (30 stocks total)
-    const keySectors = ['Technology', 'Banking', 'FMCG'];
+    console.log('Fetching stocks from ALL sectors for comprehensive analysis...');
     
-    // Fetch sectors in parallel for speed
-    const sectorPromises = keySectors.map(async (sector) => {
+    // Use ALL 10 sectors for maximum diversity (100 stocks total)
+    const allSectorKeys = Object.keys(SECTORS);
+    console.log(`Loading ${allSectorKeys.length} sectors in parallel:`, allSectorKeys);
+    
+    // Fetch ALL sectors in parallel (multi-threaded) for maximum speed
+    const startTime = Date.now();
+    const sectorPromises = allSectorKeys.map(async (sector) => {
       try {
-        console.log(`Fetching ${sector} stocks...`);
+        console.log(`[Thread] Fetching ${sector} stocks...`);
         const sectorStocks = await fetchSectorStocks(sector);
-        console.log(`✓ ${sector}: ${sectorStocks.length} stocks fetched`);
-        return sectorStocks;
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`✓ ${sector}: ${sectorStocks.length} stocks fetched in ${elapsed}s`);
+        return { sector, stocks: sectorStocks, success: true };
       } catch (error) {
         console.error(`✗ Failed to fetch ${sector}:`, error.message);
-        return []; // Return empty array for failed sectors
+        return { sector, stocks: [], success: false };
       }
     });
     
+    // Wait for ALL parallel fetches to complete
     const results = await Promise.all(sectorPromises);
-    results.forEach(stocks => allStocks.push(...stocks));
+    const allStocks = [];
     
+    // Combine results
+    results.forEach(result => {
+      if (result.success && result.stocks.length > 0) {
+        allStocks.push(...result.stocks);
+      }
+    });
+    
+    const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    const successCount = results.filter(r => r.success).length;
+    
+    console.log(`\n=== PARALLEL FETCH COMPLETE ===`);
     console.log(`Total stocks fetched: ${allStocks.length}`);
+    console.log(`Successful sectors: ${successCount}/${allSectorKeys.length}`);
+    console.log(`Total time: ${totalTime}s (parallel multi-threaded)`);
+    console.log(`================================\n`);
+    
     if (allStocks.length === 0) {
       throw new Error('No stocks could be fetched. Please check your internet connection.');
     }
