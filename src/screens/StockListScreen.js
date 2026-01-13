@@ -418,69 +418,261 @@ export default function StockListScreen({ sector, onStockPress }) {
             style={[
               styles.scoreBarFill,
               {
-                width: `${Math.min(100, Math.max(0, item.overallScore || 50))}%`,
-                backgroundColor: getScoreColor(item.overallScore || 50),
+                width: `${Math.min(100, Math.max(0, 
+                  sector === 'technically-strong' ? (item.technicalScore || item.overallScore || 50) :
+                  sector === 'fundamentally-strong' ? (item.fundamentalScore || item.overallScore || 50) :
+                  sector === 'target-oriented' ? (item.targetScore || item.overallScore || 50) :
+                  sector === 'swing' ? (item.momentumScore || item.overallScore || 50) :
+                  (item.overallScore || 50)
+                ))}%`,
+                backgroundColor: getScoreColor(
+                  sector === 'technically-strong' ? (item.technicalScore || item.overallScore || 50) :
+                  sector === 'fundamentally-strong' ? (item.fundamentalScore || item.overallScore || 50) :
+                  sector === 'target-oriented' ? (item.targetScore || item.overallScore || 50) :
+                  sector === 'swing' ? (item.momentumScore || item.overallScore || 50) :
+                  (item.overallScore || 50)
+                ),
               },
             ]}
           />
         </View>
         <View style={styles.scoreDetails}>
-          <View style={[styles.scoreBadge, { backgroundColor: getScoreColor(item.overallScore || 50) }]}>
-            <Text style={styles.scoreValue}>{Math.round(item.overallScore || 50)}</Text>
+          <View style={[styles.scoreBadge, { backgroundColor: getScoreColor(
+            sector === 'technically-strong' ? (item.technicalScore || item.overallScore || 50) :
+            sector === 'fundamentally-strong' ? (item.fundamentalScore || item.overallScore || 50) :
+            sector === 'target-oriented' ? (item.targetScore || item.overallScore || 50) :
+            sector === 'swing' ? (item.momentumScore || item.overallScore || 50) :
+            (item.overallScore || 50)
+          ) }]}>
+            <Text style={styles.scoreValue}>{Math.round(
+              sector === 'technically-strong' ? (item.technicalScore || item.overallScore || 50) :
+              sector === 'fundamentally-strong' ? (item.fundamentalScore || item.overallScore || 50) :
+              sector === 'target-oriented' ? (item.targetScore || item.overallScore || 50) :
+              sector === 'swing' ? (item.momentumScore || item.overallScore || 50) :
+              (item.overallScore || 50)
+            )}</Text>
           </View>
-          <Text style={styles.scoreLabel}>{getScoreLabel(item.overallScore || 50)}</Text>
-        </View>
-      </View>
-      
-      <View style={styles.metricsRow}>
-        <View style={styles.metric}>
-          <Text style={styles.metricLabel}>P/E</Text>
-          <Text style={styles.metricValue}>
-            {item.peRatio ? item.peRatio.toFixed(2) : 'N/A'}
-          </Text>
-        </View>
-        <View style={styles.metric}>
-          <Text style={styles.metricLabel}>ROE</Text>
-          <Text style={styles.metricValue}>
-            {item.returnOnEquity ? (item.returnOnEquity * 100).toFixed(1) + '%' : 'N/A'}
-          </Text>
-        </View>
-        <View style={styles.metric}>
-          <Text style={styles.metricLabel}>Debt/Eq</Text>
-          <Text style={styles.metricValue}>
-            {item.debtToEquity ? item.debtToEquity.toFixed(2) : 'N/A'}
-          </Text>
-        </View>
-        <View style={styles.metric}>
-          <Text style={styles.metricLabel}>RSI</Text>
-          <Text style={styles.metricValue}>
-            {item.technical?.rsi ? item.technical.rsi.toFixed(0) : 'N/A'}
+          <Text style={styles.scoreLabel}>
+            {sector === 'technically-strong' ? 'Technical' :
+             sector === 'fundamentally-strong' ? 'Fundamental' :
+             sector === 'target-oriented' ? 'Target' :
+             sector === 'swing' ? 'Momentum' :
+             getScoreLabel(item.overallScore || 50)}
           </Text>
         </View>
       </View>
       
+      {/* Category-specific metrics */}
+      {sector === 'target-oriented' && (
+        <View style={styles.metricsRow}>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Target</Text>
+            <Text style={[styles.metricValue, { color: '#4CAF50' }]}>
+              ₹{item.targetPrice || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Upside</Text>
+            <Text style={[styles.metricValue, { color: item.upsidePercent > 0 ? '#4CAF50' : '#F44336' }]}>
+              {item.upsidePercent ? item.upsidePercent.toFixed(1) + '%' : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Stop Loss</Text>
+            <Text style={[styles.metricValue, { color: '#F44336' }]}>
+              ₹{item.stopLoss || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Score</Text>
+            <Text style={styles.metricValue}>
+              {item.overallScore ? item.overallScore.toFixed(0) : 'N/A'}
+            </Text>
+          </View>
+        </View>
+      )}
+      
+      {sector === 'swing' && (
+        <View style={styles.metricsRow}>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Momentum</Text>
+            <Text style={[styles.metricValue, { color: Math.abs(item.changePercent || 0) > 1 ? '#4CAF50' : '#FFC107' }]}>
+              {item.changePercent ? Math.abs(item.changePercent).toFixed(2) + '%' : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>RSI</Text>
+            <Text style={styles.metricValue}>
+              {item.technical?.rsi ? item.technical.rsi.toFixed(0) : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>MACD</Text>
+            <Text style={[styles.metricValue, { 
+              color: item.technical?.macdSignal === 'Bullish' ? '#4CAF50' : '#F44336'
+            }]}>
+              {item.technical?.macdSignal || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Volume</Text>
+            <Text style={styles.metricValue}>
+              {item.volume ? (item.volume / 1000000).toFixed(1) + 'M' : 'N/A'}
+            </Text>
+          </View>
+        </View>
+      )}
+      
+      {sector === 'fundamentally-strong' && (
+        <View style={styles.metricsRow}>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>P/E</Text>
+            <Text style={[styles.metricValue, { color: item.peRatio && item.peRatio < 25 ? '#4CAF50' : '#666' }]}>
+              {item.peRatio ? item.peRatio.toFixed(2) : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>ROE</Text>
+            <Text style={[styles.metricValue, { color: item.returnOnEquity && item.returnOnEquity > 0.15 ? '#4CAF50' : '#666' }]}>
+              {item.returnOnEquity ? (item.returnOnEquity * 100).toFixed(1) + '%' : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Margin</Text>
+            <Text style={[styles.metricValue, { color: item.profitMargin && item.profitMargin > 0.10 ? '#4CAF50' : '#666' }]}>
+              {item.profitMargin ? (item.profitMargin * 100).toFixed(1) + '%' : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Debt/Eq</Text>
+            <Text style={[styles.metricValue, { color: item.debtToEquity && item.debtToEquity < 1 ? '#4CAF50' : '#666' }]}>
+              {item.debtToEquity ? item.debtToEquity.toFixed(2) : 'N/A'}
+            </Text>
+          </View>
+        </View>
+      )}
+      
+      {sector === 'technically-strong' && (
+        <View style={styles.metricsRow}>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>RSI</Text>
+            <Text style={[styles.metricValue, { 
+              color: item.technical?.rsi >= 50 && item.technical?.rsi <= 70 ? '#4CAF50' : '#666'
+            }]}>
+              {item.technical?.rsi ? item.technical.rsi.toFixed(0) : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>MACD</Text>
+            <Text style={[styles.metricValue, { 
+              color: item.technical?.macdSignal === 'Bullish' ? '#4CAF50' : '#F44336'
+            }]}>
+              {item.technical?.macdSignal || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Trend</Text>
+            <Text style={[styles.metricValue, { 
+              color: item.technical?.trend?.includes('Uptrend') ? '#4CAF50' : 
+                     item.technical?.trend?.includes('Downtrend') ? '#F44336' : '#FFC107'
+            }]}>
+              {item.technical?.trend || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Pattern</Text>
+            <Text style={styles.metricValue} numberOfLines={1}>
+              {item.technical?.patterns?.[0] || 'None'}
+            </Text>
+          </View>
+        </View>
+      )}
+      
+      {sector === 'hot-stocks' && (
+        <View style={styles.metricsRow}>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Change</Text>
+            <Text style={[styles.metricValue, { 
+              color: (item.changePercent || 0) >= 0 ? '#4CAF50' : '#F44336'
+            }]}>
+              {(item.changePercent || 0) >= 0 ? '+' : ''}
+              {(item.changePercent || 0).toFixed(2)}%
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Volume</Text>
+            <Text style={styles.metricValue}>
+              {item.volume ? (item.volume / 1000000).toFixed(1) + 'M' : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>High</Text>
+            <Text style={styles.metricValue}>
+              ₹{item.high?.[item.high.length - 1]?.toFixed(2) || 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Low</Text>
+            <Text style={styles.metricValue}>
+              ₹{item.low?.[item.low.length - 1]?.toFixed(2) || 'N/A'}
+            </Text>
+          </View>
+        </View>
+      )}
+      
+      {/* Default/Sector view - show balanced metrics */}
+      {!['target-oriented', 'swing', 'fundamentally-strong', 'technically-strong', 'hot-stocks'].includes(sector) && (
+        <View style={styles.metricsRow}>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>P/E</Text>
+            <Text style={styles.metricValue}>
+              {item.peRatio ? item.peRatio.toFixed(2) : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>ROE</Text>
+            <Text style={styles.metricValue}>
+              {item.returnOnEquity ? (item.returnOnEquity * 100).toFixed(1) + '%' : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>RSI</Text>
+            <Text style={styles.metricValue}>
+              {item.technical?.rsi ? item.technical.rsi.toFixed(0) : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Trend</Text>
+            <Text style={[styles.metricValue, { 
+              color: item.technical?.trend === 'Uptrend' ? '#4CAF50' : 
+                     item.technical?.trend === 'Downtrend' ? '#F44336' : '#FFC107'
+            }]}>
+              {item.technical?.trend || 'N/A'}
+            </Text>
+          </View>
+        </View>
+      )}
+      
+      {/* Remove old generic rows */}
       <View style={styles.analysisRow}>
         <View style={styles.analysisItem}>
-          <Text style={styles.analysisLabel}>Trend</Text>
+          <Text style={styles.analysisLabel}>Score</Text>
           <Text style={[styles.analysisValue, { 
-            color: item.technical?.trend === 'Uptrend' ? '#4CAF50' : 
-                   item.technical?.trend === 'Downtrend' ? '#F44336' : '#FFC107'
+            color: getScoreColor(item.overallScore || 50)
           }]}>
-            {item.technical?.trend || 'N/A'}
-          </Text>
-        </View>
-        <View style={styles.analysisItem}>
-          <Text style={styles.analysisLabel}>MACD</Text>
-          <Text style={[styles.analysisValue, { 
-            color: item.technical?.macdSignal === 'Bullish' ? '#4CAF50' : '#F44336'
-          }]}>
-            {item.technical?.macdSignal || 'N/A'}
+            {Math.round(item.overallScore || 50)}/100
           </Text>
         </View>
         <View style={styles.analysisItem}>
           <Text style={styles.analysisLabel}>Volume</Text>
           <Text style={styles.analysisValue}>
             {item.volume ? (item.volume / 1000000).toFixed(2) + 'M' : 'N/A'}
+          </Text>
+        </View>
+        <View style={styles.analysisItem}>
+          <Text style={styles.analysisLabel}>Market Cap</Text>
+          <Text style={styles.analysisValue}>
+            {item.marketCap ? '₹' + (item.marketCap / 1e7).toFixed(0) + 'Cr' : 'N/A'}
           </Text>
         </View>
       </View>
