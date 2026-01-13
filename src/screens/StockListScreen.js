@@ -38,7 +38,7 @@ export default function StockListScreen({ sector, onStockPress }) {
   };
 
   const filterStocksByAnalysis = (allStocks, analysisType) => {
-    console.log(`Filtering ${allStocks.length} stocks for ${analysisType}`);
+    console.log(`\n=== FILTERING ${allStocks.length} STOCKS FOR ${analysisType.toUpperCase()} ===`);
     let filtered = [...allStocks];
     
     // Calculate target prices and category-specific scores for all stocks
@@ -98,6 +98,7 @@ export default function StockListScreen({ sector, onStockPress }) {
           return upside > 5 && (score >= 65 || (rsi >= 45 && rsi <= 65 && macd > 0));
         });
         filtered.sort((a, b) => (b.upsidePercent || 0) - (a.upsidePercent || 0));
+        console.log(`Target-Oriented: ${filtered.length} stocks with >5% upside`);
         break;
         
       case 'swing':
@@ -111,6 +112,7 @@ export default function StockListScreen({ sector, onStockPress }) {
           return (change > 1) || (macd > 0 && rsi > 55 && histogram > 0);
         });
         filtered.sort((a, b) => Math.abs(b.changePercent || 0) - Math.abs(a.changePercent || 0));
+        console.log(`Swing: ${filtered.length} stocks with high momentum`);
         break;
         
       case 'fundamentally-strong':
@@ -137,6 +139,7 @@ export default function StockListScreen({ sector, onStockPress }) {
           const scoreB = (b.fundamentalScores?.overall || 0);
           return scoreB - scoreA;
         });
+        console.log(`Fundamentally-Strong: ${filtered.length} stocks with good fundamentals`);
         break;
         
       case 'technically-strong':
@@ -158,6 +161,7 @@ export default function StockListScreen({ sector, onStockPress }) {
           return conditions >= 2 || technicalScore >= 70;
         });
         filtered.sort((a, b) => (b.technicalScore || 0) - (a.technicalScore || 0));
+        console.log(`Technically-Strong: ${filtered.length} stocks with strong technicals`);
         break;
         
       case 'hot-stocks':
@@ -171,6 +175,7 @@ export default function StockListScreen({ sector, onStockPress }) {
           filtered = allStocks.filter(s => (s.changePercent || 0) !== 0);
         }
         filtered.sort((a, b) => (b.categoryScore || 0) - (a.categoryScore || 0));
+        console.log(`Hot-Stocks: ${filtered.length} stocks with significant movement`);
         break;
         
       case 'graha-gochar':
@@ -202,14 +207,16 @@ export default function StockListScreen({ sector, onStockPress }) {
           });
         }
         filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
+        console.log(`Graha-Gochar: ${filtered.length} stocks with favorable planetary influence`);
         break;
         
       default:
         // Keep all stocks
         filtered.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
+        console.log(`Default: ${filtered.length} stocks sorted by overall score`);
     }
     
-    console.log(`After filtering: ${filtered.length} stocks match ${analysisType}`);
+    console.log(`=== FILTERING COMPLETE: Returning top ${Math.min(filtered.length, 20)} stocks ===\n`);
     return filtered.slice(0, 20); // Return top 20 stocks
   };
 
@@ -284,16 +291,22 @@ export default function StockListScreen({ sector, onStockPress }) {
       // Apply analysis filtering if it's an analysis category
       let finalStocks = scoredStocks;
       if (isAnalysisCategory) {
+        console.log(`Applying ${sector} category filter...`);
         finalStocks = filterStocksByAnalysis(scoredStocks, sector);
+        console.log(`After filtering: ${finalStocks.length} stocks match ${sector} criteria`);
+        
         // Fallback: if filtering resulted in 0 stocks, show all stocks
         if (finalStocks.length === 0) {
           console.warn(`No stocks matched ${sector} filter, showing all stocks`);
           finalStocks = scoredStocks;
+          // Only sort by overall score if no filtering was applied
+          finalStocks.sort((a, b) => b.overallScore - a.overallScore);
         }
+        // DON'T sort again here - filtering already sorted by category-specific criteria
+      } else {
+        // For regular sectors (not analysis categories), sort by overall score
+        finalStocks.sort((a, b) => b.overallScore - a.overallScore);
       }
-      
-      // Sort by overall score
-      finalStocks.sort((a, b) => b.overallScore - a.overallScore);
       
       // Final check
       if (finalStocks.length === 0) {
