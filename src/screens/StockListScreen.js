@@ -92,16 +92,32 @@ export default function StockListScreen({ sector, onStockPress }) {
     switch (analysisType) {
       case 'target-oriented':
         // Stocks with clear upside potential and good overall score
+        // Prioritize high-quality stocks with strong fundamentals
         filtered = filtered.filter(s => {
           const rsi = s.technical?.rsi || 50;
           const macd = s.technical?.macd?.macd || 0;
           const score = s.overallScore || 50;
           const upside = s.upsidePercent || 0;
-          // Must have good upside potential (>5%) AND good score/technicals
-          return upside > 5 && (score >= 65 || (rsi >= 45 && rsi <= 65 && macd > 0));
+          const fundamentalScore = s.fundamentalScores?.overall || 0;
+          
+          // PRIORITIZE: High overall score (>=70) OR strong fundamentals (>=65) with good upside
+          // ACCEPT: Moderate score (>=60) with excellent upside (>10%) and positive technicals
+          const highQuality = score >= 70 || fundamentalScore >= 65;
+          const goodQualityWithUpside = score >= 60 && upside > 10 && rsi >= 45 && rsi <= 70;
+          const moderateQualityGoodUpside = score >= 55 && upside > 8 && macd > 0;
+          
+          return upside > 5 && (highQuality || goodQualityWithUpside || moderateQualityGoodUpside);
         });
-        filtered.sort((a, b) => (b.upsidePercent || 0) - (a.upsidePercent || 0));
-        console.log(`Target-Oriented: ${filtered.length} stocks with >5% upside`);
+        // Sort by upside percent first, then by overall score as tiebreaker
+        filtered.sort((a, b) => {
+          const upsideDiff = (b.upsidePercent || 0) - (a.upsidePercent || 0);
+          if (Math.abs(upsideDiff) < 1) {
+            // If upside is similar, prefer higher score
+            return (b.overallScore || 0) - (a.overallScore || 0);
+          }
+          return upsideDiff;
+        });
+        console.log(`Target-Oriented: ${filtered.length} stocks with >5% upside and strong fundamentals`);
         break;
         
       case 'swing':

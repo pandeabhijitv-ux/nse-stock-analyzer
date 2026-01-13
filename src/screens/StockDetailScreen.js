@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { Ionicons } from '@expo/vector-icons';
 import { generateRecommendation } from '../services/analysisEngine';
 import { FEATURES } from '../services/features';
 
@@ -74,21 +75,24 @@ export default function StockDetailScreen({ route, navigation }) {
 
   const renderOverview = () => (
     <View style={styles.tabContent}>
-      {/* Target Price Section - Like PWA */}
+      {/* BIG ACTION BUTTON AT TOP - Like PWA */}
+      <TouchableOpacity 
+        style={[styles.bigActionButton, { backgroundColor: getActionColor(recommendation.action) }]}
+        activeOpacity={0.9}
+      >
+        <Text style={styles.bigActionText}>{recommendation.action.toUpperCase()}</Text>
+      </TouchableOpacity>
+      
+      {/* Target Price Section - Centered like PWA */}
       {stock.targetPrice && (
-        <View style={[styles.card, styles.targetCard]}>
-          <View style={[styles.buyButton, { backgroundColor: getActionColor(recommendation.action) }]}>
-            <Text style={styles.buyButtonText}>{recommendation.action}</Text>
-          </View>
-          <View style={styles.targetPriceSection}>
-            <Text style={styles.targetLabel}>Target Price</Text>
-            <Text style={styles.targetPrice}>₹{stock.targetPrice.toFixed(2)}</Text>
-            {stock.upsidePercent && (
-              <Text style={[styles.upsideText, { color: stock.upsidePercent > 0 ? '#4CAF50' : '#F44336' }]}>
-                ({stock.upsidePercent > 0 ? '+' : ''}{stock.upsidePercent.toFixed(1)}% upside)
-              </Text>
-            )}
-          </View>
+        <View style={styles.targetPriceCard}>
+          <Text style={styles.targetLabel}>Target Price</Text>
+          <Text style={styles.targetPrice}>₹{stock.targetPrice.toFixed(2)}</Text>
+          {stock.upsidePercent && (
+            <Text style={[styles.upsideText, { color: stock.upsidePercent > 0 ? '#4CAF50' : '#F44336' }]}>
+              ({stock.upsidePercent > 0 ? '+' : ''}{stock.upsidePercent.toFixed(1)}% upside)
+            </Text>
+          )}
         </View>
       )}
       
@@ -1153,5 +1157,52 @@ const styles = StyleSheet.create({
   scoreMax: {
     fontSize: 18,
     color: 'white',
+  },
+  // PWA-style Big Action Button
+  bigActionButton: {
+    paddingVertical: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  bigActionText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    letterSpacing: 1,
+  },
+  // PWA-style Target Price Card
+  targetPriceCard: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  targetLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  targetPrice: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 5,
+  },
+  upsideText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
