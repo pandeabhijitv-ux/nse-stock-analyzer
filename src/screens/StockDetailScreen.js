@@ -16,8 +16,8 @@ import { FEATURES } from '../services/features';
 const screenWidth = Dimensions.get('window').width;
 
 export default function StockDetailScreen({ route, navigation }) {
-  const { stock } = route.params;
-  const [activeTab, setActiveTab] = useState('overview'); // overview, fundamental, technical, options
+  const { stock, category } = route.params;
+  const [activeTab, setActiveTab] = useState('overview');
 
   const recommendation = generateRecommendation(
     stock.overallScore,
@@ -25,6 +25,39 @@ export default function StockDetailScreen({ route, navigation }) {
     stock.technicalScore,
     stock
   );
+  
+  // Determine which tabs to show based on category
+  const getTabs = () => {
+    if (category === 'target-oriented') {
+      return ['overview', 'targets', 'levels'];
+    } else if (category === 'swing') {
+      return ['overview', 'momentum', 'entry-exit'];
+    } else if (category === 'fundamentally-strong') {
+      return ['overview', 'fundamentals', 'valuation'];
+    } else if (category === 'technically-strong') {
+      return ['overview', 'technical', 'patterns'];
+    } else {
+      return ['overview', 'fundamental', 'technical'];
+    }
+  };
+  
+  const tabs = getTabs();
+  
+  const getTabLabel = (tab) => {
+    const labels = {
+      'overview': 'Overview',
+      'targets': 'Targets',
+      'levels': 'Levels',
+      'momentum': 'Momentum',
+      'entry-exit': 'Entry/Exit',
+      'fundamentals': 'Fundamentals',
+      'valuation': 'Valuation',
+      'technical': 'Technical',
+      'patterns': 'Patterns',
+      'fundamental': 'Fundamental'
+    };
+    return labels[tab] || tab;
+  };
 
   const getActionColor = (action) => {
     if (action.includes('Strong Buy')) return '#4CAF50';
@@ -42,6 +75,35 @@ export default function StockDetailScreen({ route, navigation }) {
 
   const renderOverview = () => (
     <View style={styles.tabContent}>
+      {/* Target Price Section - Like PWA */}
+      {stock.targetPrice && (
+        <View style={[styles.card, styles.targetCard]}>
+          <View style={[styles.buyButton, { backgroundColor: getActionColor(recommendation.action) }]}>
+            <Text style={styles.buyButtonText}>{recommendation.action}</Text>
+          </View>
+          <View style={styles.targetPriceSection}>
+            <Text style={styles.targetLabel}>Target Price</Text>
+            <Text style={styles.targetPrice}>₹{stock.targetPrice.toFixed(2)}</Text>
+            {stock.upsidePercent && (
+              <Text style={[styles.upsideText, { color: stock.upsidePercent > 0 ? '#4CAF50' : '#F44336' }]}>
+                ({stock.upsidePercent > 0 ? '+' : ''}{stock.upsidePercent.toFixed(1)}% upside)
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
+      
+      {/* Overview Stats */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Overview</Text>
+        {renderMetric('Current Price', `₹${stock.currentPrice.toFixed(2)}`)}
+        {renderMetric('Overall Score', `${stock.overallScore}/100`)}
+        {renderMetric('Market Cap', stock.marketCap ? `₹${(stock.marketCap / 1e7).toFixed(2)}Cr` : 'N/A')}
+        {renderMetric('Volume', stock.volume ? `${(stock.volume / 100000).toFixed(2)}L` : 'N/A')}
+        {renderMetric('Day High', `₹${stock.high?.[stock.high.length - 1]?.toFixed(2) || 'N/A'}`)}
+        {renderMetric('Day Low', `₹${stock.low?.[stock.low.length - 1]?.toFixed(2) || 'N/A'}`)}
+      </View>
+
       {/* Recommendation Card */}
       <View style={[styles.card, styles.recommendationCard]}>
         <View style={[styles.actionBadge, { backgroundColor: getActionColor(recommendation.action) }]}>
@@ -254,6 +316,332 @@ export default function StockDetailScreen({ route, navigation }) {
     );
   };
 
+  // Targets tab for Target Oriented stocks
+  const renderTargets = () => {
+    const currentPrice = stock.currentPrice || 0;
+    const primaryTarget = stock.targetPrice || currentPrice * 1.15;
+    const conservativeTarget = currentPrice * 1.05;
+    const stretchTarget = primaryTarget * 1.08;
+    
+    const conservativeUpside = ((conservativeTarget - currentPrice) / currentPrice) * 100;
+    const primaryUpside = ((primaryTarget - currentPrice) / currentPrice) * 100;
+    const stretchUpside = ((stretchTarget - currentPrice) / currentPrice) * 100;
+
+    return (
+      <View style={styles.tabContent}>
+        {/* Conservative Target */}
+        <View style={[styles.card, { backgroundColor: '#E8F5E9' }]}>
+          <View style={styles.targetHeader}>
+            <Text style={styles.targetTitle}>Conservative Target</Text>
+            <View style={[styles.riskBadge, { backgroundColor: '#4CAF50' }]}>
+              <Text style={styles.riskBadgeText}>Low Risk</Text>
+            </View>
+          </View>
+          <Text style={styles.targetPrice}>₹{conservativeTarget.toFixed(2)}</Text>
+          <Text style={styles.targetUpside}>+{conservativeUpside.toFixed(1)}% upside</Text>
+          <Text style={styles.targetTimeframe}>Timeframe: 7-10 days</Text>
+          <Text style={styles.targetDescription}>
+            This is a conservative target based on normal market movement. Suitable for risk-averse investors.
+          </Text>
+        </View>
+
+        {/* Primary Target */}
+        <View style={[styles.card, { backgroundColor: '#FFF9C4' }]}>
+          <View style={styles.targetHeader}>
+            <Text style={styles.targetTitle}>Primary Target</Text>
+            <View style={[styles.riskBadge, { backgroundColor: '#FFC107' }]}>
+              <Text style={styles.riskBadgeText}>Medium Risk</Text>
+            </View>
+          </View>
+          <Text style={styles.targetPrice}>₹{primaryTarget.toFixed(2)}</Text>
+          <Text style={styles.targetUpside}>+{primaryUpside.toFixed(1)}% upside</Text>
+          <Text style={styles.targetTimeframe}>Timeframe: 15-20 days</Text>
+          <Text style={styles.targetDescription}>
+            Main target based on technical analysis and fundamental strength. Recommended for most traders.
+          </Text>
+        </View>
+
+        {/* Stretch Target */}
+        <View style={[styles.card, { backgroundColor: '#E3F2FD' }]}>
+          <View style={styles.targetHeader}>
+            <Text style={styles.targetTitle}>Stretch Target</Text>
+            <View style={[styles.riskBadge, { backgroundColor: '#2196F3' }]}>
+              <Text style={styles.riskBadgeText}>High Risk</Text>
+            </View>
+          </View>
+          <Text style={styles.targetPrice}>₹{stretchTarget.toFixed(2)}</Text>
+          <Text style={styles.targetUpside}>+{stretchUpside.toFixed(1)}% upside</Text>
+          <Text style={styles.targetTimeframe}>Timeframe: 25-30 days</Text>
+          <Text style={styles.targetDescription}>
+            Aggressive target for breakout scenarios. Requires favorable market conditions.
+          </Text>
+        </View>
+
+        {/* Risk Management */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Risk Management</Text>
+          {renderMetric('Stop Loss', `₹${(stock.stopLoss || currentPrice * 0.95).toFixed(2)}`)}
+          {renderMetric('Max Loss', `${(((currentPrice - (stock.stopLoss || currentPrice * 0.95)) / currentPrice) * 100).toFixed(1)}%`)}
+          {renderMetric('Risk/Reward Ratio', `1:${(primaryUpside / (((currentPrice - (stock.stopLoss || currentPrice * 0.95)) / currentPrice) * 100)).toFixed(2)}`)}
+        </View>
+      </View>
+    );
+  };
+
+  // Levels tab with Support/Resistance
+  const renderLevels = () => {
+    const currentPrice = stock.currentPrice || 0;
+    const high = stock.high?.[stock.high.length - 1] || currentPrice * 1.02;
+    const low = stock.low?.[stock.low.length - 1] || currentPrice * 0.98;
+    
+    // Calculate pivot points
+    const pivot = (high + low + currentPrice) / 3;
+    const r1 = (2 * pivot) - low;
+    const r2 = pivot + (high - low);
+    const s1 = (2 * pivot) - high;
+    const s2 = pivot - (high - low);
+
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Support & Resistance Levels</Text>
+          
+          {/* Resistance Levels */}
+          <View style={[styles.levelRow, { backgroundColor: '#FFEBEE' }]}>
+            <Text style={styles.levelLabel}>Strong Resistance (R2)</Text>
+            <Text style={[styles.levelValue, { color: '#F44336' }]}>₹{r2.toFixed(2)}</Text>
+          </View>
+          
+          <View style={[styles.levelRow, { backgroundColor: '#FFEBEE' }]}>
+            <Text style={styles.levelLabel}>Resistance (R1)</Text>
+            <Text style={[styles.levelValue, { color: '#FF5722' }]}>₹{r1.toFixed(2)}</Text>
+          </View>
+          
+          {/* Current Price */}
+          <View style={[styles.levelRow, { backgroundColor: '#E3F2FD', borderWidth: 2, borderColor: '#2196F3' }]}>
+            <Text style={[styles.levelLabel, { fontWeight: 'bold' }]}>Current Price</Text>
+            <Text style={[styles.levelValue, { fontWeight: 'bold', color: '#2196F3' }]}>₹{currentPrice.toFixed(2)}</Text>
+          </View>
+          
+          {/* Pivot Point */}
+          <View style={[styles.levelRow, { backgroundColor: '#FFF9C4' }]}>
+            <Text style={styles.levelLabel}>Pivot Point</Text>
+            <Text style={[styles.levelValue, { color: '#FFC107' }]}>₹{pivot.toFixed(2)}</Text>
+          </View>
+          
+          {/* Support Levels */}
+          <View style={[styles.levelRow, { backgroundColor: '#E8F5E9' }]}>
+            <Text style={styles.levelLabel}>Support (S1)</Text>
+            <Text style={[styles.levelValue, { color: '#4CAF50' }]}>₹{s1.toFixed(2)}</Text>
+          </View>
+          
+          <View style={[styles.levelRow, { backgroundColor: '#E8F5E9' }]}>
+            <Text style={styles.levelLabel}>Strong Support (S2)</Text>
+            <Text style={[styles.levelValue, { color: '#2E7D32' }]}>₹{s2.toFixed(2)}</Text>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Level Analysis</Text>
+          <Text style={styles.analysisText}>
+            • The stock is currently {currentPrice > pivot ? 'above' : 'below'} the pivot point, indicating {currentPrice > pivot ? 'bullish' : 'bearish'} sentiment.
+          </Text>
+          <Text style={styles.analysisText}>
+            • Next resistance: ₹{r1.toFixed(2)} ({((r1 - currentPrice) / currentPrice * 100).toFixed(1)}% above)
+          </Text>
+          <Text style={styles.analysisText}>
+            • Next support: ₹{s1.toFixed(2)} ({((currentPrice - s1) / currentPrice * 100).toFixed(1)}% below)
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  // Momentum tab for Swing stocks
+  const renderMomentum = () => {
+    const momentumScore = stock.categoryScore || stock.overallScore || 50;
+    const rsi = stock.technical?.rsi || 50;
+    const macd = stock.technical?.macd?.macd || 0;
+    const trend = stock.technical?.trend || 'Neutral';
+
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Momentum Score</Text>
+          <View style={styles.scoreDisplay}>
+            <View style={[styles.scoreBadgeLarge, { backgroundColor: getScoreColor(momentumScore) }]}>
+              <Text style={styles.scoreLarge}>{Math.round(momentumScore)}</Text>
+              <Text style={styles.scoreMax}>/100</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Momentum Indicators</Text>
+          {renderMetric('RSI', rsi.toFixed(1), rsi > 70 ? 'Overbought' : rsi < 30 ? 'Oversold' : 'Neutral')}
+          {renderMetric('MACD', macd.toFixed(2), macd > 0 ? 'Bullish' : 'Bearish')}
+          {renderMetric('Trend', trend)}
+          {renderMetric('Price Change', `${(stock.changePercent || 0).toFixed(2)}%`)}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Swing Trading Signals</Text>
+          <Text style={styles.analysisText}>
+            • Momentum: {momentumScore >= 70 ? 'Strong' : momentumScore >= 50 ? 'Moderate' : 'Weak'}
+          </Text>
+          <Text style={styles.analysisText}>
+            • RSI Status: {rsi > 70 ? 'Overbought - Consider taking profits' : rsi < 30 ? 'Oversold - Potential entry' : 'Neutral zone'}
+          </Text>
+          <Text style={styles.analysisText}>
+            • MACD: {macd > 0 ? 'Bullish crossover active' : 'Bearish pressure present'}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  // Entry/Exit tab for Swing stocks
+  const renderEntryExit = () => {
+    const currentPrice = stock.currentPrice || 0;
+    const targetPrice = stock.targetPrice || currentPrice * 1.10;
+    const stopLoss = stock.stopLoss || currentPrice * 0.97;
+    const entryZone = currentPrice * 0.98;
+    const entryZoneHigh = currentPrice * 1.02;
+
+    return (
+      <View style={styles.tabContent}>
+        <View style={[styles.card, { backgroundColor: '#E8F5E9' }]}>
+          <Text style={styles.cardTitle}>Entry Zone</Text>
+          <Text style={styles.targetPrice}>₹{entryZone.toFixed(2)} - ₹{entryZoneHigh.toFixed(2)}</Text>
+          <Text style={styles.analysisText}>
+            Ideal entry zone for swing trading. Wait for price to stabilize in this range before entering.
+          </Text>
+        </View>
+
+        <View style={[styles.card, { backgroundColor: '#E3F2FD' }]}>
+          <Text style={styles.cardTitle}>Exit Target</Text>
+          <Text style={styles.targetPrice}>₹{targetPrice.toFixed(2)}</Text>
+          <Text style={styles.targetUpside}>
+            +{((targetPrice - currentPrice) / currentPrice * 100).toFixed(1)}% potential gain
+          </Text>
+          <Text style={styles.analysisText}>
+            Book profits when price reaches this level or shows signs of reversal.
+          </Text>
+        </View>
+
+        <View style={[styles.card, { backgroundColor: '#FFEBEE' }]}>
+          <Text style={styles.cardTitle}>Stop Loss</Text>
+          <Text style={[styles.targetPrice, { color: '#F44336' }]}>₹{stopLoss.toFixed(2)}</Text>
+          <Text style={[styles.targetUpside, { color: '#F44336' }]}>
+            -{((currentPrice - stopLoss) / currentPrice * 100).toFixed(1)}% max loss
+          </Text>
+          <Text style={styles.analysisText}>
+            Exit position if price falls below this level to limit losses.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Trade Setup</Text>
+          {renderMetric('Position Size', 'Based on risk tolerance')}
+          {renderMetric('Risk/Reward', `1:${(((targetPrice - currentPrice) / (currentPrice - stopLoss))).toFixed(2)}`)}
+          {renderMetric('Holding Period', '3-7 days (typical swing)')}
+        </View>
+      </View>
+    );
+  };
+
+  // Patterns tab for Technical stocks
+  const renderPatterns = () => {
+    const rsi = stock.technical?.rsi || 50;
+    const macd = stock.technical?.macd?.macd || 0;
+    const trend = stock.technical?.trend || 'Neutral';
+    const changePercent = stock.changePercent || 0;
+
+    // Simple pattern detection
+    let patterns = [];
+    if (rsi < 30 && macd > 0) {
+      patterns.push({ name: 'Potential Reversal', confidence: 'High', direction: 'Bullish' });
+    }
+    if (rsi > 70 && macd < 0) {
+      patterns.push({ name: 'Potential Reversal', confidence: 'High', direction: 'Bearish' });
+    }
+    if (trend === 'Uptrend' && changePercent > 2) {
+      patterns.push({ name: 'Strong Momentum', confidence: 'Medium', direction: 'Bullish' });
+    }
+    if (trend === 'Downtrend' && changePercent < -2) {
+      patterns.push({ name: 'Strong Momentum', confidence: 'Medium', direction: 'Bearish' });
+    }
+
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Detected Patterns</Text>
+          {patterns.length > 0 ? (
+            patterns.map((pattern, index) => (
+              <View key={index} style={styles.patternCard}>
+                <View style={styles.patternHeader}>
+                  <Text style={styles.patternName}>{pattern.name}</Text>
+                  <View style={[styles.badge, { backgroundColor: pattern.direction === 'Bullish' ? '#4CAF50' : '#F44336' }]}>
+                    <Text style={styles.badgeText}>{pattern.direction}</Text>
+                  </View>
+                </View>
+                <Text style={styles.patternConfidence}>Confidence: {pattern.confidence}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noDataText}>No clear patterns detected at this time</Text>
+          )}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Technical Setup</Text>
+          {renderMetric('Current Trend', trend)}
+          {renderMetric('RSI Signal', rsi > 70 ? 'Overbought' : rsi < 30 ? 'Oversold' : 'Neutral')}
+          {renderMetric('MACD', macd > 0 ? 'Bullish' : 'Bearish')}
+          {renderMetric('Price Momentum', `${changePercent.toFixed(2)}%`)}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Pattern Analysis</Text>
+          <Text style={styles.analysisText}>
+            • The stock is in {trend.toLowerCase()} showing {Math.abs(changePercent) > 2 ? 'strong' : 'moderate'} movement.
+          </Text>
+          <Text style={styles.analysisText}>
+            • RSI at {rsi.toFixed(0)} suggests {rsi > 70 ? 'overbought conditions' : rsi < 30 ? 'oversold conditions' : 'balanced momentum'}.
+          </Text>
+          <Text style={styles.analysisText}>
+            • MACD is {macd > 0 ? 'positive' : 'negative'}, indicating {macd > 0 ? 'bullish' : 'bearish'} pressure.
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  // Valuation tab for Fundamentally Strong stocks
+  const renderValuation = () => {
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Valuation Metrics</Text>
+          {renderMetric('P/E Ratio', stock.peRatio?.toFixed(2) || 'N/A')}
+          {renderMetric('P/B Ratio', stock.priceToBook?.toFixed(2) || 'N/A')}
+          {renderMetric('Market Cap', stock.marketCap ? `₹${(stock.marketCap / 1e7).toFixed(2)}Cr` : 'N/A')}
+          {renderMetric('EPS', stock.eps?.toFixed(2) || 'N/A')}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Valuation Analysis</Text>
+          <Text style={styles.analysisText}>
+            • P/E Ratio: {stock.peRatio ? (stock.peRatio < 20 ? 'Undervalued' : stock.peRatio < 30 ? 'Fair' : 'Overvalued') : 'N/A'}
+          </Text>
+          <Text style={styles.analysisText}>
+            • Based on fundamental analysis, the stock shows {stock.fundamentalScores?.overall >= 70 ? 'strong' : 'moderate'} value proposition.
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   const renderMetric = (label, value, badge = null) => (
     <View style={styles.metricRow}>
       <Text style={styles.metricLabel}>{label}</Text>
@@ -323,50 +711,43 @@ export default function StockDetailScreen({ route, navigation }) {
 
       {/* Tabs */}
       <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'overview' && styles.tabActive]}
-          onPress={() => setActiveTab('overview')}
-        >
-          <Text style={[styles.tabText, activeTab === 'overview' && styles.tabTextActive]}>
-            Overview
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'fundamental' && styles.tabActive]}
-          onPress={() => setActiveTab('fundamental')}
-        >
-          <Text style={[styles.tabText, activeTab === 'fundamental' && styles.tabTextActive]}>
-            Fundamental
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'technical' && styles.tabActive]}
-          onPress={() => setActiveTab('technical')}
-        >
-          <Text style={[styles.tabText, activeTab === 'technical' && styles.tabTextActive]}>
-            Technical
-          </Text>
-        </TouchableOpacity>
-        {FEATURES.showOptions ? (
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tab, activeTab === tab && styles.activeTab]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === tab && styles.activeTabText,
+              ]}
+            >
+              {getTabLabel(tab)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        {FEATURES.showOptions && (
           <TouchableOpacity
             style={styles.optionsButton}
-            onPress={() => navigation.navigate('Options', { stock })}
+            onPress={() => navigation.navigate && navigation.navigate('Options', { stock })}
           >
-            <Ionicons name="trending-up" size={16} color="#fff" />
             <Text style={styles.optionsButtonText}>Options</Text>
           </TouchableOpacity>
-        ) : (
-          <View style={[styles.optionsButton, { backgroundColor: '#ccc' }]}> 
-            <Ionicons name="trending-up" size={16} color="#fff" />
-            <Text style={styles.optionsButtonText}>Options (Coming Soon)</Text>
-          </View>
         )}
       </View>
 
       {/* Content */}
       <ScrollView style={styles.scrollView}>
         {activeTab === 'overview' && renderOverview()}
+        {activeTab === 'targets' && renderTargets()}
+        {activeTab === 'levels' && renderLevels()}
+        {activeTab === 'momentum' && renderMomentum()}
+        {activeTab === 'entry-exit' && renderEntryExit()}
+        {activeTab === 'patterns' && renderPatterns()}
+        {activeTab === 'valuation' && renderValuation()}
         {activeTab === 'fundamental' && renderFundamental()}
+        {activeTab === 'fundamentals' && renderFundamental()}
         {activeTab === 'technical' && renderTechnical()}
       </ScrollView>
     </SafeAreaView>
@@ -456,6 +837,39 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+  },
+  targetCard: {
+    backgroundColor: '#f8f9fa',
+    padding: 16,
+  },
+  buyButton: {
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  buyButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  targetPriceSection: {
+    alignItems: 'center',
+  },
+  targetLabel: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 4,
+  },
+  targetPrice: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  upsideText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   cardTitle: {
     fontSize: 18,
@@ -628,5 +1042,115 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  // Target tab styles
+  targetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  targetTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  riskBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  riskBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  targetPrice: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
+    marginVertical: 8,
+  },
+  targetUpside: {
+    fontSize: 18,
+    color: '#4CAF50',
+    marginBottom: 8,
+  },
+  targetTimeframe: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  targetDescription: {
+    fontSize: 14,
+    color: '#777',
+    lineHeight: 20,
+  },
+  // Levels tab styles
+  levelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+  },
+  levelLabel: {
+    fontSize: 15,
+    color: '#333',
+  },
+  levelValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  analysisText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 22,
+    marginBottom: 8,
+  },
+  // Pattern tab styles
+  patternCard: {
+    backgroundColor: '#f9f9f9',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  patternHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  patternName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  patternConfidence: {
+    fontSize: 13,
+    color: '#666',
+  },
+  // Score display styles
+  scoreDisplay: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  scoreBadgeLarge: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scoreLarge: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  scoreMax: {
+    fontSize: 18,
+    color: 'white',
   },
 });
