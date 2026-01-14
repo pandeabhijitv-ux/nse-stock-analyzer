@@ -281,27 +281,36 @@ const analyzeAllCategories = async (stocksData) => {
     }
   });
   
-  // Filter for each category - RELAXED filters to ensure stocks are returned
+  console.log(`[ANALYZER] Total stocks with technical data: ${stocksWithTechnical.length}`);
+  console.log(`[ANALYZER] Sample stock:`, stocksWithTechnical[0] ? {
+    symbol: stocksWithTechnical[0].symbol,
+    hasTechnical: !!stocksWithTechnical[0].technical,
+    hasRSI: !!stocksWithTechnical[0].technical?.rsi,
+    rsiValue: stocksWithTechnical[0].technical?.rsi?.current,
+    fundScore: stocksWithTechnical[0].fundamentalScore,
+    changePercent: stocksWithTechnical[0].changePercent
+  } : 'No stocks');
+  
+  // Filter for each category - VERY RELAXED filters to ensure stocks are returned
   const targetOriented = stocksWithTechnical
-    .filter(s => s.technical && s.fundamentalScore > 30) // RELAXED from 50
-    .sort((a, b) => b.fundamentalScore - a.fundamentalScore)
+    .filter(s => s.technical && (s.fundamentalScore || 0) > 0) // ANY fundamental score
+    .sort((a, b) => (b.fundamentalScore || 0) - (a.fundamentalScore || 0))
     .slice(0, 20);
   
   const swing = stocksWithTechnical
-    .filter(s => s.technical && s.technical.rsi?.current && Math.abs(s.changePercent || 0) > 0.5) // SIMPLIFIED
-    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
+    .filter(s => s.technical && Math.abs(s.changePercent || 0) > 0.1) // ANY movement >0.1%
+    .sort((a, b) => Math.abs(b.changePercent || 0) - Math.abs(a.changePercent || 0))
     .slice(0, 20);
   
   const fundamentallyStrong = stocksWithTechnical
-    .filter(s => s.fundamentalScore > 40) // RELAXED from 65
-    .sort((a, b) => b.fundamentalScore - a.fundamentalScore)
+    .filter(s => (s.fundamentalScore || 0) > 0) // ANY score
+    .sort((a, b) => (b.fundamentalScore || 0) - (a.fundamentalScore || 0))
     .slice(0, 20);
   
   const technicallyStrong = stocksWithTechnical
-    .filter(s => s.technical && s.prices.length >= 30 && // RELAXED from 50
-      s.technical.rsi?.current > 45) // RELAXED from 50, removed MACD requirement
-    .sort((a, b) => (b.technical.rsi.current + (b.technical.macd?.histogram || 0)) - 
-                    (a.technical.rsi.current + (a.technical.macd?.histogram || 0)))
+    .filter(s => s.technical && s.prices && s.prices.length >= 20) // Just need price history
+    .sort((a, b) => ((b.technical?.rsi?.current || 50) + (b.technical?.macd?.histogram || 0)) - 
+                    ((a.technical?.rsi?.current || 50) + (a.technical?.macd?.histogram || 0)))
     .slice(0, 20);
   
   const hotStocks = stocksWithTechnical
