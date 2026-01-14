@@ -123,9 +123,9 @@ module.exports = async (req, res) => {
           changePercent: ((quote.meta?.regularMarketPrice - quote.meta?.previousClose) / quote.meta?.previousClose * 100) || 0,
           volume: quote.meta?.regularMarketVolume || 0,
           marketCap: quote.meta?.marketCap || 0,
-          prices: chart.indicators?.quote?.[0]?.close || [],
-          high: chart.indicators?.quote?.[0]?.high || [],
-          low: chart.indicators?.quote?.[0]?.low || [],
+          prices: (chart.indicators?.quote?.[0]?.close || []).filter(p => p !== null && p !== undefined && !isNaN(p)),
+          high: (chart.indicators?.quote?.[0]?.high || []).filter(p => p !== null && p !== undefined && !isNaN(p)),
+          low: (chart.indicators?.quote?.[0]?.low || []).filter(p => p !== null && p !== undefined && !isNaN(p)),
           timestamps: chart.timestamp || [],
           fundamentals: fundamentalsData,
           success: true
@@ -144,7 +144,16 @@ module.exports = async (req, res) => {
     console.log('[MANUAL] Successfully fetched', successfulStocks.length, 'stocks');
 
     // Analyze all categories
-    const analysis = await analyzeAllCategories(successfulStocks);
+    let analysis;
+    try {
+      console.log('[MANUAL] Starting analysis of categories');
+      analysis = await analyzeAllCategories(successfulStocks);
+      console.log('[MANUAL] Analysis completed successfully');
+    } catch (analysisError) {
+      console.error('[MANUAL] Error during analysis:', analysisError.message);
+      console.error('[MANUAL] Stack:', analysisError.stack);
+      throw new Error(`Analysis failed: ${analysisError.message}`);
+    }
 
     // Store in cache
     await storeAnalysis('target-oriented', analysis.targetOriented);
