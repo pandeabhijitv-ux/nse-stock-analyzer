@@ -58,13 +58,38 @@ export default function OptionsTradingScreen({ onBack }) {
   const fetchOptionsData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://stock-analyzer-backend-nu.vercel.app/api/options');
+      const response = await fetch('https://stock-analyzer-backend-nu.vercel.app/api/top-options-cached');
       const result = await response.json();
       
-      if (result.success) {
-        setOptionsData(result.data);
+      if (result.success && result.data) {
+        // Transform backend data to match screen expectations
+        const calls = result.data.filter(opt => opt.optionType === 'CE').slice(0, 5);
+        const puts = result.data.filter(opt => opt.optionType === 'PE').slice(0, 5);
+        
+        setOptionsData({
+          calls: calls.map(opt => ({
+            symbol: opt.underlyingSymbol,
+            strike: opt.strikePrice,
+            entry: opt.ltp.toFixed(2),
+            target: (opt.ltp * 1.15).toFixed(2),
+            stopLoss: (opt.ltp * 0.90).toFixed(2),
+            expiry: opt.expiryDate,
+            potential: ((opt.ltp * 0.15 / opt.ltp) * 100).toFixed(1),
+            confidence: opt.score > 75 ? 'High' : opt.score > 60 ? 'Medium' : 'Low'
+          })),
+          puts: puts.map(opt => ({
+            symbol: opt.underlyingSymbol,
+            strike: opt.strikePrice,
+            entry: opt.ltp.toFixed(2),
+            target: (opt.ltp * 1.15).toFixed(2),
+            stopLoss: (opt.ltp * 0.90).toFixed(2),
+            expiry: opt.expiryDate,
+            potential: ((opt.ltp * 0.15 / opt.ltp) * 100).toFixed(1),
+            confidence: opt.score > 75 ? 'High' : opt.score > 60 ? 'Medium' : 'Low'
+          }))
+        });
       } else {
-        console.error('Failed to fetch options data');
+        console.error('Failed to fetch options data:', result.error);
       }
     } catch (err) {
       console.error('Error fetching options:', err);
@@ -187,6 +212,19 @@ export default function OptionsTradingScreen({ onBack }) {
             <Text style={styles.alertIcon}>⚡</Text>
             <Text style={styles.alertText}>
               Live options recommendations - Available until 9:20 AM IST
+            </Text>
+          </View>
+
+          <View style={styles.disclaimerCard}>
+            <Text style={styles.disclaimerIcon}>⚠️</Text>
+            <Text style={styles.disclaimerTitle}>IMPORTANT DISCLAIMER</Text>
+            <Text style={styles.disclaimerText}>
+              • Options trading should be done between 9:15 AM to 9:30 AM IST for best results{'\n'}
+              • These recommendations are for educational purposes only{'\n'}
+              • Options trading involves HIGH RISK and may not be suitable for all investors{'\n'}
+              • You can lose your entire investment{'\n'}
+              • Always do your own research and consult a financial advisor{'\n'}
+              • INVEST AT YOUR OWN RISK - Past performance is not indicative of future results
             </Text>
           </View>
 
@@ -442,14 +480,24 @@ const styles = StyleSheet.create({
   disclaimerCard: {
     margin: 15,
     padding: 15,
-    backgroundColor: '#fee2e2',
+    backgroundColor: '#fef3c7',
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
+    borderLeftColor: '#f59e0b',
+  },
+  disclaimerIcon: {
+    fontSize: 28,
+    marginBottom: 8,
+  },
+  disclaimerTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#92400e',
+    marginBottom: 10,
   },
   disclaimerText: {
     fontSize: 13,
-    color: '#991b1b',
+    color: '#92400e',
     lineHeight: 18,
   },
 });
