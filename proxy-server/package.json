@@ -1,7 +1,7 @@
 {
   "name": "mosl-proxy",
   "version": "1.0.0",
-  "description": "CORS proxy for MOSL API",
+  "description": "Stock Analyzer Backend API - Serverless Functions",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
