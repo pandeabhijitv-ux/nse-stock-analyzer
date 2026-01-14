@@ -224,8 +224,13 @@ const analyzeAllCategories = async (stocksData) => {
   
   // Filter for each category - VERY RELAXED filters to ensure stocks are returned
   const targetOriented = stocksWithTechnical
-    .filter(s => s.technical && (s.fundamentalScore || 0) > 0) // ANY fundamental score
-    .sort((a, b) => (b.fundamentalScore || 0) - (a.fundamentalScore || 0))
+    .filter(s => s.technical && s.marketCap > 0) // Has market cap data
+    .sort((a, b) => {
+      // Sort by combination of fundamentalScore (if available) and positive price change
+      const scoreA = (a.fundamentalScore || 0) + (a.changePercent > 0 ? a.changePercent : 0);
+      const scoreB = (b.fundamentalScore || 0) + (b.changePercent > 0 ? b.changePercent : 0);
+      return scoreB - scoreA;
+    })
     .slice(0, 20);
   
   const swing = stocksWithTechnical
@@ -234,8 +239,14 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 20);
   
   const fundamentallyStrong = stocksWithTechnical
-    .filter(s => (s.fundamentalScore || 0) > 0) // ANY score
-    .sort((a, b) => (b.fundamentalScore || 0) - (a.fundamentalScore || 0))
+    .filter(s => s.marketCap > 0 && s.volume > 0) // Has market data
+    .sort((a, b) => {
+      // If fundamental scores exist, use them; otherwise sort by market cap
+      if ((a.fundamentalScore || 0) > 0 || (b.fundamentalScore || 0) > 0) {
+        return (b.fundamentalScore || 0) - (a.fundamentalScore || 0);
+      }
+      return (b.marketCap || 0) - (a.marketCap || 0);
+    })
     .slice(0, 20);
   
   const technicallyStrong = stocksWithTechnical
