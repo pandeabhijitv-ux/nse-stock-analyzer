@@ -577,7 +577,7 @@
             };
 
         // Technical Indicators Configuration - Using Samco Backend (FREE!)
-        const SAMCO_API = 'http://localhost:3002';
+        const SAMCO_API = 'https://stock-analyzer-backend-nu.vercel.app';
         const TECHNICAL_CACHE_KEY = 'samco_technical_cache';
         const TECHNICAL_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
         
@@ -1042,7 +1042,7 @@
                         
                         console.info('Loading top options from daily cache...');
                         
-                        const SAMCO_API = 'http://localhost:3002';
+                        const SAMCO_API = 'https://stock-analyzer-backend-nu.vercel.app';
                         
                         let optionsWithAnalysis = [];
                         let allMatchingOptions = [];
@@ -1127,7 +1127,7 @@
                         setGoldSilverLoading(true);
                         try {
                             console.log('💰 Fetching live gold/silver prices...');
-                            const response = await fetch('http://localhost:3002/api/commodities');
+                            const response = await fetch('https://stock-analyzer-backend-nu.vercel.app/api/commodities');
                             const result = await response.json();
                             
                             if (result.success) {
@@ -2410,7 +2410,7 @@
                 // Fetch commodities data on screen load
                 if (!window.commoditiesCache) {
                     window.commoditiesCache = { loading: true, data: null };
-                    fetch('http://localhost:3002/api/commodities')
+                    fetch('https://stock-analyzer-backend-nu.vercel.app/api/commodities')
                         .then(response => response.json())
                         .then(result => {
                             console.log('✅ Commodities API Response:', result);
@@ -3039,7 +3039,7 @@
                     const fetchCommodities = async () => {
                         try {
                             console.log('💰 Fetching commodities data...');
-                            const response = await fetch('http://localhost:3002/api/commodities');
+                            const response = await fetch('https://stock-analyzer-backend-nu.vercel.app/api/commodities');
                             const result = await response.json();
                             
                             if (result.success) {
