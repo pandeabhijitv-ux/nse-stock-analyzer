@@ -6,7 +6,7 @@
   "crons": [
     {
       "path": "/api/cron/analyze-stocks",
-      "schedule": "0 0 * * *"
+      "schedule": "30 15 * * *"
     }
   ]
 }

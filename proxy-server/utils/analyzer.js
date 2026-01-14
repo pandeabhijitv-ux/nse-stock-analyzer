@@ -274,29 +274,34 @@ const analyzeAllCategories = async (stocksData) => {
     return stock;
   });
   
-  // Filter for each category
+  // Strip .NS suffix from symbols for cleaner display
+  stocksWithTechnical.forEach(s => {
+    if (s.symbol && s.symbol.endsWith('.NS')) {
+      s.symbol = s.symbol.replace('.NS', '');
+    }
+  });
+  
+  // Filter for each category - RELAXED filters to ensure stocks are returned
   const targetOriented = stocksWithTechnical
-    .filter(s => s.technical && s.fundamentalScore > 50)
+    .filter(s => s.technical && s.fundamentalScore > 30) // RELAXED from 50
     .sort((a, b) => b.fundamentalScore - a.fundamentalScore)
     .slice(0, 20);
   
   const swing = stocksWithTechnical
-    .filter(s => s.technical && s.technical.rsi?.current && 
-      ((s.technical.rsi.current > 60 && s.technical.macd?.histogram > 0) ||
-       (s.technical.rsi.current < 40 && s.technical.macd?.histogram < 0)))
+    .filter(s => s.technical && s.technical.rsi?.current && Math.abs(s.changePercent || 0) > 0.5) // SIMPLIFIED
     .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
     .slice(0, 20);
   
   const fundamentallyStrong = stocksWithTechnical
-    .filter(s => s.fundamentalScore > 65)
+    .filter(s => s.fundamentalScore > 40) // RELAXED from 65
     .sort((a, b) => b.fundamentalScore - a.fundamentalScore)
     .slice(0, 20);
   
   const technicallyStrong = stocksWithTechnical
-    .filter(s => s.technical && s.prices.length >= 50 &&
-      s.technical.rsi?.current > 50 && s.technical.macd?.histogram > 0)
-    .sort((a, b) => (b.technical.rsi.current + b.technical.macd.histogram) - 
-                    (a.technical.rsi.current + a.technical.macd.histogram))
+    .filter(s => s.technical && s.prices.length >= 30 && // RELAXED from 50
+      s.technical.rsi?.current > 45) // RELAXED from 50, removed MACD requirement
+    .sort((a, b) => (b.technical.rsi.current + (b.technical.macd?.histogram || 0)) - 
+                    (a.technical.rsi.current + (a.technical.macd?.histogram || 0)))
     .slice(0, 20);
   
   const hotStocks = stocksWithTechnical
