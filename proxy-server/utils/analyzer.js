@@ -19,23 +19,24 @@ const scoreFundamentals = (stock) => {
     dividend: 0,
   };
   
-  const fundamentals = stock.fundamentals;
-  if (!fundamentals || Object.keys(fundamentals).length === 0) {
-    return { fundamentalScore: 0, categoryScores: scores };
-  }
+  try {
+    const fundamentals = stock.fundamentals;
+    if (!fundamentals || typeof fundamentals !== 'object' || Object.keys(fundamentals).length === 0) {
+      return { fundamentalScore: 0, categoryScores: scores };
+    }
 
-  // Extract metrics directly from the fundamentals object
-  const peRatio = fundamentals.peRatio;
-  const forwardPE = fundamentals.forwardPE;
-  const profitMargin = fundamentals.profitMargin;
-  const returnOnEquity = fundamentals.roe;
-  const returnOnAssets = fundamentals.roa;
-  const debtToEquity = fundamentals.debtToEquity;
-  const currentRatio = fundamentals.currentRatio;
-  const revenueGrowth = fundamentals.revenueGrowth;
-  const earningsGrowth = fundamentals.earningsGrowth;
-  const dividendYield = fundamentals.dividendYield;
-  const beta = fundamentals.beta;
+    // Extract metrics directly from the fundamentals object (all with safety checks)
+    const peRatio = typeof fundamentals.peRatio === 'number' ? fundamentals.peRatio : null;
+    const forwardPE = typeof fundamentals.forwardPE === 'number' ? fundamentals.forwardPE : null;
+    const profitMargin = typeof fundamentals.profitMargin === 'number' ? fundamentals.profitMargin : null;
+    const returnOnEquity = typeof fundamentals.roe === 'number' ? fundamentals.roe : null;
+    const returnOnAssets = typeof fundamentals.roa === 'number' ? fundamentals.roa : null;
+    const debtToEquity = typeof fundamentals.debtToEquity === 'number' ? fundamentals.debtToEquity : null;
+    const currentRatio = typeof fundamentals.currentRatio === 'number' ? fundamentals.currentRatio : null;
+    const revenueGrowth = typeof fundamentals.revenueGrowth === 'number' ? fundamentals.revenueGrowth : null;
+    const earningsGrowth = typeof fundamentals.earningsGrowth === 'number' ? fundamentals.earningsGrowth : null;
+    const dividendYield = typeof fundamentals.dividendYield === 'number' ? fundamentals.dividendYield : null;
+    const beta = typeof fundamentals.beta === 'number' ? fundamentals.beta : null;
 
   // Valuation Scores
   if (peRatio !== null && peRatio !== undefined) {
@@ -145,38 +146,63 @@ const scoreFundamentals = (stock) => {
   const fundamentalScore = totalWeight > 0 ? Math.round(totalScore / (totalWeight / 100)) : 0;
   
   return { fundamentalScore, categoryScores: scores };
+  } catch (error) {
+    console.error('[ERROR] scoreFundamentals failed:', error.message);
+    return { fundamentalScore: 0, categoryScores: scores };
+  }
 };
 
 // Analyze all categories
 const analyzeAllCategories = async (stocksData) => {
   // Calculate technical indicators for all stocks
   const stocksWithTechnical = stocksData.map(stock => {
-    if (stock.prices && stock.prices.length >= 50) {
-      const rsi = calculateRSI(stock.prices);
-      const macd = calculateMACD(stock.prices);
-      const bollinger = calculateBollingerBands(stock.prices);
-      const atr = calculateATR(stock.prices);
-      const stochastic = calculateStochastic(stock.prices);
-      const patterns = detectChartPatterns(stock.prices);
+    try {
+      // Calculate technical indicators if enough price data
+      if (stock.prices && Array.isArray(stock.prices) && stock.prices.length >= 50) {
+        try {
+          const rsi = calculateRSI(stock.prices);
+          const macd = calculateMACD(stock.prices);
+          const bollinger = calculateBollingerBands(stock.prices);
+          const atr = calculateATR(stock.prices);
+          const stochastic = calculateStochastic(stock.prices);
+          const patterns = detectChartPatterns(stock.prices);
+          
+          stock.technical = { rsi, macd, bollinger, atr, stochastic, patterns };
+        } catch (techError) {
+          console.error(`[ERROR] Technical calculation failed for ${stock.symbol}:`, techError.message);
+          stock.technical = null;
+        }
+      }
       
-      stock.technical = { rsi, macd, bollinger, atr, stochastic, patterns };
+      // Calculate fundamental score - pass stock object directly
+      try {
+        const fundScore = scoreFundamentals(stock);
+        stock.fundamentalScore = fundScore.fundamentalScore || 0;
+        stock.categoryScores = fundScore.categoryScores || {};
+        
+        // DEBUG: Log RELIANCE fundamental scoring
+        if (stock.symbol === 'RELIANCE.NS') {
+          console.log('[DEBUG] RELIANCE.NS fundamental scoring:');
+          console.log('[DEBUG] - Has fundamentals object?', !!stock.fundamentals);
+          console.log('[DEBUG] - Fundamentals keys:', Object.keys(stock.fundamentals || {}));
+          console.log('[DEBUG] - fundamentalScore:', stock.fundamentalScore);
+          console.log('[DEBUG] - categoryScores:', JSON.stringify(stock.categoryScores));
+        }
+      } catch (fundError) {
+        console.error(`[ERROR] Fundamental scoring failed for ${stock.symbol}:`, fundError.message);
+        stock.fundamentalScore = 0;
+        stock.categoryScores = {};
+      }
+      
+      return stock;
+    } catch (error) {
+      console.error(`[ERROR] Stock processing failed for ${stock.symbol}:`, error.message);
+      // Return stock with minimal data to prevent complete failure
+      stock.fundamentalScore = 0;
+      stock.categoryScores = {};
+      stock.technical = null;
+      return stock;
     }
-    
-    // Calculate fundamental score - pass stock object directly
-    const fundScore = scoreFundamentals(stock);
-    stock.fundamentalScore = fundScore.fundamentalScore;
-    stock.categoryScores = fundScore.categoryScores;
-    
-    // DEBUG: Log RELIANCE fundamental scoring
-    if (stock.symbol === 'RELIANCE.NS') {
-      console.log('[DEBUG] RELIANCE.NS fundamental scoring:');
-      console.log('[DEBUG] - Has fundamentals object?', !!stock.fundamentals);
-      console.log('[DEBUG] - Fundamentals keys:', Object.keys(stock.fundamentals || {}));
-      console.log('[DEBUG] - fundamentalScore:', stock.fundamentalScore);
-      console.log('[DEBUG] - categoryScores:', JSON.stringify(stock.categoryScores));
-    }
-    
-    return stock;
   });
   
   // Strip .NS suffix from symbols for cleaner display
@@ -246,6 +272,5 @@ const analyzeAllCategories = async (stocksData) => {
 
 module.exports = {
   scoreFundamentals,
-  parseStockData,
   analyzeAllCategories
 };
