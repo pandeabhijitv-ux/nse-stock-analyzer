@@ -224,11 +224,11 @@ const analyzeAllCategories = async (stocksData) => {
   
   // Filter for each category - VERY RELAXED filters to ensure stocks are returned
   const targetOriented = stocksWithTechnical
-    .filter(s => s.technical && s.marketCap > 0) // Has market cap data
+    .filter(s => s.technical && s.volume > 500000) // Has technical data and decent volume
     .sort((a, b) => {
       // Sort by combination of fundamentalScore (if available) and positive price change
-      const scoreA = (a.fundamentalScore || 0) + (a.changePercent > 0 ? a.changePercent : 0);
-      const scoreB = (b.fundamentalScore || 0) + (b.changePercent > 0 ? b.changePercent : 0);
+      const scoreA = (a.fundamentalScore || 0) + (a.changePercent > 0 ? a.changePercent * 2 : 0);
+      const scoreB = (b.fundamentalScore || 0) + (b.changePercent > 0 ? b.changePercent * 2 : 0);
       return scoreB - scoreA;
     })
     .slice(0, 20);
@@ -239,13 +239,14 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 20);
   
   const fundamentallyStrong = stocksWithTechnical
-    .filter(s => s.marketCap > 0 && s.volume > 0) // Has market data
+    .filter(s => s.currentPrice > 0 && s.volume > 1000000) // Active stocks with good volume
     .sort((a, b) => {
-      // If fundamental scores exist, use them; otherwise sort by market cap
+      // If fundamental scores exist, use them; otherwise sort by volume (liquidity proxy)
       if ((a.fundamentalScore || 0) > 0 || (b.fundamentalScore || 0) > 0) {
         return (b.fundamentalScore || 0) - (a.fundamentalScore || 0);
       }
-      return (b.marketCap || 0) - (a.marketCap || 0);
+      // Higher volume = more liquid = typically stronger stocks
+      return (b.volume || 0) - (a.volume || 0);
     })
     .slice(0, 20);
   
