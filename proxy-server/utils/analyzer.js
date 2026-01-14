@@ -210,6 +210,32 @@ const analyzeAllCategories = async (stocksData) => {
     if (s.symbol && s.symbol.endsWith('.NS')) {
       s.symbol = s.symbol.replace('.NS', '');
     }
+    
+    // Add fields expected by mobile app
+    s.name = s.symbol; // Stock name
+    s.change = s.currentPrice * (s.changePercent / 100); // Absolute change
+    s.overallScore = s.fundamentalScore || 0; // Overall score
+    s.technicalScore = s.technical ? 50 + (s.technical.rsi?.current || 50) / 2 : 0; // Simple technical score
+    s.fundamentalScores = s.categoryScores || {}; // Category breakdown
+    
+    // Calculate target price (5% upside for positive movers, current for others)
+    if (s.changePercent > 0) {
+      s.targetPrice = s.currentPrice * 1.05;
+      s.upsidePercent = 5;
+    } else {
+      s.targetPrice = s.currentPrice;
+      s.upsidePercent = 0;
+    }
+    
+    // Extract fundamental fields from fundamentals object for detail screen
+    if (s.fundamentals && typeof s.fundamentals === 'object') {
+      s.peRatio = s.fundamentals.peRatio || null;
+      s.pegRatio = s.fundamentals.forwardPE || null;
+      s.profitMargin = s.fundamentals.profitMargin || null;
+      s.returnOnEquity = s.fundamentals.roe || null;
+      s.debtToEquity = s.fundamentals.debtToEquity || null;
+      s.dividendYield = s.fundamentals.dividendYield || null;
+    }
   });
   
   console.log(`[ANALYZER] Total stocks with technical data: ${stocksWithTechnical.length}`);
