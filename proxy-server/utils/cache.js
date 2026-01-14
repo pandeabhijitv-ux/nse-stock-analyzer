@@ -1,60 +1,48 @@
-// Filesystem-based cache for Vercel serverless (uses /tmp directory)
-// Vercel's /tmp persists across warm function invocations
+// Vercel KV (Redis) cache - persistent across all function invocations
+const { kv } = require('@vercel/kv');
 
-const fs = require('fs');
-const path = require('path');
-
-const CACHE_DIR = '/tmp/stock-cache';
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-// Ensure cache directory exists
-const ensureCacheDir = () => {
-  if (!fs.existsSync(CACHE_DIR)) {
-    fs.mkdirSync(CACHE_DIR, { recursive: true });
-  }
-};
+const CACHE_TTL = 24 * 60 * 60; // 24 hours in seconds (KV uses seconds)
 
 // Store analysis results
 const storeAnalysis = async (category, data) => {
   try {
-    ensureCacheDir();
-    const filePath = path.join(CACHE_DIR, `${category}.json`);
+    const key = `analysis:${category}`;
     const cacheData = {
       data,
       timestamp: Date.now(),
-      expires: Date.now() + CACHE_TTL
+      expires: Date.now() + (CACHE_TTL * 1000)
     };
-    fs.writeFileSync(filePath, JSON.stringify(cacheData));
-    console.log(`[CACHE] Stored ${category} with ${data.length} stocks to ${filePath}`);
+    
+    // Store in KV with TTL
+    await kv.set(key, cacheData, { ex: CACHE_TTL });
+    console.log(`[KV] Stored ${category} with ${data.length} stocks`);
   } catch (error) {
-    console.error(`[CACHE] Error storing ${category}:`, error.message);
+    console.error(`[KV] Error storing ${category}:`, error.message);
   }
 };
 
 // Get analysis results
 const getAnalysis = async (category) => {
   try {
-    const filePath = path.join(CACHE_DIR, `${category}.json`);
+    const key = `analysis:${category}`;
+    const cached = await kv.get(key);
     
-    if (!fs.existsSync(filePath)) {
-      console.log(`[CACHE] Miss for ${category} (file not found)`);
+    if (!cached) {
+      console.log(`[KV] Miss for ${category}`);
       return null;
     }
     
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    const cached = JSON.parse(fileContent);
-    
-    // Check if expired
+    // Check if expired (extra safety, though KV handles TTL)
     if (Date.now() > cached.expires) {
-      console.log(`[CACHE] Expired for ${category}`);
-      fs.unlinkSync(filePath);
+      console.log(`[KV] Expired for ${category}`);
+      await kv.del(key);
       return null;
     }
     
-    console.log(`[CACHE] Hit for ${category}`);
+    console.log(`[KV] Hit for ${category}`);
     return cached.data;
   } catch (error) {
-    console.error(`[CACHE] Error reading ${category}:`, error.message);
+    console.error(`[KV] Error reading ${category}:`, error.message);
     return null;
   }
 };
@@ -62,29 +50,25 @@ const getAnalysis = async (category) => {
 // Store metadata about last analysis
 const markAsUpdated = async (metadata) => {
   try {
-    ensureCacheDir();
-    const filePath = path.join(CACHE_DIR, 'metadata.json');
-    fs.writeFileSync(filePath, JSON.stringify({
+    const metadataWithTimestamp = {
       ...metadata,
       timestamp: Date.now()
-    }));
-    console.log('[CACHE] Metadata updated');
+    };
+    
+    await kv.set('metadata:last-update', metadataWithTimestamp, { ex: CACHE_TTL });
+    console.log('[KV] Metadata updated');
   } catch (error) {
-    console.error('[CACHE] Error storing metadata:', error.message);
+    console.error('[KV] Error storing metadata:', error.message);
   }
 };
 
 // Get metadata
 const getMetadata = async () => {
   try {
-    const filePath = path.join(CACHE_DIR, 'metadata.json');
-    if (!fs.existsSync(filePath)) {
-      return null;
-    }
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(fileContent);
+    const metadata = await kv.get('metadata:last-update');
+    return metadata || null;
   } catch (error) {
-    console.error('[CACHE] Error reading metadata:', error.message);
+    console.error('[KV] Error reading metadata:', error.message);
     return null;
   }
 };
