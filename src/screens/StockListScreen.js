@@ -193,7 +193,8 @@ export default function StockListScreen({ sector, onStockPress }) {
           // If too few movers, include all with any movement
           filtered = allStocks.filter(s => (s.changePercent || 0) !== 0);
         }
-        filtered.sort((a, b) => (b.categoryScore || 0) - (a.categoryScore || 0));
+        // Sort by absolute change percent - biggest movers first
+        filtered.sort((a, b) => Math.abs(b.changePercent || 0) - Math.abs(a.changePercent || 0));
         console.log(`Hot-Stocks: ${filtered.length} stocks with significant movement`);
         break;
         
@@ -235,7 +236,14 @@ export default function StockListScreen({ sector, onStockPress }) {
         console.log(`Default: ${filtered.length} stocks sorted by overall score`);
     }
     
-    console.log(`=== FILTERING COMPLETE: Returning top ${Math.min(filtered.length, 20)} stocks ===\n`);
+    console.log(`=== FILTERING COMPLETE: Returning top ${Math.min(filtered.length, 20)} stocks ===`);
+    if (filtered.length > 0) {
+      console.log(`Top 5 stocks for ${sector}:`);
+      filtered.slice(0, 5).forEach((s, i) => {
+        console.log(`  ${i+1}. ${s.symbol} - Score: ${s.overallScore?.toFixed(0)}, Change: ${s.changePercent?.toFixed(2)}%`);
+      });
+    }
+    console.log('');
     return filtered.slice(0, 20); // Return top 20 stocks
   };
 

@@ -64,6 +64,33 @@ export default function HomeScreen({ onSectorPress }) {
       icon: '🌙',
     },
     {
+      id: 'options',
+      name: 'Options Trading',
+      description: 'Call & Put with entry/target/SL',
+      badge: 'Top 20 trades - 9:00-9:20 AM',
+      color: '#ec4899',
+      icon: '🎯',
+      comingSoon: true,
+    },
+    {
+      id: 'commodities',
+      name: 'Commodities',
+      description: 'Live gold & silver prices',
+      badge: 'Real-time data',
+      color: '#eab308',
+      icon: '📦',
+      comingSoon: true,
+    },
+    {
+      id: 'gold-silver',
+      name: 'Gold & Silver',
+      description: 'Precious metals with astro analysis',
+      badge: 'Venus & Moon impact',
+      color: '#f59e0b',
+      icon: '🔱',
+      comingSoon: true,
+    },
+    {
       id: 'etf',
       name: 'ETF Analysis',
       description: 'Exchange Traded Funds performance',
@@ -81,32 +108,7 @@ export default function HomeScreen({ onSectorPress }) {
     },
   ];
 
-  const comingSoonFeatures = [
-    {
-      id: 'gold-silver',
-      name: 'Gold & Silver',
-      description: 'Precious metals with astro analysis',
-      badge: 'Venus & Moon impact',
-      color: '#f59e0b',
-      icon: '🔱',
-    },
-    {
-      id: 'commodities',
-      name: 'Commodities',
-      description: 'Live gold & silver prices from API',
-      badge: 'Real-time data',
-      color: '#eab308',
-      icon: '📦',
-    },
-    {
-      id: 'options',
-      name: 'Options Trading',
-      description: 'Call & Put with entry/target/SL',
-      badge: 'Top 20 trades - 9:00-9:20 AM',
-      color: '#ec4899',
-      icon: '🎲',
-    },
-  ];
+  const comingSoonFeatures = [];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,8 +122,8 @@ export default function HomeScreen({ onSectorPress }) {
           {analysisCategories.map((category) => (
             <TouchableOpacity
               key={category.id}
-              onPress={() => onSectorPress(category.id)}
-              style={[styles.categoryCard, { borderLeftColor: category.color }]}
+              onPress={() => category.comingSoon ? handleComingSoon(category.name) : onSectorPress(category.id)}
+              style={[styles.categoryCard, category.comingSoon && styles.comingSoonCard, { borderLeftColor: category.color }]}
             >
               <View style={styles.cardHeader}>
                 <Text style={styles.cardIcon}>{category.icon}</Text>
@@ -131,10 +133,15 @@ export default function HomeScreen({ onSectorPress }) {
               <View style={[styles.cardBadge, { backgroundColor: category.color }]}>
                 <Text style={styles.cardBadgeText}>{category.badge}</Text>
               </View>
+              {category.comingSoon && (
+                <View style={styles.comingSoonBadge}>
+                  <Text style={styles.comingSoonBadgeText}>Coming Soon</Text>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
 
-          {/* Coming Soon Features */}
+          {/* Coming Soon Features - now empty */}
           {comingSoonFeatures.map((feature) => (
             <TouchableOpacity
               key={feature.id}
