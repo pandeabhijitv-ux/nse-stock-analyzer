@@ -52,19 +52,41 @@ module.exports = async (req, res) => {
       'CROMPTON.NS', 'SYMPHONY.NS', 'DIXON.NS', 'AMBER.NS', 'BATAINDIA.NS',
     ];
 
-    // Fetch all stock data in parallel
-    console.log('[MANUAL] Fetching data for', stockSymbols.length, 'stocks');
+    // Fetch all stock data in parallel from Yahoo Finance
+    console.log('[MANUAL] Fetching data for', stockSymbols.length, 'stocks from Yahoo Finance');
     const stockDataPromises = stockSymbols.map(async (symbol) => {
       try {
-        const [quoteRes, fundamentalsRes] = await Promise.all([
-          axios.get(`https://stock-analyzer-backend-nu.vercel.app/api/quote/${symbol}`, { timeout: 15000 }),
-          axios.get(`https://stock-analyzer-backend-nu.vercel.app/api/fundamentals/${symbol}`, { timeout: 15000 })
+        // Fetch quote and chart data from Yahoo Finance
+        const [quoteRes, chartRes] = await Promise.all([
+          axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`, { 
+            timeout: 15000,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+          }),
+          axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`, { 
+            params: { interval: '1d', range: '1y' },
+            timeout: 15000,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+          })
         ]);
+        
+        const quote = quoteRes.data?.chart?.result?.[0];
+        const chart = chartRes.data?.chart?.result?.[0];
+        
+        if (!quote || !chart) {
+          throw new Error('Invalid response from Yahoo Finance');
+        }
         
         return {
           symbol,
-          quote: quoteRes.data,
-          fundamentals: fundamentalsRes.data,
+          currentPrice: quote.meta?.regularMarketPrice || 0,
+          changePercent: ((quote.meta?.regularMarketPrice - quote.meta?.previousClose) / quote.meta?.previousClose * 100) || 0,
+          volume: quote.meta?.regularMarketVolume || 0,
+          marketCap: quote.meta?.marketCap || 0,
+          prices: chart.indicators?.quote?.[0]?.close || [],
+          high: chart.indicators?.quote?.[0]?.high || [],
+          low: chart.indicators?.quote?.[0]?.low || [],
+          timestamps: chart.timestamp || [],
+          fundamentals: {}, // Will be populated by analyzer if needed
           success: true
         };
       } catch (error) {
