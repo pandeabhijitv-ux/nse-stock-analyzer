@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use proxy server - REQUIRED for mobile app to work
-const USE_PROXY = true;
+// Use proxy server - DISABLED: Proxy doesn't have quote endpoints yet
+const USE_PROXY = false;
 const PROXY_URL = 'https://stock-analyzer-backend-nu.vercel.app';
 const BASE_URL = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v8/finance';
 const BASE_URL_V10 = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v10/finance';
