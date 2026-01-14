@@ -216,6 +216,7 @@ const analyzeAllCategories = async (stocksData) => {
     s.change = s.currentPrice * (s.changePercent / 100); // Absolute change
     s.overallScore = s.fundamentalScore || 0; // Overall score
     s.technicalScore = s.technical ? 50 + (s.technical.rsi?.current || 50) / 2 : 0; // Simple technical score
+    s.momentumScore = Math.abs(s.changePercent || 0) * 10; // Momentum based on changePercent
     s.fundamentalScores = s.categoryScores || {}; // Category breakdown
     
     // Calculate target price (5% upside for positive movers, current for others)
