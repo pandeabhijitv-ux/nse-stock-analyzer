@@ -1,12 +1,12 @@
 {
   "version": 2,
+  "rewrites": [
+    { "source": "/", "destination": "/api" }
+  ],
   "crons": [
     {
       "path": "/api/cron/analyze-stocks",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     }
-  ],
-  "env": {
-    "CRON_SECRET": "@cron-secret"
-  }
+  ]
 }

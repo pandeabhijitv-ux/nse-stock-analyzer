@@ -24,35 +24,10 @@ export default function OptionsTradingScreen({ onBack }) {
   }, []);
 
   const checkTimeAndFetchData = async () => {
-    const now = new Date();
-    // Convert to IST (UTC+5:30)
-    const istOffset = 5.5 * 60 * 60 * 1000;
-    const istTime = new Date(now.getTime() + istOffset);
-    const hours = istTime.getUTCHours();
-    const minutes = istTime.getUTCMinutes();
-    const currentMinutes = hours * 60 + minutes;
-    
-    // 9:00 AM IST = 540 minutes, 9:20 AM IST = 560 minutes
-    const startTime = 9 * 60; // 540
-    const endTime = 9 * 60 + 20; // 560
-    
-    if (currentMinutes >= startTime && currentMinutes <= endTime) {
-      setIsTimeValid(true);
-      setTimeMessage('');
-      await fetchOptionsData();
-    } else {
-      setIsTimeValid(false);
-      setLoading(false);
-      
-      if (currentMinutes < startTime) {
-        const minutesUntil = startTime - currentMinutes;
-        const hoursUntil = Math.floor(minutesUntil / 60);
-        const minsUntil = minutesUntil % 60;
-        setTimeMessage(`Options recommendations will be available at 9:00 AM IST (in ${hoursUntil}h ${minsUntil}m)`);
-      } else {
-        setTimeMessage('Options recommendations were available from 9:00 AM to 9:20 AM IST today. Check back tomorrow!');
-      }
-    }
+    // Always show options with disclaimer
+    setIsTimeValid(true);
+    setTimeMessage('⚠️ Use at your own risk. Options trading involves high risk.');
+    await fetchOptionsData();
   };
 
   const fetchOptionsData = async () => {
@@ -177,7 +152,7 @@ export default function OptionsTradingScreen({ onBack }) {
         style={styles.header}
       >
         <Text style={styles.headerTitle}>📊 Options Trading</Text>
-        <Text style={styles.headerSubtitle}>Daily Recommendations (9:00-9:20 AM IST)</Text>
+        <Text style={styles.headerSubtitle}>Daily Recommendations (Use at your own risk)</Text>
       </LinearGradient>
 
       <TouchableOpacity style={styles.backButton} onPress={onBack}>
@@ -198,7 +173,7 @@ export default function OptionsTradingScreen({ onBack }) {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>📌 How It Works</Text>
             <Text style={styles.infoText}>
-              • Options recommendations are available daily from 9:00 AM to 9:20 AM IST{'\n'}
+              • ⚠️ Options trading involves significant risk. Trade responsibly.{'\n'}
               • This 20-minute window provides pre-market insights{'\n'}
               • Both Call and Put options are analyzed{'\n'}
               • Entry, Target, and Stop Loss levels are provided{'\n'}

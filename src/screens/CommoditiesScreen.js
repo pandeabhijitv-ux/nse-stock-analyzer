@@ -117,7 +117,7 @@ export default function CommoditiesScreen({ onBack }) {
         style={styles.header}
       >
         <Text style={styles.headerTitle}>📦 Commodities</Text>
-        <Text style={styles.headerSubtitle}>Live Gold & Silver Prices</Text>
+        <Text style={styles.headerSubtitle}>Live MCX Commodity Prices</Text>
       </LinearGradient>
 
       <TouchableOpacity style={styles.backButton} onPress={onBack}>
@@ -147,10 +147,12 @@ export default function CommoditiesScreen({ onBack }) {
           <View style={styles.infoCard}>
             <Text style={styles.infoIcon}>ℹ️</Text>
             <Text style={styles.infoText}>
-              Pull down to refresh prices. Data is fetched from live market sources and updated in real-time.
+              Pull down to refresh prices. MCX commodity prices updated in real-time.
             </Text>
           </View>
 
+          {/* Precious Metals Section */}
+          <Text style={styles.sectionHeader}>💎 Precious Metals</Text>
           {renderCommodityCard(
             commoditiesData?.gold,
             'Gold',
@@ -165,7 +167,32 @@ export default function CommoditiesScreen({ onBack }) {
             ['#94a3b8', '#64748b']
           )}
 
-          {!commoditiesData?.gold && !commoditiesData?.silver && (
+          {/* Energy Commodities Section */}
+          <Text style={styles.sectionHeader}>⚡ Energy Commodities</Text>
+          {renderCommodityCard(
+            commoditiesData?.crudeOil,
+            'Crude Oil (WTI)',
+            '🛢️',
+            ['#0f172a', '#475569']
+          )}
+
+          {renderCommodityCard(
+            commoditiesData?.naturalGas,
+            'Natural Gas',
+            '🔥',
+            ['#1e40af', '#3b82f6']
+          )}
+
+          {/* Base Metals Section */}
+          <Text style={styles.sectionHeader}>🔩 Base Metals</Text>
+          {renderCommodityCard(
+            commoditiesData?.copper,
+            'Copper',
+            '🔶',
+            ['#d97706', '#f59e0b']
+          )}
+
+          {!commoditiesData && (
             <View style={styles.noDataContainer}>
               <Text style={styles.noDataText}>No commodity data available</Text>
             </View>
@@ -251,6 +278,14 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  sectionHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginLeft: 15,
+    marginTop: 20,
+    marginBottom: 10,
   },
   infoCard: {
     flexDirection: 'row',

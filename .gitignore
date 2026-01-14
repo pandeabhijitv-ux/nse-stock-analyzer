@@ -47,3 +47,5 @@ coverage/
 android/
 ios/
 capacitor.config.ts
+.vercel
+.env*.local

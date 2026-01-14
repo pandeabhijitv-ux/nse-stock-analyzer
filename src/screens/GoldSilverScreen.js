@@ -20,6 +20,7 @@ export default function GoldSilverScreen({ onBack }) {
 
   const fetchLivePrices = async () => {
     try {
+      // Fetch commodity prices
       const response = await fetch('https://stock-analyzer-backend-nu.vercel.app/api/commodities');
       const result = await response.json();
       
