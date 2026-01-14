@@ -271,6 +271,14 @@ const analyzeAllCategories = async (stocksData) => {
     stock.fundamentalScore = fundScore.fundamentalScore;
     stock.categoryScores = fundScore.categoryScores;
     
+    // DEBUG: Log RELIANCE fundamental scoring
+    if (stock.symbol === 'RELIANCE.NS') {
+      console.log('[DEBUG] RELIANCE.NS fundamental scoring:');
+      console.log('[DEBUG] - Has fundamentals object?', !!stock.fundamentals);
+      console.log('[DEBUG] - fundamentalScore:', stock.fundamentalScore);
+      console.log('[DEBUG] - categoryScores:', JSON.stringify(stock.categoryScores));
+    }
+    
     return stock;
   });
   

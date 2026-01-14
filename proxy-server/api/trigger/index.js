@@ -76,6 +76,14 @@ module.exports = async (req, res) => {
           throw new Error('Invalid response from Yahoo Finance');
         }
         
+        // DEBUG: Log first stock's raw data
+        if (symbol === 'RELIANCE.NS') {
+          console.log('[DEBUG] Raw Yahoo Finance data for RELIANCE.NS:');
+          console.log('[DEBUG] Quote meta:', JSON.stringify(quote.meta, null, 2));
+          console.log('[DEBUG] Quote has fundamentals?', !!quote.meta?.fundamentals);
+          console.log('[DEBUG] Chart timestamps:', chart.timestamp?.length || 0);
+        }
+        
         return {
           symbol,
           currentPrice: quote.meta?.regularMarketPrice || 0,
