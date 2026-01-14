@@ -162,25 +162,39 @@ export default function StockListScreen({ sector, onStockPress }) {
         break;
         
       case 'technically-strong':
-        // Strong technical patterns and indicators
+        // Strong technical patterns and indicators - ONLY show stocks with complete technical data
         filtered = filtered.filter(s => {
+          // CRITICAL: Must have actual technical data calculated (not null)
+          if (!s.technical || !s.prices || s.prices.length < 50) {
+            console.log(`Excluding ${s.symbol}: No technical data or insufficient price history`);
+            return false;
+          }
+          
           const rsi = s.technical?.rsi || 50;
           const macd = s.technical?.macd?.macd || 0;
           const signal = s.technical?.macd?.signal || 0;
           const trend = s.technical?.trend || '';
           const technicalScore = s.technicalScore || 50;
+          const patterns = s.technical?.patterns || [];
           
           // Must have strong technical setup
           const bullishMACD = macd > signal && macd > 0;
           const goodRSI = rsi >= 50 && rsi <= 70;
-          const uptrend = trend === 'Uptrend';
+          const uptrend = trend === 'Uptrend' || trend.includes('Uptrend');
+          const hasPositivePattern = patterns.some(p => p.includes('Bullish') || p.includes('Morning') || p.includes('Hammer'));
           
-          // At least 2 of 3 conditions must be true, OR high technical score
-          const conditions = [bullishMACD, goodRSI, uptrend].filter(Boolean).length;
-          return conditions >= 2 || technicalScore >= 70;
+          // At least 2 of 4 conditions must be true, OR high technical score with patterns
+          const conditions = [bullishMACD, goodRSI, uptrend, hasPositivePattern].filter(Boolean).length;
+          const strongTechnical = conditions >= 2 || (technicalScore >= 75 && patterns.length > 0);
+          
+          if (strongTechnical) {
+            console.log(`✓ ${s.symbol}: RSI=${rsi.toFixed(0)}, MACD=${bullishMACD?'✓':'✗'}, Trend=${trend}, Score=${technicalScore}, Patterns=${patterns.join(',')}`);
+          }
+          
+          return strongTechnical;
         });
         filtered.sort((a, b) => (b.technicalScore || 0) - (a.technicalScore || 0));
-        console.log(`Technically-Strong: ${filtered.length} stocks with strong technicals`);
+        console.log(`Technically-Strong: ${filtered.length} stocks with verified technical data and strong signals`);
         break;
         
       case 'hot-stocks':
@@ -297,6 +311,13 @@ export default function StockListScreen({ sector, onStockPress }) {
           const fundamentalScores = scoreFundamentals(stock) || {};
           const technicalScore = scoreTechnical(technical) || 50;
           const overallScore = calculateOverallScore(fundamentalScores, technicalScore) || 50;
+          
+          // Log technical data availability
+          const hasTechnical = technical && Object.keys(technical).length > 0;
+          const hasPrices = stock.prices && stock.prices.length >= 50;
+          if (!hasTechnical || !hasPrices) {
+            console.log(`⚠️ ${stock.symbol}: Technical=${hasTechnical}, Prices=${stock.prices?.length || 0}`);
+          }
           
           return {
             ...stock,

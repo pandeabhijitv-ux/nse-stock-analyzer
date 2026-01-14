@@ -157,14 +157,14 @@ export default function StockDetailScreen({ route, navigation }) {
       </View>
 
       {/* Price Chart */}
-      {stock.prices && stock.prices.length > 0 && (
+      {stock.prices && stock.prices.length > 0 ? (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Price Chart (1 Year)</Text>
           <LineChart
             data={{
               labels: [],
               datasets: [{
-                data: stock.prices.filter(p => p !== null).slice(-90),
+                data: stock.prices.filter(p => p !== null && p !== undefined).slice(-90),
               }],
             }}
             width={screenWidth - 60}
@@ -186,6 +186,16 @@ export default function StockDetailScreen({ route, navigation }) {
             bezier
             style={styles.chart}
           />
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Price Chart</Text>
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <Text style={{ color: '#999', fontSize: 14, textAlign: 'center' }}>
+              Historical price data not available for this stock.{'\n'}
+              Technical analysis requires at least 50 days of price history.
+            </Text>
+          </View>
         </View>
       )}
     </View>
