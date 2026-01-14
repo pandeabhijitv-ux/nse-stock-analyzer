@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
     const stockDataPromises = stockSymbols.map(async (symbol) => {
       try {
         // Fetch quote and chart data from Yahoo Finance
-        const [quoteRes, chartRes] = await Promise.all([
+        const [quoteRes, chartRes, fundamentalsRes] = await Promise.all([
           axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`, { 
             timeout: 15000,
             headers: { 'User-Agent': 'Mozilla/5.0' }
@@ -66,23 +66,51 @@ module.exports = async (req, res) => {
             params: { interval: '1d', range: '1y' },
             timeout: 15000,
             headers: { 'User-Agent': 'Mozilla/5.0' }
+          }),
+          axios.get(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}`, { 
+            params: { modules: 'summaryDetail,financialData,defaultKeyStatistics' },
+            timeout: 15000,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+          }).catch(err => {
+            console.log(`[WARN] Fundamentals fetch failed for ${symbol}:`, err.message);
+            return { data: null }; // Return empty data instead of failing
           })
         ]);
         
         const quote = quoteRes.data?.chart?.result?.[0];
         const chart = chartRes.data?.chart?.result?.[0];
+        const fundamentals = fundamentalsRes?.data?.quoteSummary?.result?.[0];
         
         if (!quote || !chart) {
           throw new Error('Invalid response from Yahoo Finance');
         }
         
-        // DEBUG: Log first stock's raw data
+        // DEBUG: Log fundamental data structure
         if (symbol === 'RELIANCE.NS') {
           console.log('[DEBUG] Raw Yahoo Finance data for RELIANCE.NS:');
           console.log('[DEBUG] Quote meta:', JSON.stringify(quote.meta, null, 2));
-          console.log('[DEBUG] Quote has fundamentals?', !!quote.meta?.fundamentals);
-          console.log('[DEBUG] Chart timestamps:', chart.timestamp?.length || 0);
+          console.log('[DEBUG] Has fundamentals from quoteSummary?', !!fundamentals);
+          if (fundamentals) {
+            console.log('[DEBUG] summaryDetail:', JSON.stringify(fundamentals.summaryDetail, null, 2));
+            console.log('[DEBUG] financialData:', JSON.stringify(fundamentals.financialData, null, 2));
+            console.log('[DEBUG] defaultKeyStatistics:', JSON.stringify(fundamentals.defaultKeyStatistics, null, 2));
+          }
         }
+        
+        // Extract fundamental data
+        const fundamentalsData = fundamentals ? {
+          peRatio: fundamentals.summaryDetail?.trailingPE?.raw || fundamentals.defaultKeyStatistics?.trailingPE?.raw || null,
+          forwardPE: fundamentals.defaultKeyStatistics?.forwardPE?.raw || null,
+          profitMargin: fundamentals.financialData?.profitMargins?.raw || null,
+          roe: fundamentals.financialData?.returnOnEquity?.raw || null,
+          roa: fundamentals.financialData?.returnOnAssets?.raw || null,
+          debtToEquity: fundamentals.financialData?.debtToEquity?.raw || null,
+          currentRatio: fundamentals.financialData?.currentRatio?.raw || null,
+          revenueGrowth: fundamentals.financialData?.revenueGrowth?.raw || null,
+          earningsGrowth: fundamentals.financialData?.earningsGrowth?.raw || null,
+          beta: fundamentals.summaryDetail?.beta?.raw || null,
+          dividendYield: fundamentals.summaryDetail?.dividendYield?.raw || null
+        } : {};
         
         return {
           symbol,
@@ -94,7 +122,7 @@ module.exports = async (req, res) => {
           high: chart.indicators?.quote?.[0]?.high || [],
           low: chart.indicators?.quote?.[0]?.low || [],
           timestamps: chart.timestamp || [],
-          fundamentals: {}, // Will be populated by analyzer if needed
+          fundamentals: fundamentalsData,
           success: true
         };
       } catch (error) {
