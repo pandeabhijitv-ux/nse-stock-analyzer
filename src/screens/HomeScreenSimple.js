@@ -64,13 +64,20 @@ export default function HomeScreen({ onSectorPress }) {
       icon: '🌙',
     },
     {
+      id: 'sectors',
+      name: 'Browse by Sectors',
+      description: 'Explore all 10 NSE sectors',
+      badge: '100 stocks categorized',
+      color: '#06b6d4',
+      icon: '🏢',
+    },
+    {
       id: 'options',
       name: 'Options Trading',
       description: 'Call & Put with entry/target/SL',
       badge: 'Top 20 trades - 9:00-9:20 AM',
       color: '#ec4899',
       icon: '🎯',
-      comingSoon: true,
     },
     {
       id: 'commodities',
@@ -79,7 +86,6 @@ export default function HomeScreen({ onSectorPress }) {
       badge: 'Real-time data',
       color: '#eab308',
       icon: '📦',
-      comingSoon: true,
     },
     {
       id: 'gold-silver',
@@ -88,7 +94,6 @@ export default function HomeScreen({ onSectorPress }) {
       badge: 'Venus & Moon impact',
       color: '#f59e0b',
       icon: '🔱',
-      comingSoon: true,
     },
     {
       id: 'etf',
@@ -122,8 +127,8 @@ export default function HomeScreen({ onSectorPress }) {
           {analysisCategories.map((category) => (
             <TouchableOpacity
               key={category.id}
-              onPress={() => category.comingSoon ? handleComingSoon(category.name) : onSectorPress(category.id)}
-              style={[styles.categoryCard, category.comingSoon && styles.comingSoonCard, { borderLeftColor: category.color }]}
+              onPress={() => onSectorPress(category.id)}
+              style={[styles.categoryCard, { borderLeftColor: category.color }]}
             >
               <View style={styles.cardHeader}>
                 <Text style={styles.cardIcon}>{category.icon}</Text>
@@ -133,11 +138,6 @@ export default function HomeScreen({ onSectorPress }) {
               <View style={[styles.cardBadge, { backgroundColor: category.color }]}>
                 <Text style={styles.cardBadgeText}>{category.badge}</Text>
               </View>
-              {category.comingSoon && (
-                <View style={styles.comingSoonBadge}>
-                  <Text style={styles.comingSoonBadgeText}>Coming Soon</Text>
-                </View>
-              )}
             </TouchableOpacity>
           ))}
 

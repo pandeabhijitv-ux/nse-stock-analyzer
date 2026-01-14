@@ -206,13 +206,13 @@ export default function StockDetailScreen({ route, navigation }) {
       {/* Valuation Metrics */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Valuation Metrics</Text>
-        {renderMetric('P/E Ratio', stock.peRatio?.toFixed(2))}
-        {renderMetric('Forward P/E', stock.forwardPE?.toFixed(2))}
-        {renderMetric('PEG Ratio', stock.pegRatio?.toFixed(2))}
-        {renderMetric('Price to Book', stock.priceToBook?.toFixed(2))}
-        {renderMetric('Price to Sales', stock.priceToSales?.toFixed(2))}
-        {renderMetric('EV/Revenue', stock.enterpriseToRevenue?.toFixed(2))}
-        {renderMetric('EV/EBITDA', stock.enterpriseToEbitda?.toFixed(2))}
+        {renderMetric('P/E Ratio', stock.peRatio ? stock.peRatio.toFixed(2) : 'N/A')}
+        {renderMetric('Forward P/E', stock.forwardPE ? stock.forwardPE.toFixed(2) : 'N/A')}
+        {renderMetric('PEG Ratio', stock.pegRatio ? stock.pegRatio.toFixed(2) : 'N/A')}
+        {renderMetric('Price to Book', stock.priceToBook ? stock.priceToBook.toFixed(2) : 'N/A')}
+        {renderMetric('Price to Sales', stock.priceToSales ? stock.priceToSales.toFixed(2) : 'N/A')}
+        {renderMetric('EV/Revenue', stock.enterpriseToRevenue ? stock.enterpriseToRevenue.toFixed(2) : 'N/A')}
+        {renderMetric('EV/EBITDA', stock.enterpriseToEbitda ? stock.enterpriseToEbitda.toFixed(2) : 'N/A')}
       </View>
 
       {/* Profitability */}
@@ -472,10 +472,11 @@ export default function StockDetailScreen({ route, navigation }) {
 
   // Momentum tab for Swing stocks
   const renderMomentum = () => {
-    const momentumScore = stock.categoryScore || stock.overallScore || 50;
+    const momentumScore = stock.momentumScore || stock.categoryScore || stock.overallScore || 50;
     const rsi = stock.technical?.rsi || 50;
     const macd = stock.technical?.macd?.macd || 0;
     const trend = stock.technical?.trend || 'Neutral';
+    const changePercent = stock.changePercent || 0;
 
     return (
       <View style={styles.tabContent}>
@@ -491,10 +492,10 @@ export default function StockDetailScreen({ route, navigation }) {
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Momentum Indicators</Text>
-          {renderMetric('RSI', rsi.toFixed(1), rsi > 70 ? 'Overbought' : rsi < 30 ? 'Oversold' : 'Neutral')}
-          {renderMetric('MACD', macd.toFixed(2), macd > 0 ? 'Bullish' : 'Bearish')}
-          {renderMetric('Trend', trend)}
-          {renderMetric('Price Change', `${(stock.changePercent || 0).toFixed(2)}%`)}
+          {renderMetric('RSI', typeof rsi === 'number' ? rsi.toFixed(1) : 'N/A', rsi > 70 ? 'Overbought' : rsi < 30 ? 'Oversold' : 'Neutral')}
+          {renderMetric('MACD', typeof macd === 'number' ? macd.toFixed(2) : 'N/A', macd > 0 ? 'Bullish' : 'Bearish')}
+          {renderMetric('Trend', trend || 'N/A')}
+          {renderMetric('Price Change', `${changePercent.toFixed(2)}%`)}
         </View>
 
         <View style={styles.card}>

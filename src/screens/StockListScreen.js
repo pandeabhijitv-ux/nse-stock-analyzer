@@ -21,8 +21,10 @@ export default function StockListScreen({ sector, onStockPress }) {
 
   useEffect(() => {
     // Reset stocks when sector changes to force fresh filtering
+    console.log(`\n🔄 SECTOR CHANGED TO: ${sector}`);
     setStocks([]);
     setLoading(true);
+    setError(null);
     loadStocks();
   }, [sector]); // Reload when sector changes
 

@@ -218,6 +218,7 @@ export const fetchFundamentalData = async (symbol) => {
 const stockCache = new Map();
 const fundamentalCache = new Map();
 const technicalCache = new Map();
+const allStocksCache = { data: null, timestamp: 0 }; // Session-level cache for all stocks
 
 // Get start of current day timestamp
 const getStartOfDay = () => {
@@ -350,6 +351,12 @@ export const fetchSectorStocks = async (sector, customSymbols = null) => {
 // Fetch stocks from selected sectors (for analysis filtering)
 export const fetchAllStocks = async () => {
   try {
+    // Check session-level cache first (valid for current app session until midnight)
+    if (allStocksCache.data && allStocksCache.timestamp >= getStartOfDay()) {
+      console.log(`📦 Using cached ALL stocks data (${allStocksCache.data.length} stocks) - INSTANT LOAD!`);
+      return allStocksCache.data;
+    }
+    
     console.log('Fetching stocks from ALL sectors for comprehensive analysis...');
     
     // Use ALL 10 sectors for maximum diversity (100 stocks total)
@@ -394,6 +401,12 @@ export const fetchAllStocks = async () => {
     if (allStocks.length === 0) {
       throw new Error('No stocks could be fetched. Please check your internet connection.');
     }
+    
+    // Cache the results for the session (until midnight)
+    allStocksCache.data = allStocks;
+    allStocksCache.timestamp = Date.now();
+    console.log(`💾 Cached ALL stocks for session (valid until midnight)`);
+    
     return allStocks;
   } catch (error) {
     console.error('Error fetching stocks:', error);
