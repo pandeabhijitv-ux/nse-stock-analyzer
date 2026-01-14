@@ -263,7 +263,7 @@ const analyzeAllCategories = async (stocksData) => {
     etf,
     mutualFunds,
     metadata: {
-      totalStocks: parsedStocks.length,
+      totalStocks: stocksWithTechnical.length,
       stocksWithTechnical: stocksWithTechnical.filter(s => s.technical).length,
       timestamp: new Date().toISOString()
     }
