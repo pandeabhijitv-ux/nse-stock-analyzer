@@ -1,7 +1,30 @@
-// Vercel KV (Redis) cache - persistent across all function invocations
-const { kv } = require('@vercel/kv');
+// Upstash Redis cache via REST API - 100% FREE, no payment method needed
+// Free tier: 10K commands/day, 256MB storage
+const axios = require('axios');
 
-const CACHE_TTL = 24 * 60 * 60; // 24 hours in seconds (KV uses seconds)
+const CACHE_TTL = 24 * 60 * 60; // 24 hours in seconds
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+// Helper to make Upstash REST API calls
+const upstashRequest = async (command, args) => {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) {
+    console.warn('[CACHE] Upstash credentials not configured, using in-memory fallback');
+    return null;
+  }
+  
+  try {
+    const response = await axios.post(
+      `${UPSTASH_URL}/${command}/${args.join('/')}`,
+      {},
+      { headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` } }
+    );
+    return response.data.result;
+  } catch (error) {
+    console.error(`[CACHE] Upstash error:`, error.message);
+    return null;
+  }
+};
 
 // Store analysis results
 const storeAnalysis = async (category, data) => {
@@ -13,11 +36,11 @@ const storeAnalysis = async (category, data) => {
       expires: Date.now() + (CACHE_TTL * 1000)
     };
     
-    // Store in KV with TTL
-    await kv.set(key, cacheData, { ex: CACHE_TTL });
-    console.log(`[KV] Stored ${category} with ${data.length} stocks`);
+    // Store in Upstash with TTL
+    await upstashRequest('SET', [key, JSON.stringify(cacheData), 'EX', CACHE_TTL]);
+    console.log(`[CACHE] Stored ${category} with ${data.length} stocks`);
   } catch (error) {
-    console.error(`[KV] Error storing ${category}:`, error.message);
+    console.error(`[CACHE] Error storing ${category}:`, error.message);
   }
 };
 
@@ -25,24 +48,26 @@ const storeAnalysis = async (category, data) => {
 const getAnalysis = async (category) => {
   try {
     const key = `analysis:${category}`;
-    const cached = await kv.get(key);
+    const result = await upstashRequest('GET', [key]);
     
-    if (!cached) {
-      console.log(`[KV] Miss for ${category}`);
+    if (!result) {
+      console.log(`[CACHE] Miss for ${category}`);
       return null;
     }
     
-    // Check if expired (extra safety, though KV handles TTL)
+    const cached = JSON.parse(result);
+    
+    // Check if expired
     if (Date.now() > cached.expires) {
-      console.log(`[KV] Expired for ${category}`);
-      await kv.del(key);
+      console.log(`[CACHE] Expired for ${category}`);
+      await upstashRequest('DEL', [key]);
       return null;
     }
     
-    console.log(`[KV] Hit for ${category}`);
+    console.log(`[CACHE] Hit for ${category}`);
     return cached.data;
   } catch (error) {
-    console.error(`[KV] Error reading ${category}:`, error.message);
+    console.error(`[CACHE] Error reading ${category}:`, error.message);
     return null;
   }
 };
@@ -55,20 +80,20 @@ const markAsUpdated = async (metadata) => {
       timestamp: Date.now()
     };
     
-    await kv.set('metadata:last-update', metadataWithTimestamp, { ex: CACHE_TTL });
-    console.log('[KV] Metadata updated');
+    await upstashRequest('SET', ['metadata:last-update', JSON.stringify(metadataWithTimestamp), 'EX', CACHE_TTL]);
+    console.log('[CACHE] Metadata updated');
   } catch (error) {
-    console.error('[KV] Error storing metadata:', error.message);
+    console.error('[CACHE] Error storing metadata:', error.message);
   }
 };
 
 // Get metadata
 const getMetadata = async () => {
   try {
-    const metadata = await kv.get('metadata:last-update');
-    return metadata || null;
+    const result = await upstashRequest('GET', ['metadata:last-update']);
+    return result ? JSON.parse(result) : null;
   } catch (error) {
-    console.error('[KV] Error reading metadata:', error.message);
+    console.error('[CACHE] Error reading metadata:', error.message);
     return null;
   }
 };
