@@ -9,9 +9,13 @@ const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 // Helper to make Upstash REST API calls
 const upstashRequest = async (command, ...args) => {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) {
-    console.warn('[CACHE] Upstash credentials not configured, using in-memory fallback');
+    console.error('[CACHE] ERROR: Upstash credentials not configured!');
+    console.error('[CACHE] UPSTASH_URL:', UPSTASH_URL ? 'SET' : 'MISSING');
+    console.error('[CACHE] UPSTASH_TOKEN:', UPSTASH_TOKEN ? 'SET' : 'MISSING');
     return null;
   }
+  
+  console.log(`[CACHE] Upstash request: ${command}`, args.slice(0, 1)); // Log first arg only
   
   try {
     // Build the command array
@@ -22,9 +26,10 @@ const upstashRequest = async (command, ...args) => {
       payload,
       { headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` } }
     );
+    console.log(`[CACHE] Upstash success: ${command}`);
     return response.data.result;
   } catch (error) {
-    console.error(`[CACHE] Upstash error:`, error.response?.data || error.message);
+    console.error(`[CACHE] Upstash error for ${command}:`, error.response?.data || error.message);
     return null;
   }
 };
