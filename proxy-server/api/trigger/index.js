@@ -98,19 +98,24 @@ module.exports = async (req, res) => {
         }
         
         // Extract fundamental data
-        const fundamentalsData = fundamentals ? {
-          peRatio: fundamentals.summaryDetail?.trailingPE?.raw || fundamentals.defaultKeyStatistics?.trailingPE?.raw || null,
-          forwardPE: fundamentals.defaultKeyStatistics?.forwardPE?.raw || null,
-          profitMargin: fundamentals.financialData?.profitMargins?.raw || null,
-          roe: fundamentals.financialData?.returnOnEquity?.raw || null,
-          roa: fundamentals.financialData?.returnOnAssets?.raw || null,
-          debtToEquity: fundamentals.financialData?.debtToEquity?.raw || null,
-          currentRatio: fundamentals.financialData?.currentRatio?.raw || null,
-          revenueGrowth: fundamentals.financialData?.revenueGrowth?.raw || null,
-          earningsGrowth: fundamentals.financialData?.earningsGrowth?.raw || null,
-          beta: fundamentals.summaryDetail?.beta?.raw || null,
-          dividendYield: fundamentals.summaryDetail?.dividendYield?.raw || null
-        } : {};
+        const fundamentalsData = {};
+        try {
+          if (fundamentals) {
+            fundamentalsData.peRatio = fundamentals.summaryDetail?.trailingPE?.raw || fundamentals.defaultKeyStatistics?.trailingPE?.raw || null;
+            fundamentalsData.forwardPE = fundamentals.defaultKeyStatistics?.forwardPE?.raw || null;
+            fundamentalsData.profitMargin = fundamentals.financialData?.profitMargins?.raw || null;
+            fundamentalsData.roe = fundamentals.financialData?.returnOnEquity?.raw || null;
+            fundamentalsData.roa = fundamentals.financialData?.returnOnAssets?.raw || null;
+            fundamentalsData.debtToEquity = fundamentals.financialData?.debtToEquity?.raw || null;
+            fundamentalsData.currentRatio = fundamentals.financialData?.currentRatio?.raw || null;
+            fundamentalsData.revenueGrowth = fundamentals.financialData?.revenueGrowth?.raw || null;
+            fundamentalsData.earningsGrowth = fundamentals.financialData?.earningsGrowth?.raw || null;
+            fundamentalsData.beta = fundamentals.summaryDetail?.beta?.raw || null;
+            fundamentalsData.dividendYield = fundamentals.summaryDetail?.dividendYield?.raw || null;
+          }
+        } catch (extractError) {
+          console.log(`[WARN] Error extracting fundamentals for ${symbol}:`, extractError.message);
+        }
         
         return {
           symbol,

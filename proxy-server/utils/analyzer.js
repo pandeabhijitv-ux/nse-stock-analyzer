@@ -151,7 +151,7 @@ const scoreFundamentals = (stock) => {
 const analyzeAllCategories = async (stocksData) => {
   // Calculate technical indicators for all stocks
   const stocksWithTechnical = stocksData.map(stock => {
-    if (stock.prices.length >= 50) {
+    if (stock.prices && stock.prices.length >= 50) {
       const rsi = calculateRSI(stock.prices);
       const macd = calculateMACD(stock.prices);
       const bollinger = calculateBollingerBands(stock.prices);
@@ -162,7 +162,8 @@ const analyzeAllCategories = async (stocksData) => {
       stock.technical = { rsi, macd, bollinger, atr, stochastic, patterns };
     }
     
-    const fundScore = scoreFundamentals({ fundamentals: stock.fundamentals });
+    // Calculate fundamental score - pass stock object directly
+    const fundScore = scoreFundamentals(stock);
     stock.fundamentalScore = fundScore.fundamentalScore;
     stock.categoryScores = fundScore.categoryScores;
     
@@ -170,6 +171,7 @@ const analyzeAllCategories = async (stocksData) => {
     if (stock.symbol === 'RELIANCE.NS') {
       console.log('[DEBUG] RELIANCE.NS fundamental scoring:');
       console.log('[DEBUG] - Has fundamentals object?', !!stock.fundamentals);
+      console.log('[DEBUG] - Fundamentals keys:', Object.keys(stock.fundamentals || {}));
       console.log('[DEBUG] - fundamentalScore:', stock.fundamentalScore);
       console.log('[DEBUG] - categoryScores:', JSON.stringify(stock.categoryScores));
     }
