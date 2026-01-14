@@ -7,21 +7,24 @@ const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 // Helper to make Upstash REST API calls
-const upstashRequest = async (command, args) => {
+const upstashRequest = async (command, ...args) => {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) {
     console.warn('[CACHE] Upstash credentials not configured, using in-memory fallback');
     return null;
   }
   
   try {
+    // Build the command array
+    const payload = [command, ...args];
+    
     const response = await axios.post(
-      `${UPSTASH_URL}/${command}/${args.join('/')}`,
-      {},
+      UPSTASH_URL,
+      payload,
       { headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` } }
     );
     return response.data.result;
   } catch (error) {
-    console.error(`[CACHE] Upstash error:`, error.message);
+    console.error(`[CACHE] Upstash error:`, error.response?.data || error.message);
     return null;
   }
 };
@@ -37,7 +40,7 @@ const storeAnalysis = async (category, data) => {
     };
     
     // Store in Upstash with TTL
-    await upstashRequest('SET', [key, JSON.stringify(cacheData), 'EX', CACHE_TTL]);
+    await upstashRequest('SET', key, JSON.stringify(cacheData), 'EX', CACHE_TTL);
     console.log(`[CACHE] Stored ${category} with ${data.length} stocks`);
   } catch (error) {
     console.error(`[CACHE] Error storing ${category}:`, error.message);
@@ -48,7 +51,7 @@ const storeAnalysis = async (category, data) => {
 const getAnalysis = async (category) => {
   try {
     const key = `analysis:${category}`;
-    const result = await upstashRequest('GET', [key]);
+    const result = await upstashRequest('GET', key);
     
     if (!result) {
       console.log(`[CACHE] Miss for ${category}`);
@@ -60,7 +63,7 @@ const getAnalysis = async (category) => {
     // Check if expired
     if (Date.now() > cached.expires) {
       console.log(`[CACHE] Expired for ${category}`);
-      await upstashRequest('DEL', [key]);
+      await upstashRequest('DEL', key);
       return null;
     }
     
@@ -80,7 +83,7 @@ const markAsUpdated = async (metadata) => {
       timestamp: Date.now()
     };
     
-    await upstashRequest('SET', ['metadata:last-update', JSON.stringify(metadataWithTimestamp), 'EX', CACHE_TTL]);
+    await upstashRequest('SET', 'metadata:last-update', JSON.stringify(metadataWithTimestamp), 'EX', CACHE_TTL);
     console.log('[CACHE] Metadata updated');
   } catch (error) {
     console.error('[CACHE] Error storing metadata:', error.message);
@@ -90,19 +93,17 @@ const markAsUpdated = async (metadata) => {
 // Get metadata
 const getMetadata = async () => {
   try {
-    const result = await upstashRequest('GET', ['metadata:last-update']);
+    const result = await upstashRequest('GET', 'metadata:last-update');
     return result ? JSON.parse(result) : null;
   } catch (error) {
     console.error('[CACHE] Error reading metadata:', error.message);
     return null;
   }
 };
-};
 
 // Clear all cache
 const clearAll = async () => {
-  cache.clear();
-  console.log('[CACHE] All cache cleared');
+  console.log('[CACHE] Clear all not implemented for Upstash');
 };
 
 // Check if cache is fresh (updated today)
