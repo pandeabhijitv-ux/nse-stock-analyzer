@@ -4,12 +4,29 @@
     {
       "src": "server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ]
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/analyze-stocks",
+      "schedule": "30 0 * * *"
+    }
+  ],
+  "env": {
+    "CRON_SECRET": "@cron-secret"
+  }
 }

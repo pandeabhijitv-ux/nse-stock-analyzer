@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { fetchSectorStocks, fetchAllStocks, fetchETFs, fetchMutualFunds, testBackendConnection } from '../services/stockAPI';
+import { fetchSectorStocks, fetchAllStocks, fetchETFs, fetchMutualFunds, testBackendConnection, fetchPrecomputedAnalysis, checkBackendHealth } from '../services/stockAPI';
 import { calculateTechnicalIndicators } from '../services/technicalAnalysis';
 import { scoreFundamentals, scoreTechnical, calculateOverallScore } from '../services/analysisEngine';
 
@@ -270,17 +270,35 @@ export default function StockListScreen({ sector, onStockPress }) {
     console.log(`Time: ${new Date().toLocaleTimeString()}`);
     
     try {
-      // First test backend connection
-      console.log('Testing backend connection...');
-      await testBackendConnection();
-      console.log('Backend connection successful!');
-      
       // Check if this is an analysis category or traditional sector
       const isAnalysisCategory = ['target-oriented', 'swing', 'fundamentally-strong', 'technically-strong', 'hot-stocks', 'graha-gochar'].includes(sector);
       const isETF = sector === 'etf';
       const isMutualFund = sector === 'mutual-funds';
       
       console.log('Loading stocks for:', sector, '(Analysis category:', isAnalysisCategory, ', ETF:', isETF, ', MF:', isMutualFund, ')');
+      
+      // TRY PRE-COMPUTED ANALYSIS FIRST (10-60x faster!)
+      if (isAnalysisCategory) {
+        console.log('⚡ Trying pre-computed analysis from backend...');
+        const precomputed = await fetchPrecomputedAnalysis(sector);
+        
+        if (precomputed && precomputed.stocks && precomputed.stocks.length > 0) {
+          console.log(`✅ Using pre-computed data! ${precomputed.stocks.length} stocks in ${precomputed.metadata?.count || '?'}ms`);
+          console.log(`📊 Last updated: ${new Date(precomputed.metadata?.lastUpdated).toLocaleString()}`);
+          
+          setStocks(precomputed.stocks);
+          setLoading(false);
+          return; // SUCCESS - using pre-computed data
+        } else {
+          console.log('⚠️  Pre-computed data not available, falling back to client-side analysis...');
+        }
+      }
+      
+      // FALLBACK: Original client-side analysis
+      // First test backend connection
+      console.log('Testing backend connection...');
+      await testBackendConnection();
+      console.log('Backend connection successful!');
       
       let data;
       if (isETF) {

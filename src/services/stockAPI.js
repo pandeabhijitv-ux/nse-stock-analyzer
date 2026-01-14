@@ -6,6 +6,47 @@ const PROXY_URL = 'https://stock-analyzer-backend-nu.vercel.app';
 const BASE_URL = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v8/finance';
 const BASE_URL_V10 = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v10/finance';
 
+// NEW: Fetch pre-computed analysis from backend (MUCH FASTER!)
+export const fetchPrecomputedAnalysis = async (category) => {
+  try {
+    console.log(`[PRECOMPUTED] Fetching ${category} from backend cache`);
+    const startTime = Date.now();
+    
+    const response = await axios.get(`${PROXY_URL}/api/analysis`, {
+      params: { category },
+      timeout: 10000,
+    });
+    
+    const duration = Date.now() - startTime;
+    console.log(`[PRECOMPUTED] Fetched ${category} in ${duration}ms`);
+    
+    if (response.data.success) {
+      return {
+        stocks: response.data.data,
+        metadata: response.data.metadata,
+        fromCache: true
+      };
+    } else {
+      throw new Error(response.data.error || 'Failed to fetch pre-computed analysis');
+    }
+  } catch (error) {
+    console.error(`[PRECOMPUTED] Error fetching ${category}:`, error.message);
+    // Return null to fallback to client-side analysis
+    return null;
+  }
+};
+
+// Check if backend cache is available and fresh
+export const checkBackendHealth = async () => {
+  try {
+    const response = await axios.get(`${PROXY_URL}/api/health`, { timeout: 5000 });
+    return response.data;
+  } catch (error) {
+    console.error('[HEALTH] Backend health check failed:', error.message);
+    return { success: false, status: 'unavailable' };
+  }
+};
+
 // Indian NSE Sector mapping with popular stocks (Yahoo Finance uses .NS suffix for NSE)
 export const SECTORS = {
   'Technology': ['TCS.NS', 'INFY.NS', 'WIPRO.NS', 'HCLTECH.NS', 'TECHM.NS', 'LTI.NS', 'PERSISTENT.NS', 'COFORGE.NS', 'MPHASIS.NS', 'LTTS.NS'],
