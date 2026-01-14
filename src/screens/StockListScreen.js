@@ -295,10 +295,14 @@ export default function StockListScreen({ sector, onStockPress }) {
       }
       
       // FALLBACK: Original client-side analysis
-      // First test backend connection
+      // Test backend connection (non-blocking)
       console.log('Testing backend connection...');
-      await testBackendConnection();
-      console.log('Backend connection successful!');
+      try {
+        await testBackendConnection();
+        console.log('Backend connection successful!');
+      } catch (err) {
+        console.warn('Backend connection test failed (will use client-side analysis):', err.message);
+      }
       
       let data;
       if (isETF) {
