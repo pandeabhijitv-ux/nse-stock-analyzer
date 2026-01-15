@@ -23,7 +23,7 @@
   "crons": [
     {
       "path": "/api/cron/analyze-stocks",
-      "schedule": "0 * * * *"
+      "schedule": "30 0 * * *"
     }
   ],
   "env": {
