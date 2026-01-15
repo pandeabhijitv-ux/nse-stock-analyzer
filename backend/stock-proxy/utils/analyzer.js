@@ -348,7 +348,7 @@ const analyzeAllCategories = async (stocksData) => {
   // Filter for each category and sort by BEST TO WORST (highest scores first)
   // Analyze ALL stocks but return only TOP 5-10 for better user experience
   const targetOriented = stocksWithTechnical
-    .filter(s => s.technical && s.fundamentalScore > 50)
+    .filter(s => s.technical && s.fundamentalScore > 0) // Any fundamental score
     .sort((a, b) => b.fundamentalScore - a.fundamentalScore) // Best fundamental score first
     .slice(0, 10); // Top 10 best fundamentals
   
@@ -365,7 +365,7 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 8); // Top 8 best swing opportunities
   
   const fundamentallyStrong = stocksWithTechnical
-    .filter(s => s.fundamentalScore > 65)
+    .filter(s => s.fundamentalScore > 0) // Any fundamental score
     .sort((a, b) => b.fundamentalScore - a.fundamentalScore) // Best fundamental score first
     .slice(0, 10); // Top 10 strongest fundamentals
   
@@ -381,7 +381,7 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 10); // Top 10 best technical indicators
   
   const hotStocks = stocksWithTechnical
-    .filter(s => Math.abs(s.changePercent) > 0) // Must have movement
+    .filter(s => Math.abs(s.changePercent) > 0.1) // Must have significant movement
     .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)) // Highest movers first
     .slice(0, 10); // Top 10 highest movers
   
