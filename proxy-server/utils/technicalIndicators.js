@@ -139,7 +139,7 @@ const calculateStochastic = (prices, period = 14) => {
   return { k, d: k };
 };
 
-const detectChartPatterns = (prices) => {
+const detectChartPatterns = (prices, highs = [], lows = []) => {
   if (prices.length < 50) return [];
   
   const patterns = [];
@@ -148,28 +148,182 @@ const detectChartPatterns = (prices) => {
   const sma20 = calculateSMA(prices, 20);
   const sma50 = calculateSMA(prices, 50);
   
-  // Golden Cross
+  // Use provided highs/lows or fallback to prices
+  const recentHighs = highs.length >= 50 ? highs.slice(-50) : recentPrices;
+  const recentLows = lows.length >= 50 ? lows.slice(-50) : recentPrices;
+  
+  // === MOVING AVERAGE PATTERNS ===
+  
+  // Golden Cross (Bullish)
   if (sma20[sma20.length - 1] > sma50[sma50.length - 1] && 
       sma20[sma20.length - 2] <= sma50[sma50.length - 2]) {
-    patterns.push({ name: 'Golden Cross', signal: 'bullish' });
+    patterns.push({ name: 'Golden Cross', signal: 'bullish', reliability: 85 });
   }
   
-  // Death Cross
+  // Death Cross (Bearish)
   if (sma20[sma20.length - 1] < sma50[sma50.length - 1] && 
       sma20[sma20.length - 2] >= sma50[sma50.length - 2]) {
-    patterns.push({ name: 'Death Cross', signal: 'bearish' });
+    patterns.push({ name: 'Death Cross', signal: 'bearish', reliability: 85 });
   }
   
-  // Breakout
+  // === BREAKOUT/BREAKDOWN PATTERNS ===
+  
+  // Breakout (Bullish)
   const recentHigh = Math.max(...recentPrices.slice(0, -1));
   if (currentPrice > recentHigh * 1.02) {
-    patterns.push({ name: 'Breakout', signal: 'bullish' });
+    patterns.push({ name: 'Breakout', signal: 'bullish', reliability: 75 });
   }
   
-  // Breakdown
+  // Breakdown (Bearish)
   const recentLow = Math.min(...recentPrices.slice(0, -1));
   if (currentPrice < recentLow * 0.98) {
-    patterns.push({ name: 'Breakdown', signal: 'bearish' });
+    patterns.push({ name: 'Breakdown', signal: 'bearish', reliability: 75 });
+  }
+  
+  // === HEAD & SHOULDERS PATTERNS ===
+  
+  // Simplified Head & Shoulders detection (last 30 days)
+  if (prices.length >= 30) {
+    const segment = prices.slice(-30);
+    const mid = Math.floor(segment.length / 2);
+    
+    // Left shoulder, head, right shoulder peaks
+    const leftPeak = Math.max(...segment.slice(0, 10));
+    const headPeak = Math.max(...segment.slice(10, 20));
+    const rightPeak = Math.max(...segment.slice(20, 30));
+    
+    // Head & Shoulders (Bearish) - Head higher than shoulders
+    if (headPeak > leftPeak * 1.03 && headPeak > rightPeak * 1.03 && 
+        Math.abs(leftPeak - rightPeak) < leftPeak * 0.05) {
+      patterns.push({ name: 'Head & Shoulders', signal: 'bearish', reliability: 80 });
+    }
+    
+    // Inverse Head & Shoulders (Bullish) - valleys instead of peaks
+    const leftValley = Math.min(...segment.slice(0, 10));
+    const headValley = Math.min(...segment.slice(10, 20));
+    const rightValley = Math.min(...segment.slice(20, 30));
+    
+    if (headValley < leftValley * 0.97 && headValley < rightValley * 0.97 && 
+        Math.abs(leftValley - rightValley) < leftValley * 0.05) {
+      patterns.push({ name: 'Inverse Head & Shoulders', signal: 'bullish', reliability: 80 });
+    }
+  }
+  
+  // === TRIANGLE PATTERNS ===
+  
+  if (prices.length >= 20) {
+    const last20 = prices.slice(-20);
+    const highs20 = recentHighs.slice(-20);
+    const lows20 = recentLows.slice(-20);
+    
+    // Calculate trend lines
+    const highTrend = (Math.max(...highs20.slice(-5)) - Math.max(...highs20.slice(0, 5))) / Math.max(...highs20.slice(0, 5));
+    const lowTrend = (Math.min(...lows20.slice(-5)) - Math.min(...lows20.slice(0, 5))) / Math.min(...lows20.slice(0, 5));
+    
+    // Ascending Triangle (Bullish) - flat top, rising bottom
+    if (Math.abs(highTrend) < 0.02 && lowTrend > 0.03) {
+      patterns.push({ name: 'Ascending Triangle', signal: 'bullish', reliability: 75 });
+    }
+    
+    // Descending Triangle (Bearish) - flat bottom, falling top
+    if (Math.abs(lowTrend) < 0.02 && highTrend < -0.03) {
+      patterns.push({ name: 'Descending Triangle', signal: 'bearish', reliability: 75 });
+    }
+    
+    // Symmetrical Triangle (Neutral) - converging lines
+    if (highTrend < -0.02 && lowTrend > 0.02) {
+      patterns.push({ name: 'Symmetrical Triangle', signal: 'neutral', reliability: 70 });
+    }
+  }
+  
+  // === FLAG & PENNANT PATTERNS ===
+  
+  if (prices.length >= 15) {
+    const last15 = prices.slice(-15);
+    const strongMove = prices.slice(-20, -15);
+    
+    // Bull Flag - Strong upward move followed by slight downward consolidation
+    const poleGain = (Math.max(...strongMove) - Math.min(...strongMove)) / Math.min(...strongMove);
+    const flagSlope = (last15[last15.length - 1] - last15[0]) / last15[0];
+    
+    if (poleGain > 0.05 && flagSlope > -0.03 && flagSlope < 0.01) {
+      patterns.push({ name: 'Bull Flag', signal: 'bullish', reliability: 80 });
+    }
+    
+    // Bear Flag - Strong downward move followed by slight upward consolidation
+    const poleDrop = (Math.min(...strongMove) - Math.max(...strongMove)) / Math.max(...strongMove);
+    if (poleDrop < -0.05 && flagSlope > -0.01 && flagSlope < 0.03) {
+      patterns.push({ name: 'Bear Flag', signal: 'bearish', reliability: 80 });
+    }
+  }
+  
+  // === WEDGE PATTERNS ===
+  
+  if (prices.length >= 25) {
+    const last25 = prices.slice(-25);
+    const highs25 = recentHighs.slice(-25);
+    const lows25 = recentLows.slice(-25);
+    
+    // Rising Wedge (Bearish) - Both lines rising but converging
+    const recentHighSlope = (Math.max(...highs25.slice(-8)) - Math.max(...highs25.slice(0, 8))) / Math.max(...highs25.slice(0, 8));
+    const recentLowSlope = (Math.min(...lows25.slice(-8)) - Math.min(...lows25.slice(0, 8))) / Math.min(...lows25.slice(0, 8));
+    
+    if (recentHighSlope > 0.02 && recentLowSlope > recentHighSlope * 1.5) {
+      patterns.push({ name: 'Rising Wedge', signal: 'bearish', reliability: 75 });
+    }
+    
+    // Falling Wedge (Bullish) - Both lines falling but converging
+    if (recentHighSlope < -0.02 && recentLowSlope < recentHighSlope * 1.5 && recentLowSlope < -0.01) {
+      patterns.push({ name: 'Falling Wedge', signal: 'bullish', reliability: 75 });
+    }
+  }
+  
+  // === DOUBLE TOP/BOTTOM PATTERNS ===
+  
+  if (prices.length >= 40) {
+    const last40 = prices.slice(-40);
+    const highs40 = recentHighs.slice(-40);
+    const lows40 = recentLows.slice(-40);
+    
+    // Double Top (Bearish) - Two peaks at similar levels
+    const peak1 = Math.max(...highs40.slice(0, 20));
+    const peak2 = Math.max(...highs40.slice(20, 40));
+    const peak1Idx = highs40.slice(0, 20).indexOf(peak1);
+    const peak2Idx = 20 + highs40.slice(20, 40).indexOf(peak2);
+    
+    if (Math.abs(peak1 - peak2) < peak1 * 0.03 && (peak2Idx - peak1Idx) > 10) {
+      patterns.push({ name: 'Double Top', signal: 'bearish', reliability: 78 });
+    }
+    
+    // Double Bottom (Bullish) - Two valleys at similar levels
+    const valley1 = Math.min(...lows40.slice(0, 20));
+    const valley2 = Math.min(...lows40.slice(20, 40));
+    const valley1Idx = lows40.slice(0, 20).indexOf(valley1);
+    const valley2Idx = 20 + lows40.slice(20, 40).indexOf(valley2);
+    
+    if (Math.abs(valley1 - valley2) < valley1 * 0.03 && (valley2Idx - valley1Idx) > 10) {
+      patterns.push({ name: 'Double Bottom', signal: 'bullish', reliability: 78 });
+    }
+  }
+  
+  // === CUP & HANDLE PATTERN ===
+  
+  if (prices.length >= 50) {
+    const last50 = prices.slice(-50);
+    const cupStart = last50[0];
+    const cupBottom = Math.min(...last50.slice(10, 30));
+    const cupEnd = last50[30];
+    const handleEnd = last50[last50.length - 1];
+    
+    // Cup: U-shaped recovery, Handle: slight pullback
+    const cupDepth = (cupStart - cupBottom) / cupStart;
+    const cupRecovery = (cupEnd - cupBottom) / cupBottom;
+    const handlePullback = (cupEnd - handleEnd) / cupEnd;
+    
+    if (cupDepth > 0.1 && cupDepth < 0.3 && cupRecovery > 0.08 && 
+        handlePullback > 0.01 && handlePullback < 0.08) {
+      patterns.push({ name: 'Cup & Handle', signal: 'bullish', reliability: 82 });
+    }
   }
   
   return patterns;

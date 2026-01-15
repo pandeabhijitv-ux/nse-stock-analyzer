@@ -165,7 +165,7 @@ const analyzeAllCategories = async (stocksData) => {
           const bollinger = calculateBollingerBands(stock.prices);
           const atr = calculateATR(stock.prices);
           const stochastic = calculateStochastic(stock.prices);
-          const patterns = detectChartPatterns(stock.prices);
+          const patterns = detectChartPatterns(stock.prices, stock.high, stock.low);
           
           stock.technical = { rsi, macd, bollinger, atr, stochastic, patterns };
         } catch (techError) {
