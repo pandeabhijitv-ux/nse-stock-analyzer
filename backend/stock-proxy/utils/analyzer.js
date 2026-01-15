@@ -195,14 +195,27 @@ const scoreFundamentals = (stock) => {
   return { fundamentalScore, categoryScores };
 };
 
-// Parse stock data from API responses
+// Parse stock data from API responses (yahoo-finance2 format)
 const parseStockData = (stockData) => {
   const { symbol, quote, fundamentals } = stockData;
   
-  const chart = quote?.chart?.result?.[0];
-  const meta = chart?.meta;
-  const prices = chart?.indicators?.quote?.[0]?.close || [];
-  const timestamps = chart?.timestamp || [];
+  // yahoo-finance2 chart format: {quotes: [{close, high, low, open, volume, date}], meta: {}}
+  const chart = quote?.chart?.result?.[0]; // Original Yahoo API format
+  const quotes = quote?.quotes || chart?.indicators?.quote?.[0]; // yahoo-finance2 or original format
+  const meta = quote?.meta || chart?.meta;
+  
+  // Extract prices from yahoo-finance2 format OR original Yahoo API format
+  let prices = [];
+  let timestamps = [];
+  if (quotes && Array.isArray(quotes)) {
+    // yahoo-finance2 format: array of objects with {close, date}
+    prices = quotes.map(q => q?.close).filter(p => p !== null && p !== undefined);
+    timestamps = quotes.map(q => q?.date ? Math.floor(q.date.getTime() / 1000) : null).filter(t => t !== null);
+  } else if (quotes?.close) {
+    // Original Yahoo API format: {close: []}
+    prices = (quotes.close || []).filter(p => p !== null && p !== undefined);
+    timestamps = chart?.timestamp || [];
+  }
   
   const fundamental = fundamentals?.quoteSummary?.result?.[0];
   const price = fundamental?.price;

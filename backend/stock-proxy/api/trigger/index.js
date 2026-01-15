@@ -62,14 +62,10 @@ module.exports = async (req, res) => {
           })
         ]);
         
-        // Transform to expected format
+        // Transform to expected format (yahoo-finance2 format is already correct)
         return {
           symbol,
-          quote: {
-            chart: {
-              result: [chartData]
-            }
-          },
+          quote: chartData, // Pass chartData directly (has .quotes and .meta)
           fundamentals: {
             quoteSummary: {
               result: [quoteData]
