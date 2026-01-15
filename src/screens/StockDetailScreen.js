@@ -306,32 +306,32 @@ export default function StockDetailScreen({ route, navigation }) {
         {/* Momentum Indicators */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Momentum Indicators</Text>
-          {renderMetric('RSI (14)', tech.rsi?.toFixed(2), tech.rsiSignal)}
-          {renderMetric('Stochastic %K', tech.stochastic?.k?.toFixed(2), tech.stochasticSignal)}
-          {renderMetric('MACD', tech.macd?.macd?.toFixed(2), tech.macdSignal)}
-          {renderMetric('MACD Signal', tech.macd?.signal?.toFixed(2))}
-          {renderMetric('MACD Histogram', tech.macd?.histogram?.toFixed(2))}
+          {renderMetric('RSI (14)', tech.rsi?.current?.toFixed(2) || tech.rsi?.toFixed(2) || 'N/A', tech.rsi?.signal || tech.rsiSignal)}
+          {renderMetric('Stochastic %K', tech.stochastic?.k?.toFixed(2) || 'N/A', tech.stochastic?.signal || tech.stochasticSignal)}
+          {renderMetric('MACD', tech.macd?.macd?.toFixed(2) || 'N/A', tech.macd?.signal ? (tech.macd.signal > 0 ? 'Bullish' : 'Bearish') : tech.macdSignal)}
+          {renderMetric('MACD Signal', tech.macd?.signal?.toFixed(2) || 'N/A')}
+          {renderMetric('MACD Histogram', tech.macd?.histogram?.toFixed(2) || 'N/A')}
         </View>
 
         {/* Trend Indicators */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Trend & Moving Averages</Text>
-          {renderMetric('Trend', tech.trend)}
-          {renderMetric('SMA 20', tech.movingAverages?.sma20?.toFixed(2))}
-          {renderMetric('SMA 50', tech.movingAverages?.sma50?.toFixed(2))}
-          {renderMetric('SMA 200', tech.movingAverages?.sma200?.toFixed(2))}
-          {renderMetric('EMA 12', tech.movingAverages?.ema12?.toFixed(2))}
-          {renderMetric('EMA 26', tech.movingAverages?.ema26?.toFixed(2))}
+          {renderMetric('Trend', tech.trend || 'N/A')}
+          {renderMetric('SMA 20', tech.movingAverages?.sma20?.toFixed(2) || 'N/A')}
+          {renderMetric('SMA 50', tech.movingAverages?.sma50?.toFixed(2) || 'N/A')}
+          {renderMetric('SMA 200', tech.movingAverages?.sma200?.toFixed(2) || 'N/A')}
+          {renderMetric('EMA 12', tech.movingAverages?.ema12?.toFixed(2) || 'N/A')}
+          {renderMetric('EMA 26', tech.movingAverages?.ema26?.toFixed(2) || 'N/A')}
         </View>
 
         {/* Volatility */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Volatility Indicators</Text>
-          {renderMetric('Bollinger Upper', tech.bollingerBands?.upper?.toFixed(2))}
-          {renderMetric('Bollinger Middle', tech.bollingerBands?.middle?.toFixed(2))}
-          {renderMetric('Bollinger Lower', tech.bollingerBands?.lower?.toFixed(2))}
-          {renderMetric('BB Signal', tech.bbSignal)}
-          {renderMetric('ATR (14)', tech.atr?.toFixed(2))}
+          {renderMetric('Bollinger Upper', tech.bollingerBands?.upper?.toFixed(2) || tech.bollinger?.upper?.toFixed(2) || 'N/A')}
+          {renderMetric('Bollinger Middle', tech.bollingerBands?.middle?.toFixed(2) || tech.bollinger?.middle?.toFixed(2) || 'N/A')}
+          {renderMetric('Bollinger Lower', tech.bollingerBands?.lower?.toFixed(2) || tech.bollinger?.lower?.toFixed(2) || 'N/A')}
+          {renderMetric('BB Signal', tech.bollinger?.signal || tech.bbSignal || 'N/A')}
+          {renderMetric('ATR (14)', tech.atr?.current?.toFixed(2) || tech.atr?.toFixed(2) || 'N/A')}
         </View>
 
         {/* Support & Resistance */}
@@ -344,9 +344,9 @@ export default function StockDetailScreen({ route, navigation }) {
         {/* Volume Analysis */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Volume Analysis</Text>
-          {renderMetric('Current Volume', tech.volumeAnalysis?.currentVolume?.toLocaleString())}
-          {renderMetric('Average Volume', tech.volumeAnalysis?.averageVolume?.toFixed(0))}
-          {renderMetric('Volume Ratio', tech.volumeAnalysis?.volumeRatio?.toFixed(2))}
+          {renderMetric('Current Volume', tech.volumeAnalysis?.currentVolume?.toLocaleString() || 'N/A')}
+          {renderMetric('Average Volume', tech.volumeAnalysis?.averageVolume?.toFixed(0) || 'N/A')}
+          {renderMetric('Volume Ratio', tech.volumeAnalysis?.volumeRatio?.toFixed(2) || 'N/A')}
           {renderMetric('High Volume?', tech.volumeAnalysis?.isHighVolume ? 'Yes' : 'No')}
         </View>
 
@@ -506,7 +506,8 @@ export default function StockDetailScreen({ route, navigation }) {
   // Momentum tab for Swing stocks
   const renderMomentum = () => {
     const momentumScore = stock.momentumScore || stock.categoryScore || stock.overallScore || 50;
-    const rsi = stock.technical?.rsi || 50;
+    // Handle both backend structure (rsi.current) and client-side (rsi as number)
+    const rsi = stock.technical?.rsi?.current || stock.technical?.rsi || 50;
     const macd = stock.technical?.macd?.macd || 0;
     const trend = stock.technical?.trend || 'Neutral';
     const changePercent = stock.changePercent || 0;
@@ -528,7 +529,7 @@ export default function StockDetailScreen({ route, navigation }) {
           {renderMetric('RSI', typeof rsi === 'number' ? rsi.toFixed(1) : 'N/A', rsi > 70 ? 'Overbought' : rsi < 30 ? 'Oversold' : 'Neutral')}
           {renderMetric('MACD', typeof macd === 'number' ? macd.toFixed(2) : 'N/A', macd > 0 ? 'Bullish' : 'Bearish')}
           {renderMetric('Trend', trend || 'N/A')}
-          {renderMetric('Price Change', `${changePercent.toFixed(2)}%`)}
+          {renderMetric('Price Change', typeof changePercent === 'number' ? `${changePercent.toFixed(2)}%` : 'N/A')}
         </View>
 
         <View style={styles.card}>

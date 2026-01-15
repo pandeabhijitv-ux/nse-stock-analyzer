@@ -296,7 +296,31 @@ export default function StockListScreen({ sector, onStockPress }) {
           console.log(`✅ Using pre-computed data! ${precomputed.stocks.length} stocks in ${precomputed.metadata?.count || '?'}ms`);
           console.log(`📊 Last updated: ${new Date(precomputed.metadata?.lastUpdated).toLocaleString()}`);
           
-          setStocks(precomputed.stocks);
+          // Map backend data structure to expected mobile app structure
+          const mappedStocks = precomputed.stocks.map(stock => ({
+            ...stock,
+            // Map fundamentalScore to overallScore for consistency
+            overallScore: stock.fundamentalScore || stock.overallScore || 50,
+            // Map categoryScores to fundamentalScores format expected by UI
+            fundamentalScores: stock.categoryScores || stock.fundamentalScores || {
+              valuation: 0,
+              profitability: 0,
+              growth: 0,
+              financialHealth: 0,
+              dividend: 0,
+              overall: stock.fundamentalScore || 50
+            },
+            // Ensure technical score exists
+            technicalScore: stock.technical ? {
+              momentum: 50,
+              trend: 50,
+              volatility: 50,
+              volume: 50,
+              overall: 50
+            } : undefined
+          }));
+          
+          setStocks(mappedStocks);
           setLoading(false);
           return; // SUCCESS - using pre-computed data
         } else {
