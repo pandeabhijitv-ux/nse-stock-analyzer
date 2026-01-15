@@ -390,9 +390,9 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 10); // Top 10 best technical indicators
   
   const hotStocks = stocksWithTechnical
-    .filter(s => Math.abs(s.changePercent) > 0.1) // Must have significant movement
-    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)) // Highest movers first
-    .slice(0, 10); // Top 10 highest movers
+    .filter(s => s.currentPrice > 0) // Must have price data
+    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)) // Highest movers first (even if 0)
+    .slice(0, 10); // Top 10
   
   // Placeholder for other categories
   const grahaGochar = []; // Astrological analysis
