@@ -6,26 +6,51 @@ const PROXY_URL = 'https://stock-analyzer-backend-nu.vercel.app';
 const BASE_URL = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v8/finance';
 const BASE_URL_V10 = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v10/finance';
 
+// Session-level cache for pre-computed analysis (persists during app session)
+let analysisCache = {};
+let analysisCacheTimestamp = null;
+
 // NEW: Fetch pre-computed analysis from backend (MUCH FASTER!)
 export const fetchPrecomputedAnalysis = async (category) => {
   try {
-    console.log(`[PRECOMPUTED] Fetching ${category} from backend cache`);
+    console.log(`[PRECOMPUTED] Fetching ${category} from backend`);
     const startTime = Date.now();
     
-    // NEW: Use /api/latest instead of /api/analysis (Vercel serverless workaround)
-    const response = await axios.get(`${PROXY_URL}/api/latest`, {
-      params: { category },
-      timeout: 10000,
+    // Check if we have cached trigger results (max 1 hour old)
+    const cacheAge = analysisCacheTimestamp ? Date.now() - analysisCacheTimestamp : Infinity;
+    const MAX_CACHE_AGE = 60 * 60 * 1000; // 1 hour
+    
+    if (Object.keys(analysisCache).length > 0 && cacheAge < MAX_CACHE_AGE) {
+      console.log(`[PRECOMPUTED] Using cached trigger data (${Math.round(cacheAge / 1000 / 60)}min old)`);
+      const stocks = analysisCache[category] || [];
+      return {
+        stocks,
+        metadata: { fromCache: true, cacheAge: Math.round(cacheAge / 1000) },
+        fromCache: true
+      };
+    }
+    
+    // Cache miss or stale - fetch fresh data from trigger
+    console.log('[PRECOMPUTED] Cache miss - calling trigger endpoint (this takes ~15s)');
+    const response = await axios.post(`${PROXY_URL}/api/trigger`, {}, {
+      timeout: 120000, // 2 minutes
     });
     
     const duration = Date.now() - startTime;
-    console.log(`[PRECOMPUTED] Fetched ${category} in ${duration}ms`);
+    console.log(`[PRECOMPUTED] Trigger completed in ${duration}ms`);
     
-    if (response.data.success) {
+    if (response.data.success && response.data.data) {
+      // Store ALL categories in cache
+      analysisCache = response.data.data;
+      analysisCacheTimestamp = Date.now();
+      
+      const stocks = analysisCache[category] || [];
+      console.log(`[PRECOMPUTED] Cached ${Object.keys(analysisCache).length} categories, returning ${stocks.length} stocks for ${category}`);
+      
       return {
-        stocks: response.data.data.stocks || response.data.data,
+        stocks,
         metadata: response.data.metadata,
-        fromCache: true
+        fromCache: false
       };
     } else {
       throw new Error(response.data.error || 'Failed to fetch pre-computed analysis');
