@@ -566,9 +566,10 @@ export default function StockListScreen({ sector, onStockPress }) {
             </Text>
           </View>
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>Stop Loss</Text>
-            <Text style={[styles.metricValue, { color: '#F44336' }]}>
-              ₹{item.stopLoss || 'N/A'}
+            <Text style={styles.metricLabel}>Target By</Text>
+            <Text style={[styles.metricValue, { color: '#2196F3', fontSize: 11 }]}>
+              {item.targetDate ? new Date(item.targetDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 
+               item.daysToTarget ? `~${item.daysToTarget}d` : 'N/A'}
             </Text>
           </View>
           <View style={styles.metric}>
@@ -643,6 +644,13 @@ export default function StockListScreen({ sector, onStockPress }) {
       {sector === 'technically-strong' && (
         <View style={styles.metricsRow}>
           <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Target By</Text>
+            <Text style={[styles.metricValue, { color: '#2196F3', fontSize: 11 }]}>
+              {item.targetDate ? new Date(item.targetDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 
+               item.daysToTarget ? `~${item.daysToTarget}d` : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
             <Text style={styles.metricLabel}>RSI</Text>
             <Text style={[styles.metricValue, { 
               color: item.technical?.rsi?.current >= 50 && item.technical?.rsi?.current <= 70 ? '#4CAF50' : '#666'
@@ -651,19 +659,12 @@ export default function StockListScreen({ sector, onStockPress }) {
             </Text>
           </View>
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>MACD</Text>
-            <Text style={[styles.metricValue, { 
-              color: item.technical?.macdSignal === 'Bullish' ? '#4CAF50' : '#F44336'
-            }]}>
-              {item.technical?.macdSignal || 'N/A'}
-            </Text>
-          </View>
-          <View style={styles.metric}>
             <Text style={styles.metricLabel}>Trend</Text>
             <Text style={[styles.metricValue, { 
               color: item.technical?.trend?.includes('Uptrend') ? '#4CAF50' : 
-                     item.technical?.trend?.includes('Downtrend') ? '#F44336' : '#FFC107'
-            }]}>
+                     item.technical?.trend?.includes('Downtrend') ? '#F44336' : '#FFC107',
+              fontSize: 11
+            }]} numberOfLines={1}>
               {item.technical?.trend || 'N/A'}
             </Text>
           </View>
@@ -672,7 +673,7 @@ export default function StockListScreen({ sector, onStockPress }) {
             <Text style={[styles.metricValue, {
               color: item.technical?.patterns?.[0]?.signal === 'bullish' ? '#4CAF50' :
                      item.technical?.patterns?.[0]?.signal === 'bearish' ? '#F44336' : '#666',
-              fontSize: 11
+              fontSize: 10
             }]} numberOfLines={1}>
               {item.technical?.patterns?.[0]?.name || 'None'}
             </Text>
