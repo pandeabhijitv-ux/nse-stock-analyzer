@@ -15,6 +15,15 @@ module.exports = async (req, res) => {
     const nifty500Path = path.join(__dirname, '../../../../scripts/nifty500-symbols.json');
     let nifty500Stocks = [];
     
+    // TESTING: Use fallback stocks first to verify API is working
+    console.log('[MANUAL] Using fallback stocks for testing');
+    nifty500Stocks = [
+      'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK', 'RELIANCE', 'HINDUNILVR', 'ITC',
+      'SBIN', 'BHARTIARTL', 'KOTAKBANK', 'LT', 'AXISBANK', 'ASIANPAINT', 'MARUTI',
+      'TITAN', 'SUNPHARMA', 'WIPRO', 'HCLTECH', 'ULTRACEMCO', 'BAJFINANCE'
+    ];
+    
+    /* DISABLED FOR NOW - Re-enable after verifying API works
     try {
       const nifty500Data = fs.readFileSync(nifty500Path, 'utf8');
       nifty500Stocks = JSON.parse(nifty500Data);
@@ -32,6 +41,7 @@ module.exports = async (req, res) => {
         'TITAN', 'SUNPHARMA', 'WIPRO', 'HCLTECH', 'ULTRACEMCO', 'BAJFINANCE'
       ];
     }
+    */
     
     // Add .NS suffix for NSE stocks
     const stockSymbols = nifty500Stocks.map(symbol => `${symbol}.NS`);
