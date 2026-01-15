@@ -25,8 +25,5 @@
       "path": "/api/cron/analyze-stocks",
       "schedule": "30 0 * * *"
     }
-  ],
-  "env": {
-    "CRON_SECRET": "@cron-secret"
-  }
+  ]
 }

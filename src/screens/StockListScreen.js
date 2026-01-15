@@ -315,18 +315,22 @@ export default function StockListScreen({ sector, onStockPress }) {
               technicalScore = Math.min(100, Math.max(0, score));
             }
             
+            // Calculate proper overallScore combining fundamental + technical
+            const fundamentalScore = stock.fundamentalScore || 50;
+            const overallScore = Math.round((fundamentalScore * 0.6) + (technicalScore * 0.4));
+            
             return {
               ...stock,
-              // Map fundamentalScore to overallScore for consistency
-              overallScore: stock.fundamentalScore || stock.overallScore || 50,
+              // Use calculated overallScore (60% fundamental + 40% technical)
+              overallScore: overallScore,
               // Map categoryScores to fundamentalScores format expected by UI
               fundamentalScores: stock.categoryScores || stock.fundamentalScores || {
-                valuation: 0,
-                profitability: 0,
-                growth: 0,
-                financialHealth: 0,
-                dividend: 0,
-                overall: stock.fundamentalScore || 50
+                valuation: stock.categoryScores?.valuation || 0,
+                profitability: stock.categoryScores?.profitability || 0,
+                growth: stock.categoryScores?.growth || 0,
+                financialHealth: stock.categoryScores?.financialHealth || 0,
+                dividend: stock.categoryScores?.dividend || 0,
+                overall: fundamentalScore
               },
               // Technical score as number (not object)
               technicalScore: technicalScore

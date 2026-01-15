@@ -1,5 +1,5 @@
 // Analysis utility - Contains all the logic from mobile app's analysisEngine.js
-const { calculateRSI, calculateMACD, calculateBollingerBands, calculateATR, calculateStochastic, detectChartPatterns } = require('./technicalIndicators');
+const { calculateRSI, calculateMACD, calculateBollingerBands, calculateATR, calculateStochastic, detectChartPatterns, calculateSMA, calculateEMA } = require('./technicalIndicators');
 
 // Score fundamental metrics (0-100 scale)
 const scoreFundamentals = (stock) => {
@@ -264,7 +264,65 @@ const analyzeAllCategories = async (stocksData) => {
       const stochastic = calculateStochastic(stock.prices);
       const patterns = detectChartPatterns(stock.prices);
       
-      stock.technical = { rsi, macd, bollinger, atr, stochastic, patterns };
+      // Calculate moving averages
+      const sma20Array = calculateSMA(stock.prices, 20);
+      const sma50Array = calculateSMA(stock.prices, 50);
+      const sma200Array = calculateSMA(stock.prices, 200);
+      const ema12Array = calculateEMA(stock.prices, 12);
+      const ema26Array = calculateEMA(stock.prices, 26);
+      
+      const movingAverages = {
+        sma20: sma20Array[sma20Array.length - 1] || null,
+        sma50: sma50Array[sma50Array.length - 1] || null,
+        sma200: sma200Array[sma200Array.length - 1] || null,
+        ema12: ema12Array[ema12Array.length - 1] || null,
+        ema26: ema26Array[ema26Array.length - 1] || null,
+      };
+      
+      // Determine trend
+      const currentPrice = stock.prices[stock.prices.length - 1];
+      let trend = 'Neutral';
+      if (movingAverages.sma20 && movingAverages.sma50) {
+        if (currentPrice > movingAverages.sma20 && movingAverages.sma20 > movingAverages.sma50) {
+          trend = 'Strong Uptrend';
+        } else if (currentPrice > movingAverages.sma50) {
+          trend = 'Uptrend';
+        } else if (currentPrice < movingAverages.sma20 && movingAverages.sma20 < movingAverages.sma50) {
+          trend = 'Strong Downtrend';
+        } else if (currentPrice < movingAverages.sma50) {
+          trend = 'Downtrend';
+        }
+      }
+      
+      // Calculate support and resistance
+      const recentPrices = stock.prices.slice(-20);
+      const supportResistance = {
+        resistance: Math.max(...recentPrices),
+        support: Math.min(...recentPrices),
+      };
+      
+      // Volume analysis
+      const volumeAnalysis = {
+        currentVolume: stock.volume,
+        avgVolume: stock.avgVolume10Day || stock.volume,
+        relativeVolume: stock.avgVolume10Day ? (stock.volume / stock.avgVolume10Day).toFixed(2) : 1,
+      };
+      
+      // Add stochastic signal
+      stochastic.signal = stochastic.k > 80 ? 'overbought' : stochastic.k < 20 ? 'oversold' : 'neutral';
+      
+      stock.technical = { 
+        rsi, 
+        macd, 
+        bollinger, 
+        atr, 
+        stochastic, 
+        patterns,
+        movingAverages,
+        trend,
+        supportResistance,
+        volumeAnalysis
+      };
     }
     
     const fundScore = scoreFundamentals({ fundamentals: stock.fundamentals });
