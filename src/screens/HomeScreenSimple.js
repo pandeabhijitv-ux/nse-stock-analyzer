@@ -256,4 +256,34 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  footerContainer: {
+    backgroundColor: '#8b5cf6',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  footerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerIcon: {
+    fontSize: 24,
+    marginRight: 12,
+    color: '#ffffff',
+  },
+  footerTextContainer: {
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  footerBrand: {
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
 });

@@ -46,40 +46,31 @@ export default function StockListScreen({ sector, onStockPress }) {
     console.log(`\n=== FILTERING ${allStocks.length} STOCKS FOR ${analysisType.toUpperCase()} ===`);
     let filtered = [...allStocks];
     
-    // Calculate target prices and category-specific scores for all stocks
+    // Use backend-calculated target prices if available, otherwise calculate category-specific scores
     filtered = filtered.map(stock => {
       const currentPrice = stock.currentPrice || 0;
-      let targetPrice = currentPrice;
-      let stopLoss = currentPrice * 0.95;
-      let categoryScore = stock.overallScore || 50;
+      // PREFER backend-calculated targetPrice (from analyzer.js) - it uses technical/fundamental analysis
+      let targetPrice = stock.targetPrice || currentPrice;
+      let stopLoss = stock.stopLoss || currentPrice * 0.95;
+      let categoryScore = stock.categoryScore || stock.overallScore || 50;
+      let upsidePercent = stock.upsidePercent || 0;
       
-      // Calculate target based on recommendation and category
-      const action = stock.overallScore >= 70 ? 'BUY' : stock.overallScore >= 50 ? 'HOLD' : 'SELL';
+      // If backend didn't calculate targetPrice, recalculate upside
+      if (!stock.targetPrice || stock.targetPrice === currentPrice) {
+        upsidePercent = 0;
+      } else {
+        upsidePercent = parseFloat((((targetPrice - currentPrice) / currentPrice) * 100).toFixed(2));
+      }
       
-      if (analysisType === 'target-oriented') {
-        targetPrice = action === 'BUY' ? currentPrice * 1.15 : action === 'HOLD' ? currentPrice * 1.05 : currentPrice * 0.92;
-        categoryScore = stock.overallScore;
-      } else if (analysisType === 'swing') {
+      // Calculate category-specific scores (for sorting/filtering)
+      if (analysisType === 'swing') {
         const momentum = Math.abs(stock.changePercent || 0);
         categoryScore = momentum > 3 ? 90 : momentum > 2 ? 80 : momentum > 1 ? 70 : 50;
-        targetPrice = action === 'BUY' ? currentPrice * 1.10 : action === 'HOLD' ? currentPrice * 1.05 : currentPrice * 0.95;
-        stopLoss = currentPrice * 0.97;
       } else if (analysisType === 'fundamentally-strong') {
         const pe = stock.peRatio || 25;
         categoryScore = pe < 20 ? 90 : pe < 30 ? 75 : 60;
-        targetPrice = action === 'BUY' ? currentPrice * 1.20 : action === 'HOLD' ? currentPrice * 1.08 : currentPrice * 0.90;
-        stopLoss = currentPrice * 0.93;
-      } else if (analysisType === 'technically-strong') {
-        categoryScore = stock.technicalScore || 50;
-        targetPrice = action === 'BUY' ? currentPrice * 1.12 : action === 'HOLD' ? currentPrice * 1.05 : currentPrice * 0.92;
-        stopLoss = currentPrice * 0.96;
       } else if (analysisType === 'hot-stocks') {
         categoryScore = Math.abs(stock.changePercent || 0) * 10;
-        const baseMultiplier = (stock.changePercent || 0) > 0 ? 1.08 : 0.95;
-        targetPrice = action === 'BUY' ? currentPrice * baseMultiplier : action === 'HOLD' ? currentPrice * 1.03 : currentPrice * 0.93;
-        stopLoss = currentPrice * 0.97;
-      } else {
-        targetPrice = action === 'BUY' ? currentPrice * 1.10 : action === 'HOLD' ? currentPrice * 1.05 : currentPrice * 0.95;
       }
       
       return {
@@ -87,7 +78,7 @@ export default function StockListScreen({ sector, onStockPress }) {
         targetPrice: parseFloat(targetPrice.toFixed(2)),
         stopLoss: parseFloat(stopLoss.toFixed(2)),
         categoryScore,
-        upsidePercent: parseFloat((((targetPrice - currentPrice) / currentPrice) * 100).toFixed(2)),
+        upsidePercent,
       };
     });
     
