@@ -1,6 +1,15 @@
 // Analysis utility - Contains all the logic from mobile app's analysisEngine.js
 const { calculateRSI, calculateMACD, calculateBollingerBands, calculateATR, calculateStochastic, detectChartPatterns, calculateSMA, calculateEMA } = require('./technicalIndicators');
 
+// Helper to extract values from both yahoo-finance2 format (plain number) and original Yahoo API format ({raw, fmt})
+const getValue = (field) => {
+  if (field === null || field === undefined) return null;
+  // yahoo-finance2 returns plain numbers/strings
+  if (typeof field === 'number' || typeof field === 'string') return field;
+  // Original Yahoo API returns {raw: value, fmt: string}
+  return field.raw !== undefined ? field.raw : field;
+};
+
 // Score fundamental metrics (0-100 scale)
 const scoreFundamentals = (stock) => {
   let scores = {
@@ -26,24 +35,24 @@ const scoreFundamentals = (stock) => {
   const financialData = fundamental.financialData || {};
   const summaryDetail = fundamental.summaryDetail || {};
 
-  // Extract metrics
-  const peRatio = summaryDetail.trailingPE?.raw || null;
-  const pegRatio = defaultKeyStats.pegRatio?.raw || null;
-  const priceToBook = defaultKeyStats.priceToBook?.raw || null;
-  const priceToSales = summaryDetail.priceToSalesTrailing12Months?.raw || null;
-  const returnOnEquity = financialData.returnOnEquity?.raw || null;
-  const profitMargin = financialData.profitMargins?.raw || null;
-  const operatingMargin = financialData.operatingMargins?.raw || null;
-  const returnOnAssets = financialData.returnOnAssets?.raw || null;
-  const revenueGrowth = financialData.revenueGrowth?.raw || null;
-  const earningsGrowth = financialData.earningsGrowth?.raw || null;
-  const earningsQuarterlyGrowth = defaultKeyStats.earningsQuarterlyGrowth?.raw || null;
-  const debtToEquity = financialData.debtToEquity?.raw || null;
-  const currentRatio = financialData.currentRatio?.raw || null;
-  const quickRatio = financialData.quickRatio?.raw || null;
-  const freeCashflow = financialData.freeCashflow?.raw || null;
-  const dividendYield = summaryDetail.dividendYield?.raw || null;
-  const payoutRatio = summaryDetail.payoutRatio?.raw || null;
+  // Extract metrics - handle both yahoo-finance2 (plain values) and original Yahoo API ({raw, fmt}) formats
+  const peRatio = getValue(summaryDetail.trailingPE);
+  const pegRatio = getValue(defaultKeyStats.pegRatio);
+  const priceToBook = getValue(defaultKeyStats.priceToBook);
+  const priceToSales = getValue(summaryDetail.priceToSalesTrailing12Months);
+  const returnOnEquity = getValue(financialData.returnOnEquity);
+  const profitMargin = getValue(financialData.profitMargins);
+  const operatingMargin = getValue(financialData.operatingMargins);
+  const returnOnAssets = getValue(financialData.returnOnAssets);
+  const revenueGrowth = getValue(financialData.revenueGrowth);
+  const earningsGrowth = getValue(financialData.earningsGrowth);
+  const earningsQuarterlyGrowth = getValue(defaultKeyStats.earningsQuarterlyGrowth);
+  const debtToEquity = getValue(financialData.debtToEquity);
+  const currentRatio = getValue(financialData.currentRatio);
+  const quickRatio = getValue(financialData.quickRatio);
+  const freeCashflow = getValue(financialData.freeCashflow);
+  const dividendYield = getValue(summaryDetail.dividendYield);
+  const payoutRatio = getValue(summaryDetail.payoutRatio);
 
   // Valuation Scores
   if (peRatio !== null) {
@@ -225,37 +234,37 @@ const parseStockData = (stockData) => {
 
   return {
     symbol,
-    name: meta?.longName || symbol.replace('.NS', ''),
-    currentPrice: price?.regularMarketPrice?.raw || meta?.regularMarketPrice || 0,
-    changePercent: price?.regularMarketChangePercent?.raw || 0,
-    change: price?.regularMarketChange?.raw || 0,
-    marketCap: summaryDetail?.marketCap?.raw || 0,
-    volume: meta?.regularMarketVolume || 0,
-    fiftyTwoWeekHigh: summaryDetail?.fiftyTwoWeekHigh?.raw || 0,
-    fiftyTwoWeekLow: summaryDetail?.fiftyTwoWeekLow?.raw || 0,
+    name: getValue(meta?.longName) || symbol.replace('.NS', ''),
+    currentPrice: getValue(price?.regularMarketPrice) || getValue(meta?.regularMarketPrice) || 0,
+    changePercent: getValue(price?.regularMarketChangePercent) || 0,
+    change: getValue(price?.regularMarketChange) || 0,
+    marketCap: getValue(summaryDetail?.marketCap) || 0,
+    volume: getValue(meta?.regularMarketVolume) || 0,
+    fiftyTwoWeekHigh: getValue(summaryDetail?.fiftyTwoWeekHigh) || 0,
+    fiftyTwoWeekLow: getValue(summaryDetail?.fiftyTwoWeekLow) || 0,
     
     // Prices for technical analysis
     prices: prices.filter(p => p !== null && p !== undefined),
     timestamps,
     
     // Fundamentals
-    peRatio: summaryDetail?.trailingPE?.raw || null,
-    pegRatio: defaultKeyStats?.pegRatio?.raw || null,
-    priceToBook: defaultKeyStats?.priceToBook?.raw || null,
-    priceToSales: summaryDetail?.priceToSalesTrailing12Months?.raw || null,
-    returnOnEquity: financialData?.returnOnEquity?.raw || null,
-    profitMargin: financialData?.profitMargins?.raw || null,
-    operatingMargin: financialData?.operatingMargins?.raw || null,
-    returnOnAssets: financialData?.returnOnAssets?.raw || null,
-    revenueGrowth: financialData?.revenueGrowth?.raw || null,
-    earningsGrowth: financialData?.earningsGrowth?.raw || null,
-    earningsQuarterlyGrowth: defaultKeyStats?.earningsQuarterlyGrowth?.raw || null,
-    debtToEquity: financialData?.debtToEquity?.raw || null,
-    currentRatio: financialData?.currentRatio?.raw || null,
-    quickRatio: financialData?.quickRatio?.raw || null,
-    freeCashflow: financialData?.freeCashflow?.raw || null,
-    dividendYield: summaryDetail?.dividendYield?.raw || null,
-    payoutRatio: summaryDetail?.payoutRatio?.raw || null,
+    peRatio: getValue(summaryDetail?.trailingPE),
+    pegRatio: getValue(defaultKeyStats?.pegRatio),
+    priceToBook: getValue(defaultKeyStats?.priceToBook),
+    priceToSales: getValue(summaryDetail?.priceToSalesTrailing12Months),
+    returnOnEquity: getValue(financialData?.returnOnEquity),
+    profitMargin: getValue(financialData?.profitMargins),
+    operatingMargin: getValue(financialData?.operatingMargins),
+    returnOnAssets: getValue(financialData?.returnOnAssets),
+    revenueGrowth: getValue(financialData?.revenueGrowth),
+    earningsGrowth: getValue(financialData?.earningsGrowth),
+    earningsQuarterlyGrowth: getValue(defaultKeyStats?.earningsQuarterlyGrowth),
+    debtToEquity: getValue(financialData?.debtToEquity),
+    currentRatio: getValue(financialData?.currentRatio),
+    quickRatio: getValue(financialData?.quickRatio),
+    freeCashflow: getValue(financialData?.freeCashflow),
+    dividendYield: getValue(summaryDetail?.dividendYield),
+    payoutRatio: getValue(summaryDetail?.payoutRatio),
     
     // Store raw data for detailed views
     quote,
