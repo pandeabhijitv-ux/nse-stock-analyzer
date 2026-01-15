@@ -332,34 +332,44 @@ const analyzeAllCategories = async (stocksData) => {
     return stock;
   });
   
-  // Filter for each category
+  // Filter for each category and sort by BEST TO WORST (highest scores first)
   // Analyze ALL stocks but return only TOP 5-10 for better user experience
   const targetOriented = stocksWithTechnical
     .filter(s => s.technical && s.fundamentalScore > 50)
-    .sort((a, b) => b.fundamentalScore - a.fundamentalScore)
+    .sort((a, b) => b.fundamentalScore - a.fundamentalScore) // Best fundamental score first
     .slice(0, 10); // Top 10 best fundamentals
   
   const swing = stocksWithTechnical
     .filter(s => s.technical && s.technical.rsi?.current && 
       ((s.technical.rsi.current > 60 && s.technical.macd?.histogram > 0) ||
        (s.technical.rsi.current < 40 && s.technical.macd?.histogram < 0)))
-    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
-    .slice(0, 8); // Top 8 highest momentum
+    .sort((a, b) => {
+      // Sort by best swing potential: RSI momentum + MACD strength
+      const aScore = Math.abs(a.technical.rsi.current - 50) + Math.abs(a.technical.macd.histogram * 10);
+      const bScore = Math.abs(b.technical.rsi.current - 50) + Math.abs(b.technical.macd.histogram * 10);
+      return bScore - aScore; // Best swing momentum first
+    })
+    .slice(0, 8); // Top 8 best swing opportunities
   
   const fundamentallyStrong = stocksWithTechnical
     .filter(s => s.fundamentalScore > 65)
-    .sort((a, b) => b.fundamentalScore - a.fundamentalScore)
+    .sort((a, b) => b.fundamentalScore - a.fundamentalScore) // Best fundamental score first
     .slice(0, 10); // Top 10 strongest fundamentals
   
   const technicallyStrong = stocksWithTechnical
     .filter(s => s.technical && s.prices.length >= 50 &&
       s.technical.rsi?.current > 50 && s.technical.macd?.histogram > 0)
-    .sort((a, b) => (b.technical.rsi.current + b.technical.macd.histogram) - 
-                    (a.technical.rsi.current + a.technical.macd.histogram))
+    .sort((a, b) => {
+      // Sort by best technical strength: RSI + MACD combined
+      const aScore = a.technical.rsi.current + (a.technical.macd.histogram * 10);
+      const bScore = b.technical.rsi.current + (b.technical.macd.histogram * 10);
+      return bScore - aScore; // Best technical indicators first
+    })
     .slice(0, 10); // Top 10 best technical indicators
   
   const hotStocks = stocksWithTechnical
-    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
+    .filter(s => Math.abs(s.changePercent) > 0) // Must have movement
+    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)) // Highest movers first
     .slice(0, 10); // Top 10 highest movers
   
   // Placeholder for other categories

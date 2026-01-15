@@ -45,20 +45,24 @@ module.exports = async (req, res) => {
     console.log('[CRON] Fetching data for', stockSymbols.length, 'stocks');
     const stockDataPromises = stockSymbols.map(async (symbol) => {
       try {
-        // Use Yahoo Finance v2 API directly (no proxy needed)
-        const yahooFinanceUrl = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${symbol}`;
-        const params = {
-          modules: 'price,summaryDetail,defaultKeyStatistics,financialData',
-          timeout: 15000
-        };
-        
-        const response = await axios.get(yahooFinanceUrl, { params, timeout: 15000 });
-        const data = response.data;
+        // Fetch both fundamentals and chart data in parallel
+        const [fundamentalsRes, chartRes] = await Promise.all([
+          // QuoteSummary for fundamentals
+          axios.get(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${symbol}`, {
+            params: { modules: 'price,summaryDetail,defaultKeyStatistics,financialData' },
+            timeout: 15000
+          }),
+          // Chart for historical prices (last 100 days for technical analysis)
+          axios.get(`https://query2.finance.yahoo.com/v8/finance/chart/${symbol}`, {
+            params: { interval: '1d', range: '100d' },
+            timeout: 15000
+          })
+        ]);
         
         return {
           symbol,
-          quote: data,
-          fundamentals: data,
+          quote: chartRes.data,
+          fundamentals: fundamentalsRes.data,
           success: true
         };
       } catch (error) {
