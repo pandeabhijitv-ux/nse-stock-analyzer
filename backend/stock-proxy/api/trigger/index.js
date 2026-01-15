@@ -1,6 +1,7 @@
 // Manual trigger endpoint for testing - NO AUTH REQUIRED
 // This allows you to trigger analysis on-demand during development/testing
-const yahooFinance = require('yahoo-finance2').default;
+const YahooFinance = require('yahoo-finance2').default;
+const yahooFinance = new YahooFinance();
 const { storeAnalysis, markAsUpdated } = require('../../utils/cache');
 const { analyzeAllCategories } = require('../../utils/analyzer');
 const fs = require('fs');

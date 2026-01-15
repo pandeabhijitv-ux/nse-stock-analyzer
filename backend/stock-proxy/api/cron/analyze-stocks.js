@@ -1,5 +1,6 @@
 // Cron job that runs at 6 AM IST (12:30 AM UTC) to pre-compute all stock analysis
-const yahooFinance = require('yahoo-finance2').default;
+const YahooFinance = require('yahoo-finance2').default;
+const yahooFinance = new YahooFinance();
 const { storeAnalysis, markAsUpdated } = require('../../utils/cache');
 const { analyzeAllCategories } = require('../../utils/analyzer');
 const fs = require('fs');
