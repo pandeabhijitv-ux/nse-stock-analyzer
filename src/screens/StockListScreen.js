@@ -96,7 +96,7 @@ export default function StockListScreen({ sector, onStockPress }) {
         // Stocks with clear upside potential and good overall score
         // Prioritize high-quality stocks with strong fundamentals
         filtered = filtered.filter(s => {
-          const rsi = s.technical?.rsi || 50;
+          const rsi = s.technical?.rsi?.current || 50;
           const macd = s.technical?.macd?.macd || 0;
           const score = s.overallScore || 50;
           const upside = s.upsidePercent || 0;
@@ -126,7 +126,7 @@ export default function StockListScreen({ sector, onStockPress }) {
         // High momentum stocks with volatility
         filtered = filtered.filter(s => {
           const macd = s.technical?.macd?.macd || 0;
-          const rsi = s.technical?.rsi || 50;
+          const rsi = s.technical?.rsi?.current || 50;
           const change = Math.abs(s.changePercent || 0);
           const histogram = s.technical?.macd?.histogram || 0;
           // Must have strong momentum indicators
@@ -172,7 +172,7 @@ export default function StockListScreen({ sector, onStockPress }) {
             return false;
           }
           
-          const rsi = s.technical?.rsi || 50;
+          const rsi = s.technical?.rsi?.current || 50;
           const macd = s.technical?.macd?.macd || 0;
           const signal = s.technical?.macd?.signal || 0;
           const trend = s.technical?.trend || '';
@@ -218,7 +218,7 @@ export default function StockListScreen({ sector, onStockPress }) {
         // Stocks influenced by planetary transits
         // Focus on astrologically favorable sectors and momentum
         filtered = filtered.filter(s => {
-          const rsi = s.technical?.rsi || 50;
+          const rsi = s.technical?.rsi?.current || 50;
           const score = s.overallScore || 50;
           const sector = s.sector || '';
           const isInfluencedSector = 
@@ -237,7 +237,7 @@ export default function StockListScreen({ sector, onStockPress }) {
         // If too few, expand to all with good momentum
         if (filtered.length < 10) {
           filtered = allStocks.filter(s => {
-            const rsi = s.technical?.rsi || 50;
+            const rsi = s.technical?.rsi?.current || 50;
             const score = s.overallScore || 50;
             return score >= 60 && rsi > 45 && rsi < 75;
           });
@@ -572,7 +572,7 @@ export default function StockListScreen({ sector, onStockPress }) {
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>RSI</Text>
             <Text style={styles.metricValue}>
-              {item.technical?.rsi ? item.technical.rsi.toFixed(0) : 'N/A'}
+              {item.technical?.rsi?.current ? item.technical.rsi.current.toFixed(0) : 'N/A'}
             </Text>
           </View>
           <View style={styles.metric}>
@@ -626,9 +626,9 @@ export default function StockListScreen({ sector, onStockPress }) {
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>RSI</Text>
             <Text style={[styles.metricValue, { 
-              color: item.technical?.rsi >= 50 && item.technical?.rsi <= 70 ? '#4CAF50' : '#666'
+              color: item.technical?.rsi?.current >= 50 && item.technical?.rsi?.current <= 70 ? '#4CAF50' : '#666'
             }]}>
-              {item.technical?.rsi ? item.technical.rsi.toFixed(0) : 'N/A'}
+              {item.technical?.rsi?.current ? item.technical.rsi.current.toFixed(0) : 'N/A'}
             </Text>
           </View>
           <View style={styles.metric}>
@@ -707,7 +707,7 @@ export default function StockListScreen({ sector, onStockPress }) {
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>RSI</Text>
             <Text style={styles.metricValue}>
-              {item.technical?.rsi ? item.technical.rsi.toFixed(0) : 'N/A'}
+              {item.technical?.rsi?.current ? item.technical.rsi.current.toFixed(0) : 'N/A'}
             </Text>
           </View>
           <View style={styles.metric}>
