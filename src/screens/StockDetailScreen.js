@@ -290,8 +290,6 @@ export default function StockDetailScreen({ route, navigation }) {
       </View>
     );
   };
-        {renderMetric('Free Cash Flow', stock.freeCashflow ? `$${(stock.freeCashflow / 1e9).toFixed(2)}B` : 'N/A')}
-      </View>
 
       {/* Dividend */}
       <View style={styles.card}>
