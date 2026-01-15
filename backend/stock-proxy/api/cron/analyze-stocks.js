@@ -2,6 +2,8 @@
 const axios = require('axios');
 const { storeAnalysis, markAsUpdated } = require('../../utils/cache');
 const { analyzeAllCategories } = require('../../utils/analyzer');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = async (req, res) => {
   try {
@@ -14,48 +16,30 @@ module.exports = async (req, res) => {
     console.log('[CRON] Starting daily stock analysis at', new Date().toISOString());
     const startTime = Date.now();
 
-    // Fetch all 100 stocks from NSE sectors
-    const stockSymbols = [
-      // Technology (10 stocks)
-      'TCS.NS', 'INFY.NS', 'WIPRO.NS', 'HCLTECH.NS', 'TECHM.NS',
-      'LTI.NS', 'COFORGE.NS', 'MPHASIS.NS', 'PERSISTENT.NS', 'LTTS.NS',
-      
-      // Banking (10 stocks)
-      'HDFCBANK.NS', 'ICICIBANK.NS', 'KOTAKBANK.NS', 'AXISBANK.NS', 'SBIN.NS',
-      'INDUSINDBK.NS', 'BANDHANBNK.NS', 'FEDERALBNK.NS', 'IDFCFIRSTB.NS', 'RBLBANK.NS',
-      
-      // Financial Services (10 stocks)
-      'BAJFINANCE.NS', 'BAJAJFINSV.NS', 'HDFCLIFE.NS', 'SBILIFE.NS', 'ICICIGI.NS',
-      'HDFC.NS', 'PNBHOUSING.NS', 'LICHSGFIN.NS', 'CHOLAFIN.NS', 'MUTHOOTFIN.NS',
-      
-      // FMCG (10 stocks)
-      'HINDUNILVR.NS', 'ITC.NS', 'NESTLEIND.NS', 'BRITANNIA.NS', 'DABUR.NS',
-      'MARICO.NS', 'GODREJCP.NS', 'COLPAL.NS', 'TATACONSUM.NS', 'EMAMILTD.NS',
-      
-      // Automobile (10 stocks)
-      'MARUTI.NS', 'TATAMOTORS.NS', 'M&M.NS', 'BAJAJ-AUTO.NS', 'EICHERMOT.NS',
-      'HEROMOTOCO.NS', 'TVSMOTOR.NS', 'ASHOKLEY.NS', 'APOLLOTYRE.NS', 'MRF.NS',
-      
-      // Pharma (10 stocks)
-      'SUNPHARMA.NS', 'DRREDDY.NS', 'DIVISLAB.NS', 'CIPLA.NS', 'AUROPHARMA.NS',
-      'BIOCON.NS', 'TORNTPHARM.NS', 'LUPIN.NS', 'ALKEM.NS', 'ABBOTINDIA.NS',
-      
-      // Energy (10 stocks)
-      'RELIANCE.NS', 'ONGC.NS', 'BPCL.NS', 'IOC.NS', 'GAIL.NS',
-      'COALINDIA.NS', 'NTPC.NS', 'POWERGRID.NS', 'ADANIGREEN.NS', 'ADANIPOWER.NS',
-      
-      // Metals & Mining (10 stocks)
-      'TATASTEEL.NS', 'HINDALCO.NS', 'JSWSTEEL.NS', 'VEDL.NS', 'JINDALSTEL.NS',
-      'SAIL.NS', 'NMDC.NS', 'NATIONALUM.NS', 'HINDZINC.NS', 'MOIL.NS',
-      
-      // Infrastructure (10 stocks)
-      'LT.NS', 'ADANIPORTS.NS', 'SIEMENS.NS', 'ABB.NS', 'CUMMINSIND.NS',
-      'ASHOKA.NS', 'NCC.NS', 'IRCTC.NS', 'CONCOR.NS', 'PNB.NS',
-      
-      // Consumer Durables (10 stocks)
-      'TITAN.NS', 'HAVELLS.NS', 'WHIRLPOOL.NS', 'VOLTAS.NS', 'BLUESTARCO.NS',
-      'CROMPTON.NS', 'SYMPHONY.NS', 'DIXON.NS', 'AMBER.NS', 'BATAINDIA.NS',
-    ];
+    // Load Nifty 500 stocks from JSON file (400-500 stocks for comprehensive analysis)
+    const nifty500Path = path.join(__dirname, '../../../../scripts/nifty500-symbols.json');
+    let nifty500Stocks = [];
+    
+    try {
+      const nifty500Data = fs.readFileSync(nifty500Path, 'utf8');
+      nifty500Stocks = JSON.parse(nifty500Data);
+      // Remove first element if it's \"NIFTY 500\" header
+      if (nifty500Stocks[0] === 'NIFTY 500') {
+        nifty500Stocks.shift();
+      }
+      console.log(`[CRON] Loaded ${nifty500Stocks.length} stocks from Nifty 500`);
+    } catch (error) {
+      console.error('[CRON] Error loading Nifty 500 list, using fallback:', error.message);
+      // Fallback to major stocks if file not found
+      nifty500Stocks = [
+        'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK', 'RELIANCE', 'HINDUNILVR', 'ITC',
+        'SBIN', 'BHARTIARTL', 'KOTAKBANK', 'LT', 'AXISBANK', 'ASIANPAINT', 'MARUTI',
+        'TITAN', 'SUNPHARMA', 'WIPRO', 'HCLTECH', 'ULTRACEMCO', 'BAJFINANCE'
+      ];
+    }
+    
+    // Add .NS suffix for NSE stocks
+    const stockSymbols = nifty500Stocks.map(symbol => `${symbol}.NS`);
 
     // Fetch all stock data in parallel
     console.log('[CRON] Fetching data for', stockSymbols.length, 'stocks');

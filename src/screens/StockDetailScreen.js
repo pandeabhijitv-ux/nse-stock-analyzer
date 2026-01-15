@@ -19,10 +19,28 @@ export default function StockDetailScreen({ route, navigation }) {
   const { stock, category } = route.params;
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Ensure all required scores exist with safe defaults
+  const safeOverallScore = (typeof stock.overallScore === 'number' && !isNaN(stock.overallScore)) 
+    ? stock.overallScore 
+    : (stock.fundamentalScore || 50);
+    
+  const safeFundamentalScores = stock.fundamentalScores || stock.categoryScores || {
+    valuation: 0,
+    profitability: 0,
+    growth: 0,
+    financialHealth: 0,
+    dividend: 0,
+    overall: stock.fundamentalScore || 50
+  };
+  
+  const safeTechnicalScore = (typeof stock.technicalScore === 'number' && !isNaN(stock.technicalScore))
+    ? stock.technicalScore
+    : 50;
+
   const recommendation = generateRecommendation(
-    stock.overallScore,
-    stock.fundamentalScores,
-    stock.technicalScore,
+    safeOverallScore,
+    safeFundamentalScores,
+    safeTechnicalScore,
     stock
   );
   

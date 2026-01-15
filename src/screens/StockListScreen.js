@@ -297,28 +297,41 @@ export default function StockListScreen({ sector, onStockPress }) {
           console.log(`📊 Last updated: ${new Date(precomputed.metadata?.lastUpdated).toLocaleString()}`);
           
           // Map backend data structure to expected mobile app structure
-          const mappedStocks = precomputed.stocks.map(stock => ({
-            ...stock,
-            // Map fundamentalScore to overallScore for consistency
-            overallScore: stock.fundamentalScore || stock.overallScore || 50,
-            // Map categoryScores to fundamentalScores format expected by UI
-            fundamentalScores: stock.categoryScores || stock.fundamentalScores || {
-              valuation: 0,
-              profitability: 0,
-              growth: 0,
-              financialHealth: 0,
-              dividend: 0,
-              overall: stock.fundamentalScore || 50
-            },
-            // Ensure technical score exists
-            technicalScore: stock.technical ? {
-              momentum: 50,
-              trend: 50,
-              volatility: 50,
-              volume: 50,
-              overall: 50
-            } : undefined
-          }));
+          const mappedStocks = precomputed.stocks.map(stock => {
+            // Calculate technical score from backend technical indicators
+            let technicalScore = 50;
+            if (stock.technical && stock.technical.rsi) {
+              const rsi = stock.technical.rsi.current || 50;
+              const macd = stock.technical.macd?.histogram || 0;
+              const trend = stock.technical.trend || 'Neutral';
+              
+              // Score based on indicators
+              let score = 50;
+              if (rsi > 50 && rsi < 70) score += 15;
+              if (rsi >= 70) score += 10; // overbought but strong
+              if (macd > 0) score += 15;
+              if (trend === 'Uptrend' || trend === 'Strong Uptrend') score += 20;
+              
+              technicalScore = Math.min(100, Math.max(0, score));
+            }
+            
+            return {
+              ...stock,
+              // Map fundamentalScore to overallScore for consistency
+              overallScore: stock.fundamentalScore || stock.overallScore || 50,
+              // Map categoryScores to fundamentalScores format expected by UI
+              fundamentalScores: stock.categoryScores || stock.fundamentalScores || {
+                valuation: 0,
+                profitability: 0,
+                growth: 0,
+                financialHealth: 0,
+                dividend: 0,
+                overall: stock.fundamentalScore || 50
+              },
+              // Technical score as number (not object)
+              technicalScore: technicalScore
+            };
+          });
           
           setStocks(mappedStocks);
           setLoading(false);
@@ -547,13 +560,16 @@ export default function StockListScreen({ sector, onStockPress }) {
             sector === 'swing' ? (item.momentumScore || item.overallScore || 50) :
             (item.overallScore || 50)
           ) }]}>
-            <Text style={styles.scoreValue}>{Math.round(
-              sector === 'technically-strong' ? (item.technicalScore || item.overallScore || 50) :
-              sector === 'fundamentally-strong' ? (item.fundamentalScore || item.overallScore || 50) :
-              sector === 'target-oriented' ? (item.targetScore || item.overallScore || 50) :
-              sector === 'swing' ? (item.momentumScore || item.overallScore || 50) :
-              (item.overallScore || 50)
-            )}</Text>
+            <Text style={styles.scoreValue}>{(() => {
+              const score = sector === 'technically-strong' ? (item.technicalScore || item.overallScore || 50) :
+                sector === 'fundamentally-strong' ? (item.fundamentalScore || item.overallScore || 50) :
+                sector === 'target-oriented' ? (item.targetScore || item.overallScore || 50) :
+                sector === 'swing' ? (item.momentumScore || item.overallScore || 50) :
+                (item.overallScore || 50);
+              // Ensure score is a valid number
+              const validScore = (typeof score === 'number' && !isNaN(score)) ? score : 50;
+              return Math.round(validScore);
+            })()}</Text>
           </View>
           <Text style={styles.scoreLabel}>
             {sector === 'technically-strong' ? 'Technical' :
