@@ -36,19 +36,24 @@ module.exports = async (req, res) => {
     // Add .NS suffix for NSE stocks
     const stockSymbols = nifty500Stocks.map(symbol => `${symbol}.NS`);
 
-    // Fetch all stock data in parallel
+    // Fetch all stock data in parallel using Yahoo Finance API directly
     console.log('[MANUAL] Fetching data for', stockSymbols.length, 'stocks');
     const stockDataPromises = stockSymbols.map(async (symbol) => {
       try {
-        const [quoteRes, fundamentalsRes] = await Promise.all([
-          axios.get(`https://stock-analyzer-backend-nu.vercel.app/api/quote/${symbol}`, { timeout: 15000 }),
-          axios.get(`https://stock-analyzer-backend-nu.vercel.app/api/fundamentals/${symbol}`, { timeout: 15000 })
-        ]);
+        // Use Yahoo Finance v2 API directly (no proxy needed)
+        const yahooFinanceUrl = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${symbol}`;
+        const params = {
+          modules: 'price,summaryDetail,defaultKeyStatistics,financialData',
+          timeout: 15000
+        };
+        
+        const response = await axios.get(yahooFinanceUrl, { params, timeout: 15000 });
+        const data = response.data;
         
         return {
           symbol,
-          quote: quoteRes.data,
-          fundamentals: fundamentalsRes.data,
+          quote: data,
+          fundamentals: data,
           success: true
         };
       } catch (error) {
