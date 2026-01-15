@@ -1,6 +1,54 @@
 // Analysis utility - Contains all the logic from mobile app's analysisEngine.js
 const { calculateRSI, calculateMACD, calculateBollingerBands, calculateATR, calculateStochastic, detectChartPatterns } = require('./technicalIndicators');
 
+// Helper: Calculate average daily price change percentage
+const calculateAverageDailyChange = (prices) => {
+  if (prices.length < 2) return 0;
+  
+  let totalChange = 0;
+  let count = 0;
+  
+  for (let i = 1; i < prices.length; i++) {
+    const change = Math.abs((prices[i] - prices[i-1]) / prices[i-1] * 100);
+    totalChange += change;
+    count++;
+  }
+  
+  return count > 0 ? totalChange / count : 0;
+};
+
+// Helper: Calculate price volatility (standard deviation of daily changes)
+const calculateVolatility = (prices) => {
+  if (prices.length < 2) return 0;
+  
+  const changes = [];
+  for (let i = 1; i < prices.length; i++) {
+    changes.push((prices[i] - prices[i-1]) / prices[i-1] * 100);
+  }
+  
+  const mean = changes.reduce((a, b) => a + b, 0) / changes.length;
+  const variance = changes.reduce((sum, change) => sum + Math.pow(change - mean, 2), 0) / changes.length;
+  return Math.sqrt(variance);
+};
+
+// Helper: Add trading days to a date (skip weekends)
+const addTradingDays = (startDate, days) => {
+  const date = new Date(startDate);
+  let addedDays = 0;
+  
+  while (addedDays < days) {
+    date.setDate(date.getDate() + 1);
+    const dayOfWeek = date.getDay();
+    
+    // Skip weekends (0 = Sunday, 6 = Saturday)
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      addedDays++;
+    }
+  }
+  
+  return date;
+};
+
 // Score fundamental metrics (0-100 scale)
 const scoreFundamentals = (stock) => {
   let scores = {
@@ -226,6 +274,60 @@ const analyzeAllCategories = async (stocksData) => {
     } else {
       s.targetPrice = s.currentPrice;
       s.upsidePercent = 0;
+    }
+    
+    // Calculate tentative target date based on historical volatility and patterns
+    if (s.targetPrice && s.currentPrice && s.prices && s.prices.length >= 30) {
+      const avgDailyChange = calculateAverageDailyChange(s.prices);
+      const volatility = calculateVolatility(s.prices);
+      const patterns = s.technical?.patterns || [];
+      
+      let daysToTarget = 15; // Default 15 trading days (~3 weeks)
+      
+      // Adjust based on upside percentage
+      if (s.upsidePercent > 0) {
+        const priceGapPercent = ((s.targetPrice - s.currentPrice) / s.currentPrice) * 100;
+        
+        // Base calculation: days = price gap / average daily movement
+        if (avgDailyChange > 0) {
+          daysToTarget = Math.ceil(priceGapPercent / avgDailyChange);
+        }
+        
+        // Adjust for volatility (high volatility = faster movement)
+        if (volatility > 3) {
+          daysToTarget = Math.floor(daysToTarget * 0.7); // 30% faster
+        } else if (volatility < 1) {
+          daysToTarget = Math.ceil(daysToTarget * 1.3); // 30% slower
+        }
+        
+        // Adjust for bullish patterns (accelerate timeline)
+        const bullishPatterns = patterns.filter(p => p.signal === 'bullish');
+        if (bullishPatterns.length >= 2) {
+          daysToTarget = Math.floor(daysToTarget * 0.8); // 20% faster with multiple bullish patterns
+        } else if (bullishPatterns.length === 1) {
+          daysToTarget = Math.floor(daysToTarget * 0.9); // 10% faster with one bullish pattern
+        }
+        
+        // Pattern-specific timeframes (some patterns have known durations)
+        const patternName = patterns[0]?.name || '';
+        if (patternName.includes('Cup & Handle')) {
+          daysToTarget = Math.max(20, Math.min(daysToTarget, 25)); // 20-25 days
+        } else if (patternName.includes('Bull Flag')) {
+          daysToTarget = Math.max(5, Math.min(daysToTarget, 12)); // 5-12 days
+        } else if (patternName.includes('Golden Cross')) {
+          daysToTarget = Math.max(15, Math.min(daysToTarget, 30)); // 15-30 days
+        } else if (patternName.includes('Triangle')) {
+          daysToTarget = Math.max(10, Math.min(daysToTarget, 20)); // 10-20 days
+        }
+        
+        // Bounds: 3 to 60 trading days (1 week to 3 months)
+        daysToTarget = Math.max(3, Math.min(daysToTarget, 60));
+      }
+      
+      // Calculate target date (add trading days, skip weekends)
+      const targetDate = addTradingDays(new Date(), daysToTarget);
+      s.targetDate = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      s.daysToTarget = daysToTarget;
     }
     
     // Extract fundamental fields from fundamentals object for detail screen
