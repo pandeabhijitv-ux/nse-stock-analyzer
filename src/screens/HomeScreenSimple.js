@@ -163,6 +163,17 @@ export default function HomeScreen({ onSectorPress }) {
           ))}
         </View>
       </ScrollView>
+      
+      {/* Developed with Love Footer */}
+      <View style={styles.footerContainer}>
+        <View style={styles.footerContent}>
+          <Text style={styles.footerIcon}>☂️</Text>
+          <View style={styles.footerTextContainer}>
+            <Text style={styles.footerText}>Developed with <Text style={styles.heartIcon}>❤️</Text></Text>
+            <Text style={styles.footerBrand}>Krittika App Developers</Text>
+          </View>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -280,6 +291,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '600',
     marginBottom: 2,
+  },
+  heartIcon: {
+    color: '#ff0000',
+    fontSize: 16,
   },
   footerBrand: {
     fontSize: 16,
