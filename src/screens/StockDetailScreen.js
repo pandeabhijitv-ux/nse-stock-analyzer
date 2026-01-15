@@ -201,43 +201,95 @@ export default function StockDetailScreen({ route, navigation }) {
     </View>
   );
 
-  const renderFundamental = () => (
-    <View style={styles.tabContent}>
-      {/* Valuation Metrics */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Valuation Metrics</Text>
-        {renderMetric('P/E Ratio', stock.peRatio ? stock.peRatio.toFixed(2) : 'N/A')}
-        {renderMetric('Forward P/E', stock.forwardPE ? stock.forwardPE.toFixed(2) : 'N/A')}
-        {renderMetric('PEG Ratio', stock.pegRatio ? stock.pegRatio.toFixed(2) : 'N/A')}
-        {renderMetric('Price to Book', stock.priceToBook ? stock.priceToBook.toFixed(2) : 'N/A')}
-        {renderMetric('Price to Sales', stock.priceToSales ? stock.priceToSales.toFixed(2) : 'N/A')}
-        {renderMetric('EV/Revenue', stock.enterpriseToRevenue ? stock.enterpriseToRevenue.toFixed(2) : 'N/A')}
-        {renderMetric('EV/EBITDA', stock.enterpriseToEbitda ? stock.enterpriseToEbitda.toFixed(2) : 'N/A')}
-      </View>
+  const renderFundamental = () => {
+    // Check what data is available
+    const hasPE = stock.peRatio !== null && stock.peRatio !== undefined;
+    const hasEPS = stock.eps !== null && stock.eps !== undefined;
+    const hasMarketCap = stock.marketCapCr !== null && stock.marketCapCr !== undefined;
+    const hasBookValue = stock.bookValue !== null && stock.bookValue !== undefined;
+    const hasProfitMargin = stock.profitMargin !== null && stock.profitMargin !== undefined;
+    const hasROE = stock.returnOnEquity !== null && stock.returnOnEquity !== undefined;
+    const hasDebtToEquity = stock.debtToEquity !== null && stock.debtToEquity !== undefined;
+    const hasDividendYield = stock.dividendYield !== null && stock.dividendYield !== undefined;
+    
+    const hasValuationData = hasPE || hasEPS || hasMarketCap || hasBookValue;
+    const hasProfitabilityData = hasProfitMargin || hasROE;
+    const hasFinancialHealthData = hasDebtToEquity;
+    const hasDividendData = hasDividendYield;
+    
+    return (
+      <View style={styles.tabContent}>
+        {hasValuationData && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Valuation Metrics</Text>
+            {hasPE && renderMetric('P/E Ratio', stock.peRatio.toFixed(2))}
+            {stock.sectorPE && renderMetric('Sector P/E', stock.sectorPE.toFixed(2))}
+            {hasEPS && renderMetric('EPS', `₹${stock.eps.toFixed(2)}`)}
+            {hasMarketCap && renderMetric('Market Cap', `₹${stock.marketCapCr.toFixed(0)} Cr`)}
+            {hasBookValue && renderMetric('Book Value', `₹${stock.bookValue.toFixed(2)}`)}
+            {stock.faceValue && renderMetric('Face Value', `₹${stock.faceValue}`)}
+          </View>
+        )}
 
-      {/* Profitability */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Profitability</Text>
-        {renderMetric('Profit Margin', stock.profitMargin ? (stock.profitMargin * 100).toFixed(2) + '%' : 'N/A')}
-        {renderMetric('Operating Margin', stock.operatingMargin ? (stock.operatingMargin * 100).toFixed(2) + '%' : 'N/A')}
-        {renderMetric('Return on Equity (ROE)', stock.returnOnEquity ? (stock.returnOnEquity * 100).toFixed(2) + '%' : 'N/A')}
-        {renderMetric('Return on Assets (ROA)', stock.returnOnAssets ? (stock.returnOnAssets * 100).toFixed(2) + '%' : 'N/A')}
-      </View>
+        {hasProfitabilityData && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Profitability</Text>
+            {hasProfitMargin && renderMetric('Profit Margin', (stock.profitMargin * 100).toFixed(2) + '%')}
+            {hasROE && renderMetric('Return on Equity (ROE)', (stock.returnOnEquity * 100).toFixed(2) + '%')}
+            {stock.returnOnAssets && renderMetric('Return on Assets (ROA)', (stock.returnOnAssets * 100).toFixed(2) + '%')}
+          </View>
+        )}
 
-      {/* Growth */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Growth Metrics</Text>
-        {renderMetric('Revenue Growth', stock.revenueGrowth ? (stock.revenueGrowth * 100).toFixed(2) + '%' : 'N/A')}
-        {renderMetric('Earnings Growth', stock.earningsGrowth ? (stock.earningsGrowth * 100).toFixed(2) + '%' : 'N/A')}
-        {renderMetric('Quarterly Earnings Growth', stock.earningsQuarterlyGrowth ? (stock.earningsQuarterlyGrowth * 100).toFixed(2) + '%' : 'N/A')}
-      </View>
+        {(stock.revenueGrowth || stock.earningsGrowth) && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Growth Metrics</Text>
+            {stock.revenueGrowth && renderMetric('Revenue Growth', (stock.revenueGrowth * 100).toFixed(2) + '%')}
+            {stock.earningsGrowth && renderMetric('Earnings Growth', (stock.earningsGrowth * 100).toFixed(2) + '%')}
+          </View>
+        )}
 
-      {/* Financial Health */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Financial Health</Text>
-        {renderMetric('Debt to Equity', stock.debtToEquity?.toFixed(2))}
-        {renderMetric('Current Ratio', stock.currentRatio?.toFixed(2))}
-        {renderMetric('Quick Ratio', stock.quickRatio?.toFixed(2))}
+        {hasFinancialHealthData && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Financial Health</Text>
+            {hasDebtToEquity && renderMetric('Debt to Equity', stock.debtToEquity.toFixed(2))}
+            {stock.currentRatio && renderMetric('Current Ratio', stock.currentRatio.toFixed(2))}
+          </View>
+        )}
+
+        {hasDividendData && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Dividend Information</Text>
+            {hasDividendYield && renderMetric('Dividend Yield', (stock.dividendYield * 100).toFixed(2) + '%')}
+          </View>
+        )}
+
+        {(stock.week52High || stock.week52Low) && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>52-Week Range</Text>
+            {stock.week52High && renderMetric('52W High', `₹${stock.week52High.toFixed(2)}`)}
+            {stock.week52Low && renderMetric('52W Low', `₹${stock.week52Low.toFixed(2)}`)}
+          </View>
+        )}
+        
+        {!hasValuationData && !hasProfitabilityData && !hasFinancialHealthData && !hasDividendData && (
+          <View style={styles.card}>
+            <Text style={[styles.cardTitle, { color: '#999', textAlign: 'center', marginTop: 20 }]}>
+              Limited fundamental data available for this stock.
+            </Text>
+            <Text style={[styles.analysisText, { textAlign: 'center', marginTop: 10, fontSize: 12 }]}>
+              Price and technical indicators are available in other tabs.
+            </Text>
+          </View>
+        )}
+        
+        {stock.fundamentalSource && (hasValuationData || hasProfitabilityData) && (
+          <Text style={[styles.metricLabel, { fontSize: 10, color: '#999', marginTop: 10, textAlign: 'center' }]}>
+            Data source: {stock.fundamentalSource}
+          </Text>
+        )}
+      </View>
+    );
+  };
         {renderMetric('Free Cash Flow', stock.freeCashflow ? `$${(stock.freeCashflow / 1e9).toFixed(2)}B` : 'N/A')}
       </View>
 
@@ -635,24 +687,65 @@ export default function StockDetailScreen({ route, navigation }) {
   // Valuation tab for Fundamentally Strong stocks
   const renderValuation = () => {
     const fundScore = stock.fundamentalScores?.overall || 50;
+    
+    // Check what fundamental data is available
+    const hasPE = stock.peRatio !== null && stock.peRatio !== undefined;
+    const hasEPS = stock.eps !== null && stock.eps !== undefined;
+    const hasMarketCap = stock.marketCapCr !== null && stock.marketCapCr !== undefined;
+    const hasBookValue = stock.bookValue !== null && stock.bookValue !== undefined;
+    const has52WeekData = stock.week52High !== null && stock.week52High !== undefined;
+    const hasFaceValue = stock.faceValue !== null && stock.faceValue !== undefined;
+    const hasSectorPE = stock.sectorPE !== null && stock.sectorPE !== undefined;
+    
+    const hasAnyValuationData = hasPE || hasEPS || hasMarketCap || hasBookValue;
+    
     return (
       <View style={styles.tabContent}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Valuation Metrics</Text>
-          {renderMetric('P/E Ratio', stock.peRatio?.toFixed(2) || 'N/A')}
-          {renderMetric('P/B Ratio', stock.priceToBook?.toFixed(2) || 'N/A')}
-          {renderMetric('Market Cap', stock.marketCap ? `₹${(stock.marketCap / 1e7).toFixed(2)}Cr` : 'N/A')}
-          {renderMetric('EPS', stock.eps?.toFixed(2) || 'N/A')}
-        </View>
+        {hasAnyValuationData && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Valuation Metrics</Text>
+            {hasPE && renderMetric('P/E Ratio', stock.peRatio.toFixed(2), stock.peRatio < 20 ? 'Good' : stock.peRatio < 30 ? 'Fair' : null)}
+            {hasSectorPE && renderMetric('Sector P/E', stock.sectorPE.toFixed(2))}
+            {hasEPS && renderMetric('EPS', `₹${stock.eps.toFixed(2)}`)}
+            {hasMarketCap && renderMetric('Market Cap', `₹${stock.marketCapCr.toFixed(0)} Cr`)}
+            {hasBookValue && renderMetric('Book Value', `₹${stock.bookValue.toFixed(2)}`)}
+            {hasFaceValue && renderMetric('Face Value', `₹${stock.faceValue}`)}
+            {stock.fundamentalSource && (
+              <Text style={[styles.metricLabel, { fontSize: 10, color: '#999', marginTop: 10, textAlign: 'right' }]}>
+                Source: {stock.fundamentalSource}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {has52WeekData && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>52-Week Range</Text>
+            {renderMetric('52W High', `₹${stock.week52High.toFixed(2)}`)}
+            {renderMetric('52W Low', `₹${stock.week52Low.toFixed(2)}`)}
+            {stock.currentPrice && renderMetric('Current', `₹${stock.currentPrice.toFixed(2)}`)}
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Valuation Analysis</Text>
+          {hasPE ? (
+            <Text style={styles.analysisText}>
+              • P/E Ratio: {stock.peRatio < 20 ? 'Undervalued - Trading below industry average' : stock.peRatio < 30 ? 'Fair valuation - In line with market' : 'Premium valuation - Trading above average'}
+            </Text>
+          ) : (
+            <Text style={styles.analysisText}>
+              • P/E Ratio data not available for detailed valuation analysis
+            </Text>
+          )}
           <Text style={styles.analysisText}>
-            • P/E Ratio: {stock.peRatio ? (stock.peRatio < 20 ? 'Undervalued' : stock.peRatio < 30 ? 'Fair' : 'Overvalued') : 'N/A'}
+            • Based on fundamental analysis, the stock shows {fundScore >= 70 ? 'strong' : fundScore >= 50 ? 'moderate' : 'weak'} value proposition.
           </Text>
-          <Text style={styles.analysisText}>
-            • Based on fundamental analysis, the stock shows {fundScore >= 70 ? 'strong' : 'moderate'} value proposition.
-          </Text>
+          {hasAnyValuationData && (
+            <Text style={[styles.analysisText, { fontSize: 12, color: '#666', marginTop: 10, fontStyle: 'italic' }]}>
+              Note: Fundamental data sourced from {stock.fundamentalSource || 'NSE India'}. Some metrics may not be available for all stocks.
+            </Text>
+          )}
         </View>
       </View>
     );
