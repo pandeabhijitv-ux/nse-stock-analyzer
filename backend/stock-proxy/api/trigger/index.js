@@ -1,6 +1,6 @@
 // Manual trigger endpoint for testing - NO AUTH REQUIRED
 // This allows you to trigger analysis on-demand during development/testing
-const axios = require('axios');
+const yahooFinance = require('yahoo-finance2').default;
 const { storeAnalysis, markAsUpdated } = require('../../utils/cache');
 const { analyzeAllCategories } = require('../../utils/analyzer');
 const fs = require('fs');
@@ -46,28 +46,34 @@ module.exports = async (req, res) => {
     // Add .NS suffix for NSE stocks
     const stockSymbols = nifty500Stocks.map(symbol => `${symbol}.NS`);
 
-    // Fetch all stock data in parallel using Yahoo Finance API directly
+    // Fetch all stock data in parallel using yahoo-finance2 library
     console.log('[MANUAL] Fetching data for', stockSymbols.length, 'stocks');
     const stockDataPromises = stockSymbols.map(async (symbol) => {
       try {
-        // Fetch both fundamentals and chart data in parallel
-        const [fundamentalsRes, chartRes] = await Promise.all([
-          // QuoteSummary for fundamentals
-          axios.get(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${symbol}`, {
-            params: { modules: 'price,summaryDetail,defaultKeyStatistics,financialData' },
-            timeout: 15000
+        // Fetch both quote and chart data using yahoo-finance2
+        const [quoteData, chartData] = await Promise.all([
+          yahooFinance.quoteSummary(symbol, {
+            modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'financialData']
           }),
-          // Chart for historical prices (last 100 days for technical analysis)
-          axios.get(`https://query2.finance.yahoo.com/v8/finance/chart/${symbol}`, {
-            params: { interval: '1d', range: '100d' },
-            timeout: 15000
+          yahooFinance.chart(symbol, {
+            period1: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000), // 100 days ago
+            interval: '1d'
           })
         ]);
         
+        // Transform to expected format
         return {
           symbol,
-          quote: chartRes.data,
-          fundamentals: fundamentalsRes.data,
+          quote: {
+            chart: {
+              result: [chartData]
+            }
+          },
+          fundamentals: {
+            quoteSummary: {
+              result: [quoteData]
+            }
+          },
           success: true
         };
       } catch (error) {
