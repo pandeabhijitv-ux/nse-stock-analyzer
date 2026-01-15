@@ -34,6 +34,22 @@ export default function GoldSilverScreen({ onBack }) {
     }
   };
 
+  // Helper function to calculate target date (trading days only)
+  const getTargetDate = (tradingDays) => {
+    const date = new Date();
+    let addedDays = 0;
+    
+    while (addedDays < tradingDays) {
+      date.setDate(date.getDate() + 1);
+      // Skip weekends (0 = Sunday, 6 = Saturday)
+      if (date.getDay() !== 0 && date.getDay() !== 6) {
+        addedDays++;
+      }
+    }
+    
+    return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
   const goldData = {
     metal: 'Gold',
     symbol: '🥇',
@@ -124,6 +140,22 @@ export default function GoldSilverScreen({ onBack }) {
 
               <Text style={styles.sectionTitle}>💡 Investment Guidance</Text>
               <Text style={styles.guidanceText}>{goldData.guidance}</Text>
+
+              <Text style={styles.sectionTitle}>📅 Price Targets</Text>
+              <View style={styles.targetsContainer}>
+                <View style={styles.targetCard}>
+                  <Text style={styles.targetLabel}>1-Month Target</Text>
+                  <Text style={styles.targetPrice}>₹{typeof goldData.price === 'number' ? (goldData.price * 1.03).toFixed(0) : 'N/A'}</Text>
+                  <Text style={styles.targetDate}>{getTargetDate(22)}</Text>
+                  <Text style={styles.targetChange}>+3% expected</Text>
+                </View>
+                <View style={styles.targetCard}>
+                  <Text style={styles.targetLabel}>3-Month Target</Text>
+                  <Text style={styles.targetPrice}>₹{typeof goldData.price === 'number' ? (goldData.price * 1.08).toFixed(0) : 'N/A'}</Text>
+                  <Text style={styles.targetDate}>{getTargetDate(65)}</Text>
+                  <Text style={styles.targetChange}>+8% expected</Text>
+                </View>
+              </View>
             </View>
           </View>
 
@@ -164,6 +196,22 @@ export default function GoldSilverScreen({ onBack }) {
 
               <Text style={styles.sectionTitle}>💡 Investment Guidance</Text>
               <Text style={styles.guidanceText}>{silverData.guidance}</Text>
+
+              <Text style={styles.sectionTitle}>📅 Price Targets</Text>
+              <View style={styles.targetsContainer}>
+                <View style={styles.targetCard}>
+                  <Text style={styles.targetLabel}>1-Month Target</Text>
+                  <Text style={styles.targetPrice}>₹{typeof silverData.price === 'number' ? (silverData.price * 1.05).toFixed(0) : 'N/A'}</Text>
+                  <Text style={styles.targetDate}>{getTargetDate(22)}</Text>
+                  <Text style={styles.targetChange}>+5% expected</Text>
+                </View>
+                <View style={styles.targetCard}>
+                  <Text style={styles.targetLabel}>3-Month Target</Text>
+                  <Text style={styles.targetPrice}>₹{typeof silverData.price === 'number' ? (silverData.price * 1.12).toFixed(0) : 'N/A'}</Text>
+                  <Text style={styles.targetDate}>{getTargetDate(65)}</Text>
+                  <Text style={styles.targetChange}>+12% expected</Text>
+                </View>
+              </View>
             </View>
           </View>
 
@@ -322,6 +370,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
+  },
+  targetsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 15,
+  },
+  targetCard: {
+    flex: 1,
+    backgroundColor: '#f0f9ff',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#bae6fd',
+  },
+  targetLabel: {
+    fontSize: 12,
+    color: '#0369a1',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  targetPrice: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0c4a6e',
+    marginBottom: 6,
+  },
+  targetDate: {
+    fontSize: 11,
+    color: '#075985',
+    marginBottom: 4,
+  },
+  targetChange: {
+    fontSize: 11,
+    color: '#10b981',
+    fontWeight: '600',
   },
   disclaimerCard: {
     margin: 15,

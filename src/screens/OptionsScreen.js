@@ -74,6 +74,9 @@ const OptionsScreen = ({ route }) => {
         <Text style={styles.confidenceText}>
           Confidence: {analysis.confidence}%
         </Text>
+        <Text style={styles.targetDateText}>
+          Target by: {analysis.expiration.recommended === 'Near Term' ? analysis.expiration.nearTerm.date : analysis.expiration.monthly.date}
+        </Text>
       </View>
 
       {/* Tabs */}
@@ -325,6 +328,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255,255,255,0.9)',
     marginTop: 10,
+  },
+  targetDateText: {
+    fontSize: 14,
+    color: 'white',
+    fontWeight: '600',
+    marginTop: 8,
   },
   tabContainer: {
     flexDirection: 'row',
