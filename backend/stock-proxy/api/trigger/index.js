@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
     const startTime = Date.now();
 
     // Load Nifty 500 stocks from JSON file (500 stocks for comprehensive analysis)
-    const nifty500Path = path.join(__dirname, '../../../../scripts/nifty500-symbols.json');
+    const nifty500Path = path.join(__dirname, '../../nifty500-symbols.json');
     let nifty500Stocks = [];
     
     try {
