@@ -236,6 +236,16 @@ const analyzeAllCategories = async (stocksData) => {
       s.returnOnEquity = s.fundamentals.roe || null;
       s.debtToEquity = s.fundamentals.debtToEquity || null;
       s.dividendYield = s.fundamentals.dividendYield || null;
+      
+      // NSE-specific fields
+      s.eps = s.fundamentals.eps || null;
+      s.bookValue = s.fundamentals.bookValue || null;
+      s.faceValue = s.fundamentals.faceValue || null;
+      s.week52High = s.fundamentals.week52High || null;
+      s.week52Low = s.fundamentals.week52Low || null;
+      s.marketCapCr = s.fundamentals.marketCapCr || null;
+      s.sectorPE = s.fundamentals.sectorPE || null;
+      s.fundamentalSource = s.fundamentals.source || null;
     }
   });
   

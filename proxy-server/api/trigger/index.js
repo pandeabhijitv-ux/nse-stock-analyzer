@@ -113,6 +113,58 @@ module.exports = async (req, res) => {
             fundamentalsData.beta = fundamentals.summaryDetail?.beta?.raw || null;
             fundamentalsData.dividendYield = fundamentals.summaryDetail?.dividendYield?.raw || null;
           }
+          
+          // FALLBACK: If Yahoo Finance fundamentals failed, try NSE India API
+          if (!fundamentals || !fundamentalsData.peRatio) {
+            const nseSymbol = symbol.replace('.NS', '');
+            console.log(`[NSE] Fetching fundamentals for ${nseSymbol} from NSE India API...`);
+            
+            try {
+              const nseRes = await axios.get(`https://www.nseindia.com/api/quote-equity?symbol=${nseSymbol}`, {
+                timeout: 10000,
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                  'Accept': 'application/json',
+                  'Accept-Language': 'en-US,en;q=0.9',
+                  'Accept-Encoding': 'gzip, deflate, br'
+                }
+              });
+              
+              const nseData = nseRes.data;
+              if (nseData && nseData.metadata && nseData.priceInfo) {
+                console.log(`[NSE] ✓ Got fundamentals for ${nseSymbol}: P/E=${nseData.metadata.pdSymbolPe}`);
+                
+                // Extract fundamental data from NSE API
+                fundamentalsData.peRatio = fundamentalsData.peRatio || nseData.metadata.pdSymbolPe || null;
+                fundamentalsData.sectorPE = nseData.metadata.pdSectorPe || null;
+                fundamentalsData.faceValue = nseData.securityInfo?.faceValue || null;
+                fundamentalsData.issuedSize = nseData.securityInfo?.issuedSize || null;
+                
+                // Calculate market cap from current price * issued shares
+                if (nseData.priceInfo.lastPrice && nseData.securityInfo?.issuedSize) {
+                  fundamentalsData.marketCapCr = (nseData.priceInfo.lastPrice * nseData.securityInfo.issuedSize) / 10000000; // In Crores
+                }
+                
+                // Calculate EPS from Price / PE
+                if (fundamentalsData.peRatio && nseData.priceInfo.lastPrice) {
+                  fundamentalsData.eps = nseData.priceInfo.lastPrice / fundamentalsData.peRatio;
+                }
+                
+                // Book value (use face value as proxy - not ideal but better than nothing)
+                fundamentalsData.bookValue = fundamentalsData.faceValue || null;
+                
+                // 52-week high/low
+                fundamentalsData.week52High = nseData.priceInfo.weekHighLow?.max || null;
+                fundamentalsData.week52Low = nseData.priceInfo.weekHighLow?.min || null;
+                
+                fundamentalsData.source = 'NSE';
+              }
+            } catch (nseError) {
+              console.log(`[NSE] ✗ Failed to fetch from NSE for ${nseSymbol}:`, nseError.message);
+            }
+          } else {
+            fundamentalsData.source = 'Yahoo';
+          }
         } catch (extractError) {
           console.log(`[WARN] Error extracting fundamentals for ${symbol}:`, extractError.message);
         }
