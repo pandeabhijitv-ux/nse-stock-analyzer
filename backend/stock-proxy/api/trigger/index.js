@@ -3,6 +3,7 @@
 const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 const { storeAnalysis, markAsUpdated } = require('../../utils/cache');
+const { storeLatestAnalysis } = require('../latest/index');
 const { analyzeAllCategories } = require('../../utils/analyzer');
 const fs = require('fs');
 const path = require('path');
@@ -101,7 +102,8 @@ module.exports = async (req, res) => {
 
     console.log('[MANUAL] Analysis completed and cached');
 
-    res.status(200).json({
+    // NEW: Store full response for /api/latest endpoint (Vercel workaround)
+    const responseData = {
       success: true,
       message: 'Stock analysis completed successfully',
       stats: {
@@ -120,8 +122,32 @@ module.exports = async (req, res) => {
         'graha-gochar': analysis.grahaGochar.length,
         'etf': analysis.etf.length,
         'mutual-funds': analysis.mutualFunds.length
+      },
+      // NEW: Return full stock data so mobile app can use it directly (Vercel serverless = no shared memory)
+      data: {
+        'target-oriented': analysis.targetOriented,
+        'swing': analysis.swing,
+        'fundamentally-strong': analysis.fundamentallyStrong,
+        'technically-strong': analysis.technicallyStrong,
+        'hot-stocks': analysis.hotStocks,
+        'graha-gochar': analysis.grahaGochar,
+        'etf': analysis.etf,
+        'mutual-funds': analysis.mutualFunds
+      },
+      metadata: {
+        timestamp: new Date().toISOString(),
+        stocksAnalyzed: successfulStocks.length,
+        totalStocks: stockSymbols.length,
+        successRate: (successfulStocks.length / stockSymbols.length * 100).toFixed(2) + '%',
+        duration: Date.now() - startTime + 'ms',
+        trigger: 'manual'
       }
-    });
+    };
+    
+    // Store for /api/latest to retrieve
+    storeLatestAnalysis(responseData);
+    
+    res.status(200).json(responseData);
 
   } catch (error) {
     console.error('[MANUAL] Fatal error:', error);
