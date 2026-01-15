@@ -179,23 +179,42 @@ export default function StockListScreen({ sector, onStockPress }) {
           const technicalScore = s.technicalScore || 50;
           const patterns = s.technical?.patterns || [];
           
+          // Check for bullish patterns (now with object structure)
+          const hasBullishPattern = patterns.some(p => 
+            (p.signal === 'bullish' || p.name?.toLowerCase().includes('bull') || 
+             p.name?.includes('Golden') || p.name?.includes('Inverse') || 
+             p.name?.includes('Ascending') || p.name?.includes('Cup'))
+          );
+          
           // Must have strong technical setup
           const bullishMACD = macd > signal && macd > 0;
           const goodRSI = rsi >= 50 && rsi <= 70;
           const uptrend = trend === 'Uptrend' || trend.includes('Uptrend');
-          const hasPositivePattern = patterns.some(p => p.includes('Bullish') || p.includes('Morning') || p.includes('Hammer'));
           
-          // At least 2 of 4 conditions must be true, OR high technical score with patterns
-          const conditions = [bullishMACD, goodRSI, uptrend, hasPositivePattern].filter(Boolean).length;
+          // At least 2 of 4 conditions must be true, OR high technical score with bullish patterns
+          const conditions = [bullishMACD, goodRSI, uptrend, hasBullishPattern].filter(Boolean).length;
           const strongTechnical = conditions >= 2 || (technicalScore >= 75 && patterns.length > 0);
           
           if (strongTechnical) {
-            console.log(`✓ ${s.symbol}: RSI=${rsi.toFixed(0)}, MACD=${bullishMACD?'✓':'✗'}, Trend=${trend}, Score=${technicalScore}, Patterns=${patterns.join(',')}`);
+            const patternNames = patterns.map(p => p.name || p).join(', ');
+            console.log(`✓ ${s.symbol}: RSI=${rsi.toFixed(0)}, MACD=${bullishMACD?'✓':'✗'}, Trend=${trend}, Score=${technicalScore}, Patterns=${patternNames}`);
           }
           
           return strongTechnical;
         });
-        filtered.sort((a, b) => (b.technicalScore || 0) - (a.technicalScore || 0));
+        // Sort by technical score, then by number of bullish patterns
+        filtered.sort((a, b) => {
+          const aScore = (a.technicalScore || 0);
+          const bScore = (b.technicalScore || 0);
+          const aBullishPatterns = (a.technical?.patterns || []).filter(p => p.signal === 'bullish').length;
+          const bBullishPatterns = (b.technical?.patterns || []).filter(p => p.signal === 'bullish').length;
+          
+          // First by pattern count, then by score
+          if (aBullishPatterns !== bBullishPatterns) {
+            return bBullishPatterns - aBullishPatterns;
+          }
+          return bScore - aScore;
+        });
         console.log(`Technically-Strong: ${filtered.length} stocks with verified technical data and strong signals`);
         break;
         
@@ -650,8 +669,12 @@ export default function StockListScreen({ sector, onStockPress }) {
           </View>
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>Pattern</Text>
-            <Text style={styles.metricValue} numberOfLines={1}>
-              {item.technical?.patterns?.[0] || 'None'}
+            <Text style={[styles.metricValue, {
+              color: item.technical?.patterns?.[0]?.signal === 'bullish' ? '#4CAF50' :
+                     item.technical?.patterns?.[0]?.signal === 'bearish' ? '#F44336' : '#666',
+              fontSize: 11
+            }]} numberOfLines={1}>
+              {item.technical?.patterns?.[0]?.name || 'None'}
             </Text>
           </View>
         </View>
