@@ -291,23 +291,6 @@ export default function StockDetailScreen({ route, navigation }) {
     );
   };
 
-      {/* Dividend */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Dividend Information</Text>
-        {renderMetric('Dividend Yield', stock.dividendYield ? (stock.dividendYield * 100).toFixed(2) + '%' : 'N/A')}
-        {renderMetric('Dividend Rate', stock.dividendRate ? `$${stock.dividendRate.toFixed(2)}` : 'N/A')}
-        {renderMetric('Payout Ratio', stock.payoutRatio ? (stock.payoutRatio * 100).toFixed(2) + '%' : 'N/A')}
-      </View>
-
-      {/* Risk */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Risk Metrics</Text>
-        {renderMetric('Beta', stock.beta?.toFixed(2))}
-        {renderMetric('Market Cap', stock.marketCap ? `$${(stock.marketCap / 1e9).toFixed(2)}B` : 'N/A')}
-      </View>
-    </View>
-  );
-
   const renderTechnical = () => {
     const tech = stock.technical;
     if (!tech) {
