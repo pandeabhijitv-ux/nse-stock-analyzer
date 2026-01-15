@@ -12,7 +12,8 @@ export const fetchPrecomputedAnalysis = async (category) => {
     console.log(`[PRECOMPUTED] Fetching ${category} from backend cache`);
     const startTime = Date.now();
     
-    const response = await axios.get(`${PROXY_URL}/api/analysis`, {
+    // NEW: Use /api/latest instead of /api/analysis (Vercel serverless workaround)
+    const response = await axios.get(`${PROXY_URL}/api/latest`, {
       params: { category },
       timeout: 10000,
     });
@@ -22,7 +23,7 @@ export const fetchPrecomputedAnalysis = async (category) => {
     
     if (response.data.success) {
       return {
-        stocks: response.data.data,
+        stocks: response.data.data.stocks || response.data.data,
         metadata: response.data.metadata,
         fromCache: true
       };
