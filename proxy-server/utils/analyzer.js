@@ -267,14 +267,49 @@ const analyzeAllCategories = async (stocksData) => {
     s.momentumScore = Math.abs(s.changePercent || 0) * 10; // Momentum based on changePercent
     s.fundamentalScores = s.categoryScores || {}; // Category breakdown
     
-    // Calculate target price (5% upside for positive movers, current for others)
-    if (s.changePercent > 0) {
-      s.targetPrice = s.currentPrice * 1.05;
-      s.upsidePercent = 5;
+    // Calculate dynamic target price based on technical + fundamental analysis
+    // BASE: Technical score (0-100) + Fundamental score (0-100) → Target % (5-25%)
+    const technicalStrength = s.technicalScore || 0; // 0-100
+    const fundamentalStrength = s.fundamentalScore || 0; // 0-100
+    const combinedScore = (technicalStrength + fundamentalStrength) / 2; // 0-100
+    
+    // Map combined score to upside percentage:
+    // Score 0-40: 3-8% upside (weak)
+    // Score 40-60: 8-12% upside (moderate)
+    // Score 60-80: 12-18% upside (strong)
+    // Score 80-100: 18-25% upside (excellent)
+    let upsidePercent = 3; // Minimum 3%
+    if (combinedScore >= 80) {
+      upsidePercent = 18 + ((combinedScore - 80) / 20) * 7; // 18-25%
+    } else if (combinedScore >= 60) {
+      upsidePercent = 12 + ((combinedScore - 60) / 20) * 6; // 12-18%
+    } else if (combinedScore >= 40) {
+      upsidePercent = 8 + ((combinedScore - 40) / 20) * 4; // 8-12%
     } else {
-      s.targetPrice = s.currentPrice;
-      s.upsidePercent = 0;
+      upsidePercent = 3 + (combinedScore / 40) * 5; // 3-8%
     }
+    
+    // Adjust for momentum: Add up to 5% for strong positive momentum
+    const momentum = Math.abs(s.changePercent || 0);
+    if (s.changePercent > 0 && momentum > 2) {
+      upsidePercent += Math.min(5, momentum); // Cap momentum bonus at 5%
+    }
+    
+    // Adjust for patterns: Add 2% for each bullish pattern (max 6%)
+    const patterns = s.technical?.patterns || [];
+    const bullishPatterns = patterns.filter(p => p.signal === 'bullish').length;
+    upsidePercent += Math.min(6, bullishPatterns * 2);
+    
+    // Final bounds: 3% to 30% upside
+    upsidePercent = Math.max(3, Math.min(30, upsidePercent));
+    
+    // Calculate target price
+    s.targetPrice = s.currentPrice * (1 + upsidePercent / 100);
+    s.upsidePercent = parseFloat(upsidePercent.toFixed(2));
+    
+    // Calculate stop loss (5% below current for strong stocks, 8% for weak)
+    const stopLossPercent = combinedScore >= 60 ? 5 : 8;
+    s.stopLoss = s.currentPrice * (1 - stopLossPercent / 100);
     
     // Calculate tentative target date based on historical volatility and patterns
     if (s.targetPrice && s.currentPrice && s.prices && s.prices.length >= 30) {
