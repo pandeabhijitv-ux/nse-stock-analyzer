@@ -266,6 +266,12 @@ const parseStockData = (stockData) => {
     dividendYield: getValue(summaryDetail?.dividendYield),
     payoutRatio: getValue(summaryDetail?.payoutRatio),
     
+    // Analyst targets
+    targetMeanPrice: getValue(financialData?.targetMeanPrice),
+    targetHighPrice: getValue(financialData?.targetHighPrice),
+    targetLowPrice: getValue(financialData?.targetLowPrice),
+    numberOfAnalystOpinions: getValue(financialData?.numberOfAnalystOpinions),
+    
     // Store raw data for detailed views
     quote,
     fundamentals
@@ -377,7 +383,18 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 10); // Top 10 strongest fundamentals
   
   const technicallyStrong = stocksWithTechnical
-    .filter(s => s.technical && s.prices.length >= 30) // Just need 30+ days of data
+    .filter(s => {
+      // Must have proper technical chart data (50+ days for all indicators)
+      if (!s.technical || s.prices.length < 50) return false;
+      
+      // Must have RSI and MACD indicators
+      if (!s.technical.rsi?.current || !s.technical.macd?.histogram) return false;
+      
+      // Must have moving averages for chart display
+      if (!s.technical.movingAverages?.sma20 || !s.technical.movingAverages?.sma50) return false;
+      
+      return true;
+    })
     .sort((a, b) => {
       // Sort by best technical strength: RSI + MACD combined
       const aScore = (a.technical.rsi?.current || 50) + ((a.technical.macd?.histogram || 0) * 10);
