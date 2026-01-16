@@ -6,26 +6,29 @@ function generateRealisticOptions() {
   const today = new Date();
   const seed = today.getDate() + today.getMonth() * 31;
   
-  // Top liquid NSE stocks
+  // Top liquid NSE stocks with NSE-compliant strike intervals
   const stocks = [
-    { symbol: 'RELIANCE', spot: 2850, atm: 2850 },
-    { symbol: 'TCS', spot: 3920, atm: 3900 },
-    { symbol: 'INFY', spot: 1780, atm: 1800 },
-    { symbol: 'HDFCBANK', spot: 1645, atm: 1650 },
-    { symbol: 'ICICIBANK', spot: 1095, atm: 1100 },
-    { symbol: 'SBIN', spot: 785, atm: 800 },
-    { symbol: 'BHARTIARTL', spot: 1545, atm: 1550 },
-    { symbol: 'ITC', spot: 465, atm: 470 },
+    { symbol: 'RELIANCE', spot: 2850, atm: 2850, interval: 50 },  // Above 1000: 50 interval
+    { symbol: 'TCS', spot: 3920, atm: 3900, interval: 100 },      // Above 1000: 50-100 interval
+    { symbol: 'INFY', spot: 1780, atm: 1780, interval: 20 },      // Above 1000: 20 interval
+    { symbol: 'HDFCBANK', spot: 1645, atm: 1640, interval: 20 },  // Above 1000: 20 interval
+    { symbol: 'ICICIBANK', spot: 1095, atm: 1100, interval: 20 }, // Above 1000: 20 interval
+    { symbol: 'SBIN', spot: 785, atm: 780, interval: 20 },        // 500-1000: 20 interval
+    { symbol: 'BHARTIARTL', spot: 1545, atm: 1540, interval: 20 },// Above 1000: 20 interval
+    { symbol: 'ITC', spot: 465, atm: 460, interval: 10 },         // 250-500: 10 interval
   ];
   
   const options = [];
   
-  // Generate 10-15 quality options
+  // Generate 10-15 quality options with NSE-compliant strike prices
   for (let i = 0; i < 12; i++) {
     const stock = stocks[i % stocks.length];
     const isCall = (seed + i) % 2 === 0;
-    const strikeVariation = ((seed + i * 7) % 3 - 1) * 50; // -50, 0, or +50
-    const strike = stock.atm + strikeVariation;
+    
+    // Generate strikes using NSE-compliant intervals
+    // Strikes: ATM-2, ATM-1, ATM, ATM+1, ATM+2
+    const strikeOffset = ((seed + i * 7) % 5 - 2); // -2, -1, 0, 1, 2
+    const strike = stock.atm + (strikeOffset * stock.interval);
     
     // Premium calculation based on moneyness
     const moneyness = isCall ? 
