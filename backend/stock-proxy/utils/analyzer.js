@@ -362,13 +362,11 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 10); // Top 10 best fundamentals
   
   const swing = stocksWithTechnical
-    .filter(s => s.technical && s.technical.rsi?.current && 
-      ((s.technical.rsi.current > 60 && s.technical.macd?.histogram > 0) ||
-       (s.technical.rsi.current < 40 && s.technical.macd?.histogram < 0)))
+    .filter(s => s.technical && s.technical.rsi?.current && Math.abs(s.changePercent || 0) > 0.5) // ANY stock with movement > 0.5%
     .sort((a, b) => {
-      // Sort by best swing potential: RSI momentum + MACD strength
-      const aScore = Math.abs(a.technical.rsi.current - 50) + Math.abs(a.technical.macd.histogram * 10);
-      const bScore = Math.abs(b.technical.rsi.current - 50) + Math.abs(b.technical.macd.histogram * 10);
+      // Sort by best swing potential: RSI momentum + price movement
+      const aScore = Math.abs(a.technical.rsi.current - 50) + Math.abs(a.changePercent || 0) * 2;
+      const bScore = Math.abs(b.technical.rsi.current - 50) + Math.abs(b.changePercent || 0) * 2;
       return bScore - aScore; // Best swing momentum first
     })
     .slice(0, 8); // Top 8 best swing opportunities
@@ -379,12 +377,11 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 10); // Top 10 strongest fundamentals
   
   const technicallyStrong = stocksWithTechnical
-    .filter(s => s.technical && s.prices.length >= 50 &&
-      s.technical.rsi?.current > 50 && s.technical.macd?.histogram > 0)
+    .filter(s => s.technical && s.prices.length >= 30) // Just need 30+ days of data
     .sort((a, b) => {
       // Sort by best technical strength: RSI + MACD combined
-      const aScore = a.technical.rsi.current + (a.technical.macd.histogram * 10);
-      const bScore = b.technical.rsi.current + (b.technical.macd.histogram * 10);
+      const aScore = (a.technical.rsi?.current || 50) + ((a.technical.macd?.histogram || 0) * 10);
+      const bScore = (b.technical.rsi?.current || 50) + ((b.technical.macd?.histogram || 0) * 10);
       return bScore - aScore; // Best technical indicators first
     })
     .slice(0, 10); // Top 10 best technical indicators
