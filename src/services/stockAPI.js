@@ -30,26 +30,31 @@ export const fetchPrecomputedAnalysis = async (category) => {
       };
     }
     
-    // Cache miss or stale - fetch fresh data from trigger
-    console.log('[PRECOMPUTED] Cache miss - calling trigger endpoint (this takes ~15s)');
-    const response = await axios.post(`${PROXY_URL}/api/trigger`, {}, {
-      timeout: 120000, // 2 minutes
+    // Cache miss or stale - fetch from Redis-cached analysis endpoint (FAST!)
+    console.log('[PRECOMPUTED] Cache miss - fetching from Redis cache (2-3 seconds)');
+    const response = await axios.get(`${PROXY_URL}/api/analysis`, {
+      params: { category },
+      timeout: 30000, // 30 seconds
     });
     
     const duration = Date.now() - startTime;
-    console.log(`[PRECOMPUTED] Trigger completed in ${duration}ms`);
+    console.log(`[PRECOMPUTED] Redis fetch completed in ${duration}ms`);
     
     if (response.data.success && response.data.data) {
-      // Store ALL categories in cache
-      analysisCache = response.data.data;
-      analysisCacheTimestamp = Date.now();
+      // /api/analysis returns single category, store it in cache
+      const stocks = response.data.data;
       
-      const stocks = analysisCache[category] || [];
-      console.log(`[PRECOMPUTED] Cached ${Object.keys(analysisCache).length} categories, returning ${stocks.length} stocks for ${category}`);
+      // Update cache for this category only
+      if (!analysisCache[category] || cacheAge >= MAX_CACHE_AGE) {
+        analysisCache[category] = stocks;
+        analysisCacheTimestamp = Date.now();
+      }
+      
+      console.log(`[PRECOMPUTED] Cached ${stocks.length} stocks for ${category}`);
       
       return {
         stocks,
-        metadata: response.data.metadata,
+        metadata: response.data.metadata || { source: 'redis', timestamp: Date.now() },
         fromCache: false
       };
     } else {
