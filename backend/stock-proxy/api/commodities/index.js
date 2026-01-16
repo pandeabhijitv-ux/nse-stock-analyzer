@@ -178,7 +178,8 @@ module.exports = async (req, res) => {
     const combinedData = {
       ...metalPrices,
       ...mcxPrices,
-      fetchedAt: new Date().toISOString()
+      fetchedAt: new Date().toISOString(),
+      disclaimer: 'Prices shown are international spot prices. MCX prices may differ due to local premiums, taxes, and duties. For accurate MCX prices, please check official MCX website.'
     };
     
     console.log('✅ Commodity prices fetched successfully');
