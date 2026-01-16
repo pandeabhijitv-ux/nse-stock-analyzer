@@ -92,8 +92,7 @@ module.exports = async (req, res) => {
     await storeAnalysis('technically-strong', analysis.technicallyStrong);
     await storeAnalysis('hot-stocks', analysis.hotStocks);
     await storeAnalysis('graha-gochar', analysis.grahaGochar);
-    await storeAnalysis('etf', analysis.etf);
-    await storeAnalysis('mutual-funds', analysis.mutualFunds);
+    // ETF and Mutual Funds removed - focusing on stocks only
     
     // Mark metadata
     await markAsUpdated({
@@ -123,9 +122,8 @@ module.exports = async (req, res) => {
         'fundamentally-strong': analysis.fundamentallyStrong.length,
         'technically-strong': analysis.technicallyStrong.length,
         'hot-stocks': analysis.hotStocks.length,
-        'graha-gochar': analysis.grahaGochar.length,
-        'etf': analysis.etf.length,
-        'mutual-funds': analysis.mutualFunds.length
+        'graha-gochar': analysis.grahaGochar.length
+        // ETF and Mutual Funds removed
       },
       data: {
         'target-oriented': analysis.targetOriented,
@@ -133,9 +131,8 @@ module.exports = async (req, res) => {
         'fundamentally-strong': analysis.fundamentallyStrong,
         'technically-strong': analysis.technicallyStrong,
         'hot-stocks': analysis.hotStocks,
-        'graha-gochar': analysis.grahaGochar,
-        'etf': analysis.etf,
-        'mutual-funds': analysis.mutualFunds
+        'graha-gochar': analysis.grahaGochar
+        // ETF and Mutual Funds removed
       },
       metadata: {
         timestamp: new Date().toISOString(),

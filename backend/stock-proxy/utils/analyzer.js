@@ -393,8 +393,7 @@ const analyzeAllCategories = async (stocksData) => {
   
   // Placeholder for other categories
   const grahaGochar = []; // Astrological analysis
-  const etf = []; // ETF specific
-  const mutualFunds = []; // Mutual fund stocks
+  // ETF and Mutual Funds removed - focusing on stocks only
   
   return {
     targetOriented,
@@ -403,8 +402,7 @@ const analyzeAllCategories = async (stocksData) => {
     technicallyStrong,
     hotStocks,
     grahaGochar,
-    etf,
-    mutualFunds,
+
     metadata: {
       totalStocks: parsedStocks.length,
       stocksWithTechnical: stocksWithTechnical.filter(s => s.technical).length,

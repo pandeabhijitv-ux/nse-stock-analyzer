@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { fetchSectorStocks, fetchAllStocks, fetchETFs, fetchMutualFunds, testBackendConnection, fetchPrecomputedAnalysis, checkBackendHealth } from '../services/stockAPI';
+import { fetchSectorStocks, fetchAllStocks, testBackendConnection, fetchPrecomputedAnalysis, checkBackendHealth } from '../services/stockAPI';
 import { calculateTechnicalIndicators } from '../services/technicalAnalysis';
 import { scoreFundamentals, scoreTechnical, calculateOverallScore } from '../services/analysisEngine';
 
@@ -36,8 +36,7 @@ export default function StockListScreen({ sector, onStockPress }) {
       'technically-strong': 'Technically Strong',
       'hot-stocks': 'Hot Stocks Today',
       'graha-gochar': 'Graha Gochar Impact',
-      'etf': 'ETF Analysis',
-      'mutual-funds': 'Mutual Fund Stocks',
+
     };
     return titles[categoryId] || categoryId;
   };
@@ -356,13 +355,7 @@ export default function StockListScreen({ sector, onStockPress }) {
       }
       
       let data;
-      if (isETF) {
-        // Fetch ETF data
-        data = await fetchETFs();
-      } else if (isMutualFund) {
-        // Fetch Mutual Fund stocks
-        data = await fetchMutualFunds();
-      } else if (isAnalysisCategory) {
+      if (isAnalysisCategory) {
         // Fetch all stocks for analysis filtering
         data = await fetchAllStocks();
       } else {

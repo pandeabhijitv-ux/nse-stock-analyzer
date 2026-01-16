@@ -57,8 +57,7 @@ module.exports = async (req, res) => {
       'technically-strong',
       'hot-stocks',
       'graha-gochar',
-      'etf',
-      'mutual-funds'
+
     ];
     
     if (category && !validCategories.includes(category)) {

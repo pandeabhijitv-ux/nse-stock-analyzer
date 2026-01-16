@@ -95,22 +95,6 @@ export default function HomeScreen({ onSectorPress }) {
       color: '#f59e0b',
       icon: '🔱',
     },
-    {
-      id: 'etf',
-      name: 'ETF Analysis',
-      description: 'Exchange Traded Funds performance',
-      badge: 'NIFTY, BANK, GOLD ETFs',
-      color: '#06b6d4',
-      icon: '📦',
-    },
-    {
-      id: 'mutual-funds',
-      name: 'Mutual Fund Stocks',
-      description: 'AMC stocks & fund performance',
-      badge: 'Top fund houses',
-      color: '#14b8a6',
-      icon: '💰',
-    },
   ];
 
   const comingSoonFeatures = [];

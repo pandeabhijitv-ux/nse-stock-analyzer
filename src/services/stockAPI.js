@@ -87,23 +87,7 @@ export const SECTORS = {
   'Consumer Durables': ['TITAN.NS', 'HAVELLS.NS', 'VOLTAS.NS', 'WHIRLPOOL.NS', 'CROMPTON.NS', 'BATAINDIA.NS', 'RELAXO.NS', 'Symphony.NS', 'AMBER.NS', 'CENTURYPLY.NS'],
 };
 
-// Popular NSE ETFs (Exchange Traded Funds)
-export const ETF_SYMBOLS = [
-  'NIFTYBEES.NS',     // Nifty 50 ETF
-  'BANKBEES.NS',      // Nifty Bank ETF
-  'JUNIORBEES.NS',    // Nifty Next 50 ETF
-  'LIQUIDBEES.NS',    // Liquid ETF
-  'GOLDBEES.NS',      // Gold ETF
-];
-
-// Popular Mutual Fund AMC stocks (Asset Management Companies)
-export const MUTUAL_FUND_STOCKS = [
-  'HDFCAMC.NS',       // HDFC AMC
-  'NAM-INDIA.NS',     // Nippon Life AMC
-  'HDFCBANK.NS',      // HDFC Bank (MF ecosystem)
-  'ICICIGI.NS',       // ICICI Prudential
-  'SBILIFE.NS',       // SBI Life (MF ecosystem)
-];
+// ETFs and Mutual Funds removed - focusing on stocks only
 
 // Test backend connection
 export const testBackendConnection = async () => {
@@ -481,27 +465,7 @@ export const fetchAllStocks = async () => {
   }
 };
 
-// Fetch ETF data
-export const fetchETFs = async () => {
-  try {
-    console.log('Fetching ETF data...');
-    return await fetchSectorStocks('ETF', ETF_SYMBOLS);
-  } catch (error) {
-    console.error('Error fetching ETFs:', error);
-    throw error;
-  }
-};
-
-// Fetch Mutual Fund related stocks
-export const fetchMutualFunds = async () => {
-  try {
-    console.log('Fetching Mutual Fund AMC stocks...');
-    return await fetchSectorStocks('Mutual Funds', MUTUAL_FUND_STOCKS);
-  } catch (error) {
-    console.error('Error fetching Mutual Funds:', error);
-    throw error;
-  }
-};
+// ETF and Mutual Fund functions removed - app focuses on stocks only
 
 // Search for stocks
 export const searchStocks = async (query) => {
