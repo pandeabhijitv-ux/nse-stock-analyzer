@@ -349,7 +349,7 @@ export default function StockDetailScreen({ route, navigation }) {
           {renderMetric('Bollinger Middle', tech.bollingerBands?.middle?.toFixed(2) || tech.bollinger?.middle?.toFixed(2) || 'N/A')}
           {renderMetric('Bollinger Lower', tech.bollingerBands?.lower?.toFixed(2) || tech.bollinger?.lower?.toFixed(2) || 'N/A')}
           {renderMetric('BB Signal', tech.bollinger?.signal || tech.bbSignal || 'N/A')}
-          {renderMetric('ATR (14)', tech.atr?.current?.toFixed(2) || tech.atr?.toFixed(2) || 'N/A')}
+          {renderMetric('ATR (14)', typeof tech.atr === 'number' ? tech.atr.toFixed(2) : (tech.atr?.current?.toFixed(2) || 'N/A'))}
         </View>
 
         {/* Support & Resistance */}
@@ -358,6 +358,22 @@ export default function StockDetailScreen({ route, navigation }) {
           {renderMetric('Resistance', tech.supportResistance?.resistance?.toFixed(2) || 'N/A')}
           {renderMetric('Support', tech.supportResistance?.support?.toFixed(2) || 'N/A')}
         </View>
+
+        {/* Analyst Target Prices */}
+        {(stock.targetMeanPrice || stock.targetHighPrice || stock.targetLowPrice) && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Analyst Target Prices</Text>
+            {stock.targetHighPrice && renderMetric('High Target', `₹${stock.targetHighPrice.toFixed(2)}`)}
+            {stock.targetMeanPrice && renderMetric('Mean Target', `₹${stock.targetMeanPrice.toFixed(2)}`)}
+            {stock.targetLowPrice && renderMetric('Low Target', `₹${stock.targetLowPrice.toFixed(2)}`)}
+            {stock.numberOfAnalystOpinions && renderMetric('Analyst Count', stock.numberOfAnalystOpinions.toString())}
+            {stock.targetMeanPrice && stock.currentPrice && renderMetric(
+              'Upside Potential', 
+              `${(((stock.targetMeanPrice - stock.currentPrice) / stock.currentPrice) * 100).toFixed(2)}%`,
+              (stock.targetMeanPrice > stock.currentPrice) ? 'Bullish' : 'Bearish'
+            )}
+          </View>
+        )}
 
         {/* Volume Analysis */}
         <View style={styles.card}>
