@@ -362,7 +362,7 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 10); // Top 10 best fundamentals
   
   const swing = stocksWithTechnical
-    .filter(s => s.technical && s.technical.rsi?.current && Math.abs(s.changePercent || 0) > 0.5) // ANY stock with movement > 0.5%
+    .filter(s => s.technical && s.technical.rsi?.current && Math.abs(s.changePercent || 0) > 0.1) // ANY movement > 0.1%
     .sort((a, b) => {
       // Sort by best swing potential: RSI momentum + price movement
       const aScore = Math.abs(a.technical.rsi.current - 50) + Math.abs(a.changePercent || 0) * 2;
