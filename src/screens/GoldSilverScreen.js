@@ -93,7 +93,7 @@ export default function GoldSilverScreen({ onBack }) {
       </LinearGradient>
 
       <View style={styles.disclaimerBanner}>
-        <Text style={styles.disclaimerText}>ℹ️ International prices shown. MCX prices may differ.</Text>
+        <Text style={styles.disclaimerText}>ℹ️ International futures prices (COMEX via Yahoo Finance). MCX prices may differ.</Text>
       </View>
 
       <TouchableOpacity style={styles.backButton} onPress={onBack}>

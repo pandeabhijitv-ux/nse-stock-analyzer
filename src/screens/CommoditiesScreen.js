@@ -117,10 +117,10 @@ export default function CommoditiesScreen({ onBack }) {
         style={styles.header}
       >
         <Text style={styles.headerTitle}>📦 Commodities</Text>
-        <Text style={styles.headerSubtitle}>Live MCX Commodity Prices</Text>
+        <Text style={styles.headerSubtitle}>Live Commodity Futures (Yahoo Finance)</Text>
       </LinearGradient>
       <View style={styles.disclaimerBanner}>
-        <Text style={styles.disclaimerText}>ℹ️ International spot prices. MCX may differ due to local taxes & premiums.</Text>
+        <Text style={styles.disclaimerText}>ℹ️ International futures prices (COMEX/LME via Yahoo Finance). MCX may differ due to local premiums & taxes.</Text>
       </View>
       <TouchableOpacity style={styles.backButton} onPress={onBack}>
         <Text style={styles.backButtonText}>← Back</Text>
@@ -171,12 +171,6 @@ export default function CommoditiesScreen({ onBack }) {
 
           {/* Energy Commodities Section */}
           <Text style={styles.sectionHeader}>⚡ Energy Commodities</Text>
-          {renderCommodityCard(
-            commoditiesData?.electricity,
-            'Electricity Futures',
-            '⚡',
-            ['#8b5cf6', '#7c3aed']
-          )}
 
           {renderCommodityCard(
             commoditiesData?.brentCrude,
