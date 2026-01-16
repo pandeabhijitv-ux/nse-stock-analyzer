@@ -119,7 +119,9 @@ export default function CommoditiesScreen({ onBack }) {
         <Text style={styles.headerTitle}>📦 Commodities</Text>
         <Text style={styles.headerSubtitle}>Live MCX Commodity Prices</Text>
       </LinearGradient>
-
+      <View style={styles.disclaimerBanner}>
+        <Text style={styles.disclaimerText}>ℹ️ International spot prices. MCX may differ due to local taxes & premiums.</Text>
+      </View>
       <TouchableOpacity style={styles.backButton} onPress={onBack}>
         <Text style={styles.backButtonText}>← Back</Text>
       </TouchableOpacity>
@@ -170,8 +172,22 @@ export default function CommoditiesScreen({ onBack }) {
           {/* Energy Commodities Section */}
           <Text style={styles.sectionHeader}>⚡ Energy Commodities</Text>
           {renderCommodityCard(
+            commoditiesData?.electricity,
+            'Electricity Futures',
+            '⚡',
+            ['#8b5cf6', '#7c3aed']
+          )}
+
+          {renderCommodityCard(
+            commoditiesData?.brentCrude,
+            'Brent Crude Oil',
+            '🛢️',
+            ['#1e293b', '#334155']
+          )}
+
+          {renderCommodityCard(
             commoditiesData?.crudeOil,
-            'Crude Oil (WTI)',
+            'WTI Crude Oil',
             '🛢️',
             ['#0f172a', '#475569']
           )}
@@ -186,10 +202,38 @@ export default function CommoditiesScreen({ onBack }) {
           {/* Base Metals Section */}
           <Text style={styles.sectionHeader}>🔩 Base Metals</Text>
           {renderCommodityCard(
+            commoditiesData?.aluminium,
+            'Aluminium',
+            '⚪',
+            ['#94a3b8', '#64748b']
+          )}
+
+          {renderCommodityCard(
             commoditiesData?.copper,
             'Copper',
             '🔶',
             ['#d97706', '#f59e0b']
+          )}
+
+          {renderCommodityCard(
+            commoditiesData?.lead,
+            'Lead',
+            '⚫',
+            ['#334155', '#475569']
+          )}
+
+          {renderCommodityCard(
+            commoditiesData?.nickel,
+            'Nickel',
+            '⚪',
+            ['#71717a', '#a1a1aa']
+          )}
+
+          {renderCommodityCard(
+            commoditiesData?.zinc,
+            'Zinc',
+            '🔘',
+            ['#52525b', '#71717a']
           )}
 
           {!commoditiesData && (
@@ -218,8 +262,17 @@ const styles = StyleSheet.create({
   header: {
     padding: 30,
     paddingTop: 20,
+  },  disclaimerBanner: {
+    backgroundColor: '#fff3cd',
+    padding: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffc107',
   },
-  headerTitle: {
+  disclaimerText: {
+    fontSize: 13,
+    color: '#856404',
+    textAlign: 'center',
+  },  headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: 'white',

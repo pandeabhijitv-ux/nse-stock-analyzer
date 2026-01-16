@@ -92,6 +92,10 @@ export default function GoldSilverScreen({ onBack }) {
         <Text style={styles.headerSubtitle}>Precious Metals with Astrological Analysis</Text>
       </LinearGradient>
 
+      <View style={styles.disclaimerBanner}>
+        <Text style={styles.disclaimerText}>ℹ️ International prices shown. MCX prices may differ.</Text>
+      </View>
+
       <TouchableOpacity style={styles.backButton} onPress={onBack}>
         <Text style={styles.backButtonText}>← Back</Text>
       </TouchableOpacity>
@@ -234,8 +238,17 @@ const styles = StyleSheet.create({
   header: {
     padding: 30,
     paddingTop: 20,
+  },  disclaimerBanner: {
+    backgroundColor: '#fff3cd',
+    padding: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffc107',
   },
-  headerTitle: {
+  disclaimerText: {
+    fontSize: 13,
+    color: '#856404',
+    textAlign: 'center',
+  },  headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: 'white',

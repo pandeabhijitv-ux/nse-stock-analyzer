@@ -86,14 +86,22 @@ async function fetchMetalPrices() {
   }
 }
 
-// Generate MCX commodity prices (crude oil, natural gas, copper)
+// Generate NSE/MCX commodity prices (energy, bullion, base metals)
 // Uses date-based seed for consistent daily prices
-function generateMCXPrices() {
-  // Baseline realistic prices for MCX commodities (INR)
+function generateNSECommodityPrices() {
+  // Baseline realistic prices for NSE/MCX commodities (INR)
   const basePrices = {
-    crudeOil: 6450,      // INR per barrel (WTI crude)
-    naturalGas: 245,     // INR per MMBtu
-    copper: 785          // INR per kg
+    // Energy
+    electricity: 4.50,       // INR per unit (kWh)
+    brentCrude: 6850,        // INR per barrel (Brent crude)
+    crudeOil: 6450,          // INR per barrel (WTI crude)
+    naturalGas: 245,         // INR per MMBtu
+    // Base Metals
+    aluminium: 225,          // INR per kg
+    copper: 785,             // INR per kg
+    lead: 180,               // INR per kg
+    nickel: 1420,            // INR per kg
+    zinc: 265                // INR per kg
   };
   
   // Apply daily variation (±5% from baseline) using date seed
@@ -101,49 +109,133 @@ function generateMCXPrices() {
   const seed = today.split('-').reduce((acc, val) => acc + parseInt(val), 0);
   const dailyVariation = ((seed % 100) / 1000) - 0.05; // -5% to +5%
   
-  const crudeOilPerBarrel = basePrices.crudeOil * (1 + dailyVariation * 0.8);
-  const naturalGasPerMMBtu = basePrices.naturalGas * (1 + dailyVariation * 1.2);
-  const copperPerKg = basePrices.copper * (1 + dailyVariation * 0.6);
+  // Calculate prices with different volatility for each commodity
+  const prices = {
+    electricity: basePrices.electricity * (1 + dailyVariation * 0.5),
+    brentCrude: basePrices.brentCrude * (1 + dailyVariation * 0.9),
+    crudeOil: basePrices.crudeOil * (1 + dailyVariation * 0.8),
+    naturalGas: basePrices.naturalGas * (1 + dailyVariation * 1.2),
+    aluminium: basePrices.aluminium * (1 + dailyVariation * 0.7),
+    copper: basePrices.copper * (1 + dailyVariation * 0.6),
+    lead: basePrices.lead * (1 + dailyVariation * 0.8),
+    nickel: basePrices.nickel * (1 + dailyVariation * 1.0),
+    zinc: basePrices.zinc * (1 + dailyVariation * 0.7)
+  };
   
-  // Calculate simulated 24-hour change
-  const crudeChangePercent = dailyVariation * 80;
-  const gasChangePercent = dailyVariation * 120;
-  const copperChangePercent = dailyVariation * 60;
-  
-  const crudeTrend = crudeChangePercent > 0 ? 'BULLISH' : 'BEARISH';
-  const gasTrend = gasChangePercent > 0 ? 'BULLISH' : 'BEARISH';
-  const copperTrend = copperChangePercent > 0 ? 'BULLISH' : 'BEARISH';
+  // Calculate simulated 24-hour changes
+  const changes = {
+    electricity: dailyVariation * 50,
+    brentCrude: dailyVariation * 90,
+    crudeOil: dailyVariation * 80,
+    naturalGas: dailyVariation * 120,
+    aluminium: dailyVariation * 70,
+    copper: dailyVariation * 60,
+    lead: dailyVariation * 80,
+    nickel: dailyVariation * 100,
+    zinc: dailyVariation * 70
+  };
   
   const fetchedAt = new Date();
   
   return {
+    // ENERGY
+    electricity: {
+      symbol: 'ELECTRICITY',
+      name: 'Electricity Futures (NSE)',
+      price: prices.electricity.toFixed(2),
+      unit: '₹/kWh',
+      change: changes.electricity > 0 ? `+${changes.electricity.toFixed(1)}%` : `${changes.electricity.toFixed(1)}%`,
+      trend: changes.electricity > 0 ? 'BULLISH' : 'BEARISH',
+      category: 'Energy',
+      lastUpdate: fetchedAt.toISOString(),
+      source: 'NSE Simulated'
+    },
+    brentCrude: {
+      symbol: 'BRENTCRUDE',
+      name: 'Brent Crude Oil (MCX)',
+      price: formatIndianPrice(prices.brentCrude),
+      unit: '₹/barrel',
+      change: changes.brentCrude > 0 ? `+${changes.brentCrude.toFixed(1)}%` : `${changes.brentCrude.toFixed(1)}%`,
+      trend: changes.brentCrude > 0 ? 'BULLISH' : 'BEARISH',
+      category: 'Energy',
+      lastUpdate: fetchedAt.toISOString(),
+      source: 'MCX Simulated'
+    },
     crudeOil: {
       symbol: 'CRUDEOIL',
-      name: 'Crude Oil WTI (MCX)',
-      price: formatIndianPrice(crudeOilPerBarrel),
+      name: 'WTI Crude Oil (MCX)',
+      price: formatIndianPrice(prices.crudeOil),
       unit: '₹/barrel',
-      change: crudeChangePercent > 0 ? `+${crudeChangePercent.toFixed(1)}%` : `${crudeChangePercent.toFixed(1)}%`,
-      trend: crudeTrend,
+      change: changes.crudeOil > 0 ? `+${changes.crudeOil.toFixed(1)}%` : `${changes.crudeOil.toFixed(1)}%`,
+      trend: changes.crudeOil > 0 ? 'BULLISH' : 'BEARISH',
+      category: 'Energy',
       lastUpdate: fetchedAt.toISOString(),
       source: 'MCX Simulated'
     },
     naturalGas: {
       symbol: 'NATURALGAS',
       name: 'Natural Gas (MCX)',
-      price: formatIndianPrice(naturalGasPerMMBtu),
+      price: formatIndianPrice(prices.naturalGas),
       unit: '₹/MMBtu',
-      change: gasChangePercent > 0 ? `+${gasChangePercent.toFixed(1)}%` : `${gasChangePercent.toFixed(1)}%`,
-      trend: gasTrend,
+      change: changes.naturalGas > 0 ? `+${changes.naturalGas.toFixed(1)}%` : `${changes.naturalGas.toFixed(1)}%`,
+      trend: changes.naturalGas > 0 ? 'BULLISH' : 'BEARISH',
+      category: 'Energy',
+      lastUpdate: fetchedAt.toISOString(),
+      source: 'MCX Simulated'
+    },
+    // BASE METALS
+    aluminium: {
+      symbol: 'ALUMINIUM',
+      name: 'Aluminium (MCX)',
+      price: formatIndianPrice(prices.aluminium),
+      unit: '₹/kg',
+      change: changes.aluminium > 0 ? `+${changes.aluminium.toFixed(1)}%` : `${changes.aluminium.toFixed(1)}%`,
+      trend: changes.aluminium > 0 ? 'BULLISH' : 'BEARISH',
+      category: 'Base Metals',
       lastUpdate: fetchedAt.toISOString(),
       source: 'MCX Simulated'
     },
     copper: {
       symbol: 'COPPER',
       name: 'Copper (MCX)',
-      price: formatIndianPrice(copperPerKg),
+      price: formatIndianPrice(prices.copper),
       unit: '₹/kg',
-      change: copperChangePercent > 0 ? `+${copperChangePercent.toFixed(1)}%` : `${copperChangePercent.toFixed(1)}%`,
-      trend: copperTrend,
+      change: changes.copper > 0 ? `+${changes.copper.toFixed(1)}%` : `${changes.copper.toFixed(1)}%`,
+      trend: changes.copper > 0 ? 'BULLISH' : 'BEARISH',
+      category: 'Base Metals',
+      lastUpdate: fetchedAt.toISOString(),
+      source: 'MCX Simulated'
+    },
+    lead: {
+      symbol: 'LEAD',
+      name: 'Lead (MCX)',
+      price: formatIndianPrice(prices.lead),
+      unit: '₹/kg',
+      change: changes.lead > 0 ? `+${changes.lead.toFixed(1)}%` : `${changes.lead.toFixed(1)}%`,
+      trend: changes.lead > 0 ? 'BULLISH' : 'BEARISH',
+      category: 'Base Metals',
+      lastUpdate: fetchedAt.toISOString(),
+      source: 'MCX Simulated'
+    },
+    nickel: {
+      symbol: 'NICKEL',
+      name: 'Nickel (MCX)',
+      price: formatIndianPrice(prices.nickel),
+      unit: '₹/kg',
+      change: changes.nickel > 0 ? `+${changes.nickel.toFixed(1)}%` : `${changes.nickel.toFixed(1)}%`,
+      trend: changes.nickel > 0 ? 'BULLISH' : 'BEARISH',
+      category: 'Base Metals',
+      lastUpdate: fetchedAt.toISOString(),
+      source: 'MCX Simulated'
+    },
+    zinc: {
+      symbol: 'ZINC',
+      name: 'Zinc (MCX)',
+      price: formatIndianPrice(prices.zinc),
+      unit: '₹/kg',
+      change: changes.zinc > 0 ? `+${changes.zinc.toFixed(1)}%` : `${changes.zinc.toFixed(1)}%`,
+      trend: changes.zinc > 0 ? 'BULLISH' : 'BEARISH',
+      category: 'Base Metals',
       lastUpdate: fetchedAt.toISOString(),
       source: 'MCX Simulated'
     }
@@ -168,18 +260,18 @@ module.exports = async (req, res) => {
   try {
     console.log('💰 Fetching commodity prices...');
     
-    // Fetch metal prices and generate MCX prices in parallel
-    const [metalPrices, mcxPrices] = await Promise.all([
+    // Fetch metal prices and generate NSE/MCX prices in parallel
+    const [metalPrices, nseCommodityPrices] = await Promise.all([
       fetchMetalPrices(),
-      Promise.resolve(generateMCXPrices())
+      Promise.resolve(generateNSECommodityPrices())
     ]);
     
     // Combine both responses
     const combinedData = {
       ...metalPrices,
-      ...mcxPrices,
+      ...nseCommodityPrices,
       fetchedAt: new Date().toISOString(),
-      disclaimer: 'Prices shown are international spot prices. MCX prices may differ due to local premiums, taxes, and duties. For accurate MCX prices, please check official MCX website.'
+      disclaimer: 'Prices shown are international spot prices. MCX/NSE prices may differ due to local premiums, taxes, and duties. For accurate prices, please check official MCX/NSE website.'
     };
     
     console.log('✅ Commodity prices fetched successfully');
