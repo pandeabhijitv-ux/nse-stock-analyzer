@@ -524,10 +524,12 @@ export default function StockDetailScreen({ route, navigation }) {
   // Momentum tab for Swing stocks
   const renderMomentum = () => {
     const momentumScore = stock.momentumScore || stock.categoryScore || stock.overallScore || 50;
+    // CRITICAL FIX: Handle missing technical object (causes crash)
+    const hasTechnical = stock.technical && typeof stock.technical === 'object';
     // Handle both backend structure (rsi.current) and client-side (rsi as number)
-    const rsi = stock.technical?.rsi?.current || stock.technical?.rsi || 50;
-    const macd = stock.technical?.macd?.macd || 0;
-    const trend = stock.technical?.trend || 'Neutral';
+    const rsi = hasTechnical ? (stock.technical.rsi?.current || stock.technical.rsi || 50) : 50;
+    const macd = hasTechnical ? (stock.technical.macd?.macd || 0) : 0;
+    const trend = hasTechnical ? (stock.technical.trend || 'Neutral') : 'Neutral';
     const changePercent = stock.changePercent || 0;
 
     return (
@@ -618,9 +620,11 @@ export default function StockDetailScreen({ route, navigation }) {
 
   // Patterns tab for Technical stocks
   const renderPatterns = () => {
-    const rsi = stock.technical?.rsi || 50;
-    const macd = stock.technical?.macd?.macd || 0;
-    const trend = stock.technical?.trend || 'Neutral';
+    // CRITICAL FIX: Handle missing technical object (causes crash)
+    const hasTechnical = stock.technical && typeof stock.technical === 'object';
+    const rsi = hasTechnical ? (stock.technical.rsi?.current || stock.technical.rsi || 50) : 50;
+    const macd = hasTechnical ? (stock.technical.macd?.macd || 0) : 0;
+    const trend = hasTechnical ? (stock.technical.trend || 'Neutral') : 'Neutral';
     const changePercent = stock.changePercent || 0;
     const technicalScore = stock.technicalScore?.overall || stock.technicalScore || 50;
 
