@@ -1,43 +1,43 @@
 {
-  "expo": {
-    "name": "NSE Stock Analyzer",
-    "slug": "nse-stock-analyzer",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/SA.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/images/SA.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#667eea"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "description": "AI-Powered NSE Stock Analysis App with Technical and Fundamental Indicators for Indian Market",
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.nsestockanalyzer.mobile"
-    },
-    "android": {
-      "icon": "./assets/images/SA.png",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/SA.png",
-        "backgroundColor": "#667eea"
-      },
-      "package": "com.nsestockanalyzer.mobile",
-      "permissions": [
-        "INTERNET",
-        "ACCESS_NETWORK_STATE"
-      ],
-      "usesCleartextTraffic": true,
-      "versionCode": 8
-    },
-    "extra": {
-      "eas": {
-        "projectId": "b3b4110e-c382-471b-b65d-6ccb9e500a0d"
-      }
-    },
-    "owner": "pande.abhijit.v"
-  }
+    "expo":  {
+                 "name":  "NSE Stock Analyzer",
+                 "slug":  "nse-stock-analyzer",
+                 "version":  "1.0.0",
+                 "orientation":  "portrait",
+                 "icon":  "./assets/images/SA.png",
+                 "userInterfaceStyle":  "light",
+                 "splash":  {
+                                "image":  "./assets/images/SA.png",
+                                "resizeMode":  "contain",
+                                "backgroundColor":  "#667eea"
+                            },
+                 "assetBundlePatterns":  [
+                                             "**/*"
+                                         ],
+                 "description":  "AI-Powered NSE Stock Analysis App with Technical and Fundamental Indicators for Indian Market",
+                 "ios":  {
+                             "supportsTablet":  true,
+                             "bundleIdentifier":  "com.nsestockanalyzer.mobile"
+                         },
+                 "android":  {
+                                 "icon":  "./assets/images/SA.png",
+                                 "adaptiveIcon":  {
+                                                      "foregroundImage":  "./assets/images/SA.png",
+                                                      "backgroundColor":  "#667eea"
+                                                  },
+                                 "package":  "com.nsestockanalyzer.mobile",
+                                 "permissions":  [
+                                                     "INTERNET",
+                                                     "ACCESS_NETWORK_STATE"
+                                                 ],
+                                 "usesCleartextTraffic":  true,
+                                 "versionCode":  9
+                             },
+                 "extra":  {
+                               "eas":  {
+                                           "projectId":  "b3b4110e-c382-471b-b65d-6ccb9e500a0d"
+                                       }
+                           },
+                 "owner":  "pande.abhijit.v"
+             }
 }
