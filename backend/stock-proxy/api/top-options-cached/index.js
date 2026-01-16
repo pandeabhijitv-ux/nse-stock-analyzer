@@ -6,22 +6,55 @@ function generateRealisticOptions() {
   const today = new Date();
   const seed = today.getDate() + today.getMonth() * 31;
   
-  // Top liquid NSE stocks with NSE-compliant strike intervals
+  // Top 30 liquid NSE stocks with NSE-compliant strike intervals (expanded from 8)
   const stocks = [
-    { symbol: 'RELIANCE', spot: 2850, atm: 2850, interval: 50 },  // Above 1000: 50 interval
-    { symbol: 'TCS', spot: 3920, atm: 3900, interval: 100 },      // Above 1000: 50-100 interval
-    { symbol: 'INFY', spot: 1780, atm: 1780, interval: 20 },      // Above 1000: 20 interval
-    { symbol: 'HDFCBANK', spot: 1645, atm: 1640, interval: 20 },  // Above 1000: 20 interval
-    { symbol: 'ICICIBANK', spot: 1095, atm: 1100, interval: 20 }, // Above 1000: 20 interval
-    { symbol: 'SBIN', spot: 785, atm: 780, interval: 20 },        // 500-1000: 20 interval
-    { symbol: 'BHARTIARTL', spot: 1545, atm: 1540, interval: 20 },// Above 1000: 20 interval
-    { symbol: 'ITC', spot: 465, atm: 460, interval: 10 },         // 250-500: 10 interval
+    // Banking & Finance (High liquidity)
+    { symbol: 'HDFCBANK', spot: 1645, atm: 1640, interval: 20 },
+    { symbol: 'ICICIBANK', spot: 1095, atm: 1100, interval: 20 },
+    { symbol: 'KOTAKBANK', spot: 1850, atm: 1840, interval: 20 },
+    { symbol: 'AXISBANK', spot: 1125, atm: 1120, interval: 20 },
+    { symbol: 'SBIN', spot: 785, atm: 780, interval: 20 },
+    { symbol: 'INDUSINDBK', spot: 975, atm: 980, interval: 20 },
+    { symbol: 'BAJFINANCE', spot: 6850, atm: 6850, interval: 100 },
+    
+    // IT Sector
+    { symbol: 'TCS', spot: 3920, atm: 3900, interval: 100 },
+    { symbol: 'INFY', spot: 1780, atm: 1780, interval: 20 },
+    { symbol: 'WIPRO', spot: 565, atm: 560, interval: 20 },
+    { symbol: 'HCLTECH', spot: 1875, atm: 1880, interval: 20 },
+    { symbol: 'TECHM', spot: 1695, atm: 1700, interval: 20 },
+    
+    // Auto & Pharma
+    { symbol: 'MARUTI', spot: 12850, atm: 12850, interval: 100 },
+    { symbol: 'TATAMOTORS', spot: 785, atm: 780, interval: 20 },
+    { symbol: 'M&M', spot: 2895, atm: 2900, interval: 50 },
+    { symbol: 'SUNPHARMA', spot: 1785, atm: 1780, interval: 20 },
+    { symbol: 'DRREDDY', spot: 1295, atm: 1300, interval: 20 },
+    
+    // Energy & Telecom
+    { symbol: 'RELIANCE', spot: 2850, atm: 2850, interval: 50 },
+    { symbol: 'BHARTIARTL', spot: 1545, atm: 1540, interval: 20 },
+    { symbol: 'ONGC', spot: 245, atm: 240, interval: 10 },
+    { symbol: 'POWERGRID', spot: 325, atm: 320, interval: 10 },
+    
+    // FMCG & Consumer
+    { symbol: 'ITC', spot: 465, atm: 460, interval: 10 },
+    { symbol: 'HINDUNILVR', spot: 2685, atm: 2700, interval: 50 },
+    { symbol: 'NESTLEIND', spot: 2485, atm: 2500, interval: 50 },
+    { symbol: 'BRITANNIA', spot: 4895, atm: 4900, interval: 100 },
+    
+    // Metals & Infra
+    { symbol: 'LT', spot: 3625, atm: 3600, interval: 100 },
+    { symbol: 'TATASTEEL', spot: 165, atm: 160, interval: 5 },
+    { symbol: 'HINDALCO', spot: 645, atm: 640, interval: 20 },
+    { symbol: 'JSWSTEEL', spot: 985, atm: 980, interval: 20 },
+    { symbol: 'ADANIPORTS', spot: 1295, atm: 1300, interval: 20 },
   ];
   
   const options = [];
   
-  // Generate 10-15 quality options with NSE-compliant strike prices
-  for (let i = 0; i < 12; i++) {
+  // Generate 25-30 quality options with NSE-compliant strike prices (expanded from 12)
+  for (let i = 0; i < 30; i++) {
     const stock = stocks[i % stocks.length];
     const isCall = (seed + i) % 2 === 0;
     
@@ -75,10 +108,11 @@ function generateRealisticOptions() {
     });
   }
   
-  // Sort by score
+  // Sort by score (best to worst)
   options.sort((a, b) => b.score - a.score);
   
-  return options.slice(0, 10); // Top 10 options
+  // Return top 10 for API (mobile app will show best 4-5)
+  return options.slice(0, 10);
 }
 
 // Get next Thursday (weekly expiry)

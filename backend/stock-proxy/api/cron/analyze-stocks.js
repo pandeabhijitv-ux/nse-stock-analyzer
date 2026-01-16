@@ -2,6 +2,7 @@
 const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 const { storeAnalysis, markAsUpdated } = require('../../utils/cache');
+const { storeLatestAnalysis } = require('../latest/index');
 const { analyzeAllCategories } = require('../../utils/analyzer');
 const fs = require('fs');
 const path = require('path');
@@ -105,16 +106,53 @@ module.exports = async (req, res) => {
 
     console.log('[CRON] Analysis completed and cached');
 
-    res.status(200).json({
+    // NEW: Store full response for mobile app (same as trigger endpoint)
+    const responseData = {
       success: true,
       message: 'Stock analysis completed',
       stats: {
         stocksAnalyzed: successfulStocks.length,
         totalStocks: stockSymbols.length,
-        duration: Date.now() - startTime,
+        successRate: ((successfulStocks.length / stockSymbols.length) * 100).toFixed(2) + '%',
+        duration: Date.now() - startTime + 'ms',
         categories: Object.keys(analysis).length
+      },
+      categories: {
+        'target-oriented': analysis.targetOriented.length,
+        'swing': analysis.swing.length,
+        'fundamentally-strong': analysis.fundamentallyStrong.length,
+        'technically-strong': analysis.technicallyStrong.length,
+        'hot-stocks': analysis.hotStocks.length,
+        'graha-gochar': analysis.grahaGochar.length,
+        'etf': analysis.etf.length,
+        'mutual-funds': analysis.mutualFunds.length
+      },
+      data: {
+        'target-oriented': analysis.targetOriented,
+        'swing': analysis.swing,
+        'fundamentally-strong': analysis.fundamentallyStrong,
+        'technically-strong': analysis.technicallyStrong,
+        'hot-stocks': analysis.hotStocks,
+        'graha-gochar': analysis.grahaGochar,
+        'etf': analysis.etf,
+        'mutual-funds': analysis.mutualFunds
+      },
+      metadata: {
+        timestamp: new Date().toISOString(),
+        stocksAnalyzed: successfulStocks.length,
+        totalStocks: stockSymbols.length,
+        successRate: (successfulStocks.length / stockSymbols.length * 100).toFixed(2) + '%',
+        duration: Date.now() - startTime + 'ms',
+        trigger: 'cron'
       }
-    });
+    };
+    
+    // Store for /api/latest to retrieve (mobile app can fetch instantly)
+    storeLatestAnalysis(responseData);
+    
+    console.log('[CRON] Stored full analysis for mobile app instant access');
+
+    res.status(200).json(responseData);
 
   } catch (error) {
     console.error('[CRON] Fatal error:', error);

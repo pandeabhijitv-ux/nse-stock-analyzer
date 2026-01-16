@@ -38,7 +38,8 @@ export default function OptionsTradingScreen({ onBack }) {
       
       if (result.success && result.data) {
         // Transform backend data to match screen expectations
-        const calls = result.data.filter(opt => opt.optionType === 'CE').slice(0, 5);
+        // Backend analyzes 30 stocks, returns top 10, we show best 4-5 per type
+        const calls = result.data.filter(opt => opt.optionType === 'CE').slice(0, 4);
         const puts = result.data.filter(opt => opt.optionType === 'PE').slice(0, 5);
         
         setOptionsData({
