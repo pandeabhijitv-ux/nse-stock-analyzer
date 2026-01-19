@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -15,19 +16,31 @@ export default function OptionsTradingScreen({ onBack }) {
   const [isTimeValid, setIsTimeValid] = useState(false);
   const [timeMessage, setTimeMessage] = useState('');
   const [optionsData, setOptionsData] = useState({ calls: [], puts: [] });
+  const [lastFetchDate, setLastFetchDate] = useState(null);
 
   useEffect(() => {
     checkTimeAndFetchData();
-    // Check time every minute
-    const interval = setInterval(checkTimeAndFetchData, 60000);
-    return () => clearInterval(interval);
+    // No auto-refresh - options data changes once per day
+    // User can manually pull to refresh if needed
   }, []);
 
   const checkTimeAndFetchData = async () => {
-    // Always show options with disclaimer
+    // Check if we already fetched today
+    const today = new Date().toDateString();
+    if (lastFetchDate === today && optionsData.calls.length > 0) {
+      console.log('📊 Using cached options data from today');
+      setIsTimeValid(true);
+      setTimeMessage('⚠️ Use at your own risk. Options trading involves high risk.');
+      setLoading(false);
+      return;
+    }
+
+    // Fetch fresh data for today
+    console.log('📊 Fetching fresh options data for', today);
     setIsTimeValid(true);
     setTimeMessage('⚠️ Use at your own risk. Options trading involves high risk.');
     await fetchOptionsData();
+    setLastFetchDate(today);
   };
 
   const fetchOptionsData = async () => {
@@ -72,6 +85,13 @@ export default function OptionsTradingScreen({ onBack }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Manual refresh - force fetch even if already cached today
+  const handleManualRefresh = async () => {
+    console.log('🔄 Manual refresh triggered');
+    await fetchOptionsData();
+    setLastFetchDate(new Date().toDateString());
   };
 
   const renderOptionCard = (option, type) => {
@@ -183,12 +203,29 @@ export default function OptionsTradingScreen({ onBack }) {
           </View>
         </View>
       ) : (
-        <ScrollView style={styles.scrollView}>
+        <ScrollView 
+          style={styles.scrollView}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={handleManualRefresh}
+              colors={['#667eea']}
+              tintColor="#667eea"
+              title="Pull to refresh options data..."
+              titleColor="#667eea"
+            />
+          }
+        >
           <View style={styles.alertCard}>
             <Text style={styles.alertIcon}>⚡</Text>
-            <Text style={styles.alertText}>
-              Live options recommendations - Available until 9:20 AM IST
-            </Text>
+            <View style={{flex: 1}}>
+              <Text style={styles.alertText}>
+                Live options recommendations - Updated daily
+              </Text>
+              <Text style={styles.alertSubtext}>
+                Pull down to refresh if market conditions change significantly
+              </Text>
+            </View>
           </View>
 
           <View style={styles.disclaimerCard}>
@@ -326,6 +363,7 @@ const styles = StyleSheet.create({
   },
   alertCard: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     margin: 15,
     padding: 15,
     backgroundColor: '#dcfce7',
@@ -343,6 +381,12 @@ const styles = StyleSheet.create({
     color: '#166534',
     lineHeight: 18,
     fontWeight: '600',
+  },
+  alertSubtext: {
+    fontSize: 11,
+    color: '#047857',
+    marginTop: 5,
+    fontStyle: 'italic',
   },
   section: {
     marginBottom: 20,
