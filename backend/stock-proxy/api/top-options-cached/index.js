@@ -1,10 +1,25 @@
 // Options Trading API - Returns realistic options data
 // Path: /api/top-options-cached (to match PWA expectations)
 
-// Generate realistic options data based on current date
+const { Redis } = require('@upstash/redis');
+
+// Initialize Upstash Redis client
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
+// Generate realistic options data based on current date (with seeded random)
 function generateRealisticOptions() {
   const today = new Date();
   const seed = today.getDate() + today.getMonth() * 31;
+  
+  // Seeded random function for consistent results within the same day
+  let randomSeed = seed;
+  const seededRandom = () => {
+    randomSeed = (randomSeed * 9301 + 49297) % 233280;
+    return randomSeed / 233280;
+  };
   
   // Top 30 liquid NSE stocks with NSE-compliant strike intervals (expanded from 8)
   const stocks = [
@@ -69,7 +84,7 @@ function generateRealisticOptions() {
       (strike - stock.spot) / strike;
     
     const basePremium = Math.abs(moneyness) * stock.spot * 0.02 + 
-      (Math.random() * 0.01 + 0.02) * stock.spot;
+      (seededRandom() * 0.01 + 0.02) * stock.spot;
     
     const premium = Math.max(5, Math.min(200, basePremium));
     
@@ -80,7 +95,7 @@ function generateRealisticOptions() {
     
     const iv = 18 + (seed + i * 3) % 15; // 18-33% IV
     const volume = Math.floor((seed + i * 17) % 50000 + 10000);
-    const oi = Math.floor(volume * (1.5 + Math.random() * 2));
+    const oi = Math.floor(volume * (1.5 + seededRandom() * 2));
     
     const score = Math.floor(
       (volume / 1000) * 0.2 +
@@ -101,7 +116,7 @@ function generateRealisticOptions() {
       iv: Number(iv.toFixed(2)),
       delta: Number(delta.toFixed(3)),
       theta: Number((-(premium * 0.05)).toFixed(3)),
-      gamma: Number((0.001 + Math.random() * 0.002).toFixed(4)),
+      gamma: Number((0.001 + seededRandom() * 0.002).toFixed(4)),
       vega: Number((premium * 0.15).toFixed(2)),
       score: Math.min(95, Math.max(45, score)),
       expiryDate: getNextThursday().toISOString().split('T')[0]
@@ -140,24 +155,51 @@ module.exports = async (req, res) => {
   }
   
   try {
-    console.log('📊 Generating options data...');
+    // Generate cache key based on today's date (changes daily)
+    const today = new Date();
+    const cacheKey = `options:${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
     
-    const options = generateRealisticOptions();
-    const expiryDate = getNextThursday().toISOString().split('T')[0];
+    console.log(`📊 Checking cache for ${cacheKey}...`);
     
-    console.log(`✅ Generated ${options.length} quality options`);
+    // Try to get cached data from Redis
+    let cachedData = null;
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        cachedData = typeof cached === 'string' ? JSON.parse(cached) : cached;
+        console.log('✅ Using cached options data from Redis');
+      }
+    } catch (cacheError) {
+      console.log('⚠️ Cache read error, generating fresh:', cacheError.message);
+    }
     
-    // Match the structure expected by PWA
-    res.status(200).json({
-      success: true,
-      data: options,
-      cachedAt: new Date().toISOString(),
-      expiryDate: expiryDate,
-      totalScanned: options.length,
-      message: 'Realistic simulated data - SAMCO integration pending'
-    });
+    // If no cache, generate fresh data
+    if (!cachedData) {
+      console.log('📊 Generating fresh options data for today...');
+      const options = generateRealisticOptions();
+      const expiryDate = getNextThursday().toISOString().split('T')[0];
+      
+      cachedData = {
+        success: true,
+        data: options,
+        cachedAt: new Date().toISOString(),
+        expiryDate: expiryDate,
+        totalScanned: options.length,
+        message: 'Realistic simulated data - SAMCO integration pending'
+      };
+      
+      // Cache until end of day (86400 seconds = 24 hours)
+      try {
+        await redis.set(cacheKey, JSON.stringify(cachedData), { ex: 86400 });
+        console.log(`✅ Cached options data for 24 hours`);
+      } catch (cacheError) {
+        console.log('⚠️ Cache write error (continuing):', cacheError.message);
+      }
+    }
+    
+    res.status(200).json(cachedData);
   } catch (error) {
-    console.error('❌ Error generating options:', error);
+    console.error('❌ Error in options endpoint:', error);
     res.status(500).json({
       success: false,
       error: error.message
