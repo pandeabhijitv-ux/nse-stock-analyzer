@@ -99,6 +99,16 @@ const clearAll = async () => {
   }
 };
 
+// Delete specific category cache (for manual refresh)
+const deleteAnalysis = async (category) => {
+  try {
+    await redis.del(`analysis:${category}`);
+    console.log(`[REDIS] Deleted cache for category: ${category}`);
+  } catch (error) {
+    console.error(`[REDIS] Error deleting ${category} cache:`, error.message);
+  }
+};
+
 // Check if cache is fresh (updated today)
 const isCacheFresh = async () => {
   try {
@@ -122,5 +132,6 @@ module.exports = {
   markAsUpdated,
   getMetadata,
   clearAll,
+  deleteAnalysis,
   isCacheFresh
 };

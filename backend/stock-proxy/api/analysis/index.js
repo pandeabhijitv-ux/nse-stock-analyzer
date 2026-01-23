@@ -1,9 +1,10 @@
 // API endpoint to fetch pre-computed analysis for a specific category
-const { getAnalysis, getMetadata } = require('../../utils/cache');
+const { getAnalysis, getMetadata, deleteAnalysis } = require('../../utils/cache');
+const { analyzeMarket } = require('../../utils/stockService');
 
 module.exports = async (req, res) => {
   try {
-    const { category } = req.query;
+    const { category, refresh, secret } = req.query;
     
     if (!category) {
       return res.status(400).json({
@@ -28,6 +29,29 @@ module.exports = async (req, res) => {
         success: false,
         error: `Invalid category. Must be one of: ${validCategories.join(', ')}`
       });
+    }
+    
+    // Handle manual refresh request
+    if (refresh === 'true') {
+      // Verify secret key to prevent abuse
+      const REFRESH_SECRET = process.env.REFRESH_SECRET || 'dev-secret-key-123';
+      if (secret !== REFRESH_SECRET) {
+        return res.status(403).json({
+          success: false,
+          error: 'Invalid or missing secret key for refresh',
+          message: 'Use ?refresh=true&secret=YOUR_SECRET to manually refresh cache'
+        });
+      }
+      
+      console.log(`🔄 Manual refresh requested for category: ${category}`);
+      
+      // Delete cached data to force refresh
+      await deleteAnalysis(category);
+      
+      // Trigger fresh analysis
+      console.log('📊 Triggering fresh market analysis...');
+      await analyzeMarket();
+      console.log('✅ Fresh analysis complete!');
     }
     
     // Get cached analysis

@@ -240,11 +240,34 @@ module.exports = async (req, res) => {
   }
   
   try {
+    // Check for manual refresh request
+    const { refresh, secret } = req.query;
+    const REFRESH_SECRET = process.env.REFRESH_SECRET || 'dev-secret-key-123';
+    
     // Generate cache key based on today's date (changes daily)
     const today = new Date();
     const cacheKey = `options:${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
     
     console.log(`📊 Checking cache for ${cacheKey}...`);
+    
+    // Handle manual refresh
+    if (refresh === 'true') {
+      if (secret !== REFRESH_SECRET) {
+        return res.status(403).json({
+          success: false,
+          error: 'Invalid or missing secret key for refresh',
+          message: 'Use ?refresh=true&secret=YOUR_SECRET to manually refresh cache'
+        });
+      }
+      
+      console.log('🔄 Manual refresh requested - clearing options cache...');
+      try {
+        await redis.del(cacheKey);
+        console.log('✅ Options cache cleared');
+      } catch (err) {
+        console.log('⚠️ Cache clear error:', err.message);
+      }
+    }
     
     // Try to get cached data from Redis
     let cachedData = null;
