@@ -1,7 +1,8 @@
-// Options Trading API - Returns realistic options data
+// Options Trading API - Returns realistic options data with target calculations
 // Path: /api/top-options-cached (to match PWA expectations)
 
 const { Redis } = require('@upstash/redis');
+const yahooFinance = require('yahoo-finance2').default;
 
 // Initialize Upstash Redis client
 const redis = new Redis({
@@ -139,6 +140,90 @@ function getNextThursday() {
   return nextThursday;
 }
 
+// Calculate target price for underlying stock (SINGLE BEST METHOD)
+function calculateUnderlyingTarget(fundamentals) {
+  const currentPrice = fundamentals.currentPrice;
+  const peRatio = fundamentals.peRatio;
+  const pegRatio = fundamentals.pegRatio;
+  const earningsGrowth = fundamentals.earningsGrowth;
+  const priceToBook = fundamentals.priceToBook;
+  const returnOnEquity = fundamentals.returnOnEquity;
+  const fiftyTwoWeekHigh = fundamentals.fiftyTwoWeekHigh;
+  const fiftyTwoWeekLow = fundamentals.fiftyTwoWeekLow;
+
+  if (!currentPrice || currentPrice <= 0) return null;
+
+  let target = null;
+  let method = null;
+  let signal = null; // 'BULLISH' or 'BEARISH'
+
+  // Priority 1: PEG-based (best for growth stocks)
+  if (pegRatio && pegRatio > 0 && pegRatio < 2.5 && earningsGrowth && earningsGrowth > 0.10) {
+    const fairPE = earningsGrowth * 100;
+    target = currentPrice * (fairPE / (peRatio || 20));
+    method = 'PEG';
+  }
+  // Priority 2: ROE-based (best for value stocks)
+  else if (returnOnEquity && returnOnEquity > 0.15 && priceToBook && priceToBook > 0) {
+    const roePercent = returnOnEquity * 100;
+    let fairPB = roePercent > 20 ? 5.0 : roePercent > 18 ? 4.5 : 4.0;
+    target = currentPrice * (fairPB / priceToBook);
+    method = 'ROE';
+  }
+  // Priority 3: Momentum-based (fallback)
+  else if (fiftyTwoWeekHigh && fiftyTwoWeekLow) {
+    const range = fiftyTwoWeekHigh - fiftyTwoWeekLow;
+    const position = (currentPrice - fiftyTwoWeekLow) / range;
+    target = position < 0.4 ? fiftyTwoWeekHigh : fiftyTwoWeekHigh * 1.08;
+    method = 'MOM';
+  }
+
+  if (!target) return null;
+
+  // Apply bounds (±30%)
+  target = Math.max(currentPrice * 0.7, Math.min(currentPrice * 1.3, target));
+  const upside = ((target - currentPrice) / currentPrice) * 100;
+  
+  // Determine signal for options
+  if (upside > 5) signal = 'BULLISH'; // Favor Calls
+  else if (upside < -5) signal = 'BEARISH'; // Favor Puts
+  else signal = 'NEUTRAL';
+
+  return {
+    target: Number(target.toFixed(2)),
+    upside: Number(upside.toFixed(2)),
+    method,
+    signal
+  };
+}
+
+// Fetch fundamentals for target calculation
+async function fetchUnderlyingFundamentals(symbol) {
+  try {
+    const nseSymbol = `${symbol}.NS`;
+    const [quote, fundamentals] = await Promise.all([
+      yahooFinance.quote(nseSymbol),
+      yahooFinance.quoteSummary(nseSymbol, {
+        modules: ['defaultKeyStatistics', 'financialData', 'summaryDetail']
+      })
+    ]);
+
+    return {
+      currentPrice: quote.regularMarketPrice || 0,
+      peRatio: fundamentals.defaultKeyStatistics?.trailingPE || 0,
+      pegRatio: fundamentals.defaultKeyStatistics?.pegRatio || 0,
+      earningsGrowth: fundamentals.defaultKeyStatistics?.earningsQuarterlyGrowth || 0,
+      priceToBook: fundamentals.defaultKeyStatistics?.priceToBook || 0,
+      returnOnEquity: fundamentals.financialData?.returnOnEquity || 0,
+      fiftyTwoWeekHigh: fundamentals.summaryDetail?.fiftyTwoWeekHigh || quote.fiftyTwoWeekHigh || 0,
+      fiftyTwoWeekLow: fundamentals.summaryDetail?.fiftyTwoWeekLow || quote.fiftyTwoWeekLow || 0
+    };
+  } catch (err) {
+    console.log(`⚠️ Could not fetch fundamentals for ${symbol}:`, err.message);
+    return null;
+  }
+}
+
 // Main handler
 module.exports = async (req, res) => {
   // Enable CORS
@@ -179,13 +264,59 @@ module.exports = async (req, res) => {
       const options = generateRealisticOptions();
       const expiryDate = getNextThursday().toISOString().split('T')[0];
       
+      // Add target calculations for unique underlying stocks
+      const uniqueSymbols = [...new Set(options.map(opt => opt.underlyingSymbol))];
+      console.log(`📈 Calculating targets for ${uniqueSymbols.length} underlying stocks...`);
+      
+      const targetMap = {};
+      await Promise.all(
+        uniqueSymbols.map(async (symbol) => {
+          const fundamentals = await fetchUnderlyingFundamentals(symbol);
+          if (fundamentals) {
+            targetMap[symbol] = calculateUnderlyingTarget(fundamentals);
+          }
+        })
+      );
+      
+      // Enhance options with underlying targets and bias
+      const enhancedOptions = options.map(opt => {
+        const target = targetMap[opt.underlyingSymbol];
+        if (target) {
+          // Add bias to score based on signal alignment
+          let biasedScore = opt.score;
+          if (target.signal === 'BULLISH' && opt.optionType === 'CE') {
+            biasedScore += 10; // Boost Call options on bullish signal
+          } else if (target.signal === 'BEARISH' && opt.optionType === 'PE') {
+            biasedScore += 10; // Boost Put options on bearish signal
+          }
+          
+          return {
+            ...opt,
+            score: Math.min(99, biasedScore),
+            underlyingTarget: target.target,
+            underlyingUpside: target.upside,
+            targetMethod: target.method,
+            marketSignal: target.signal,
+            recommendation: target.signal === 'BULLISH' && opt.optionType === 'CE' ? 'STRONG BUY' :
+                          target.signal === 'BEARISH' && opt.optionType === 'PE' ? 'STRONG BUY' :
+                          target.signal === 'BULLISH' && opt.optionType === 'PE' ? 'AVOID' :
+                          target.signal === 'BEARISH' && opt.optionType === 'CE' ? 'AVOID' :
+                          'NEUTRAL'
+          };
+        }
+        return opt;
+      });
+      
+      // Re-sort by biased score
+      enhancedOptions.sort((a, b) => b.score - a.score);
+      
       cachedData = {
         success: true,
-        data: options,
+        data: enhancedOptions.slice(0, 10),
         cachedAt: new Date().toISOString(),
         expiryDate: expiryDate,
-        totalScanned: options.length,
-        message: 'Realistic simulated data - SAMCO integration pending'
+        totalScanned: enhancedOptions.length,
+        message: 'Options with underlying target analysis - Best method per stock'
       };
       
       // Cache until end of day (86400 seconds = 24 hours)
