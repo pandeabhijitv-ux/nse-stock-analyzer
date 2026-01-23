@@ -204,6 +204,110 @@ const scoreFundamentals = (stock) => {
   return { fundamentalScore, categoryScores };
 };
 
+// Calculate target price using SINGLE BEST METHOD (most accurate approach)
+const calculateTargetPrice = (stock) => {
+  const {
+    currentPrice,
+    peRatio,
+    pegRatio,
+    earningsGrowth,
+    priceToBook,
+    returnOnEquity,
+    fiftyTwoWeekHigh,
+    fiftyTwoWeekLow
+  } = stock;
+
+  if (!currentPrice || currentPrice <= 0) return null;
+
+  let calculatedTarget = null;
+  let methodUsed = null;
+  let confidence = 'Low';
+  let explanation = '';
+
+  // PRIORITY 1: PEG-based valuation (MOST RELIABLE for growth stocks)
+  // Best for: IT, Pharma, Consumer Discretionary
+  if (pegRatio && pegRatio > 0 && pegRatio < 2.5 && earningsGrowth && earningsGrowth > 0.10) {
+    const epsGrowthPercent = earningsGrowth * 100;
+    const fairPE = epsGrowthPercent; // Fair PEG = 1.0, so fair PE = growth rate
+    const currentPE = peRatio || 20;
+    calculatedTarget = currentPrice * (fairPE / currentPE);
+    methodUsed = 'PEG-Based';
+    confidence = pegRatio < 1.5 ? 'High' : 'Medium';
+    explanation = `Fair PE=${fairPE.toFixed(1)} (based on ${epsGrowthPercent.toFixed(1)}% growth), Current PE=${currentPE.toFixed(1)}`;
+  }
+  // PRIORITY 2: ROE-based valuation (BEST for value/mature companies)
+  // Best for: Banks, FMCG, Utilities
+  else if (returnOnEquity && returnOnEquity > 0.15 && priceToBook && priceToBook > 0) {
+    const roePercent = returnOnEquity * 100;
+    let fairPB = 3.0;
+    if (roePercent > 20) fairPB = 5.0;
+    else if (roePercent > 18) fairPB = 4.5;
+    else if (roePercent > 15) fairPB = 4.0;
+    
+    calculatedTarget = currentPrice * (fairPB / priceToBook);
+    methodUsed = 'ROE-Based';
+    confidence = roePercent > 20 ? 'High' : 'Medium';
+    explanation = `ROE=${roePercent.toFixed(1)}%, Fair P/B=${fairPB.toFixed(1)}, Current P/B=${priceToBook.toFixed(2)}`;
+  }
+  // PRIORITY 3: Growth-adjusted PE (ALTERNATIVE fundamental)
+  // Used when PEG unavailable but growth data exists
+  else if (peRatio && peRatio > 0 && earningsGrowth && earningsGrowth > 0.08) {
+    const growthPercent = earningsGrowth * 100;
+    let fairPE = 18; // Base for moderate growth
+    if (growthPercent > 20) fairPE = 28;
+    else if (growthPercent > 15) fairPE = 24;
+    else if (growthPercent > 10) fairPE = 20;
+    
+    calculatedTarget = currentPrice * (fairPE / peRatio);
+    methodUsed = 'Growth-PE';
+    confidence = 'Medium';
+    explanation = `${growthPercent.toFixed(1)}% growth → Fair PE=${fairPE}, Current PE=${peRatio.toFixed(1)}`;
+  }
+  // PRIORITY 4: 52-week momentum (FALLBACK - always available)
+  // Technical analysis when fundamental data is weak
+  else if (fiftyTwoWeekHigh && fiftyTwoWeekLow && fiftyTwoWeekHigh > fiftyTwoWeekLow) {
+    const range = fiftyTwoWeekHigh - fiftyTwoWeekLow;
+    const positionInRange = (currentPrice - fiftyTwoWeekLow) / range;
+    
+    if (positionInRange < 0.4) {
+      // Near 52w low - target is 52w high (mean reversion)
+      calculatedTarget = fiftyTwoWeekHigh;
+      explanation = `Near 52w low, targeting 52w high`;
+    } else if (positionInRange > 0.8) {
+      // Near 52w high - target is 8% above (breakout)
+      calculatedTarget = fiftyTwoWeekHigh * 1.08;
+      explanation = `Near 52w high, targeting breakout (+8%)`;
+    } else {
+      // Mid-range - target is 52w high
+      calculatedTarget = fiftyTwoWeekHigh;
+      explanation = `Mid-range, targeting 52w high`;
+    }
+    methodUsed = 'Momentum';
+    confidence = 'Low';
+  }
+
+  // No method could be applied
+  if (!calculatedTarget || !methodUsed) return null;
+
+  // Apply tighter sanity bounds (±30% instead of ±100%)
+  const minTarget = currentPrice * 0.7; // Max 30% downside
+  const maxTarget = currentPrice * 1.3; // Max 30% upside
+  const finalTarget = Math.max(minTarget, Math.min(maxTarget, calculatedTarget));
+
+  // Adjust confidence if bounds were hit (indicates unrealistic target)
+  if (finalTarget !== calculatedTarget) {
+    confidence = confidence === 'High' ? 'Medium' : 'Low';
+  }
+
+  return {
+    calculatedTarget: Number(finalTarget.toFixed(2)),
+    upside: Number((((finalTarget - currentPrice) / currentPrice) * 100).toFixed(2)),
+    methodUsed: methodUsed,
+    confidence: confidence,
+    explanation: explanation
+  };
+};
+
 // Parse stock data from API responses (yahoo-finance2 format)
 const parseStockData = (stockData) => {
   const { symbol, quote, fundamentals } = stockData;
@@ -266,7 +370,7 @@ const parseStockData = (stockData) => {
     dividendYield: getValue(summaryDetail?.dividendYield),
     payoutRatio: getValue(summaryDetail?.payoutRatio),
     
-    // Analyst targets
+    // Analyst targets (from Yahoo Finance)
     targetMeanPrice: getValue(financialData?.targetMeanPrice),
     targetHighPrice: getValue(financialData?.targetHighPrice),
     targetLowPrice: getValue(financialData?.targetLowPrice),
@@ -282,8 +386,21 @@ const parseStockData = (stockData) => {
 const analyzeAllCategories = async (stocksData) => {
   const parsedStocks = stocksData.map(parseStockData);
   
+// Add calculated target prices to all stocks (using SINGLE BEST METHOD)
+    const stocksWithTargets = parsedStocks.map(stock => {
+      const calculatedTarget = calculateTargetPrice(stock);
+      return {
+        ...stock,
+        calculatedTarget: calculatedTarget?.calculatedTarget || null,
+        calculatedUpside: calculatedTarget?.upside || null,
+        calculatedConfidence: calculatedTarget?.confidence || null,
+        calculatedMethod: calculatedTarget?.methodUsed || null,
+        calculatedExplanation: calculatedTarget?.explanation || null
+    };
+  });
+  
   // Calculate technical indicators for all stocks
-  const stocksWithTechnical = parsedStocks.map(stock => {
+  const stocksWithTechnical = stocksWithTargets.map(stock => {
     if (stock.prices.length >= 50) {
       const rsi = calculateRSI(stock.prices);
       const macd = calculateMACD(stock.prices);
