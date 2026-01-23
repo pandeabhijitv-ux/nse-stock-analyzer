@@ -204,6 +204,55 @@ const scoreFundamentals = (stock) => {
   return { fundamentalScore, categoryScores };
 };
 
+// Score technical indicators (RSI, MACD, trend, volume)
+const scoreTechnicals = (technical) => {
+  if (!technical) return 0;
+  
+  let score = 0;
+  let maxScore = 0;
+  
+  // RSI scoring (25 points max)
+  if (technical.rsi?.current) {
+    maxScore += 25;
+    const rsi = technical.rsi.current;
+    if (rsi > 60 && rsi < 80) score += 25; // Strong bullish
+    else if (rsi > 50 && rsi < 90) score += 20; // Bullish
+    else if (rsi > 30 && rsi < 50) score += 15; // Neutral-bearish
+    else if (rsi > 20 && rsi < 30) score += 20; // Oversold (buying opportunity)
+  }
+  
+  // MACD scoring (25 points max)
+  if (technical.macd?.histogram !== undefined) {
+    maxScore += 25;
+    if (technical.macd.histogram > 0) score += 25; // Bullish momentum
+    else if (technical.macd.histogram > -2) score += 15; // Weak bearish
+  }
+  
+  // Trend scoring (20 points max)
+  if (technical.trend) {
+    maxScore += 20;
+    if (technical.trend === 'uptrend') score += 20;
+    else if (technical.trend === 'sideways') score += 10;
+  }
+  
+  // Moving averages (15 points max)
+  if (technical.movingAverages?.sma20 && technical.movingAverages?.sma50) {
+    maxScore += 15;
+    if (technical.movingAverages.sma20 > technical.movingAverages.sma50) score += 15; // Golden cross
+    else score += 5; // Death cross
+  }
+  
+  // Volume analysis (15 points max)
+  if (technical.volumeAnalysis) {
+    maxScore += 15;
+    if (technical.volumeAnalysis === 'strong-buying') score += 15;
+    else if (technical.volumeAnalysis === 'moderate-buying') score += 10;
+    else if (technical.volumeAnalysis === 'normal') score += 7;
+  }
+  
+  return maxScore > 0 ? (score / maxScore) * 100 : 0;
+};
+
 // Calculate target price using SINGLE BEST METHOD (most accurate approach)
 const calculateTargetPrice = (stock) => {
   const {
@@ -478,6 +527,9 @@ const analyzeAllCategories = async (stocksData) => {
     const fundScore = scoreFundamentals({ fundamentals: stock.fundamentals });
     stock.fundamentalScore = fundScore.fundamentalScore;
     stock.categoryScores = fundScore.categoryScores;
+    
+    // Calculate technical score
+    stock.technicalScore = scoreTechnicals(stock.technical);
     
     return stock;
   });
