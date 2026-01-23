@@ -563,9 +563,23 @@ const analyzeAllCategories = async (stocksData) => {
     })
     .slice(0, 10); // Top 10 best technical indicators
   
+  // Hot Stocks: High movers with QUALITY data (70+ score + complete fundamentals)
   const hotStocks = stocksWithTechnical
-    .filter(s => s.currentPrice > 0) // Must have price data
-    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)) // Highest movers first (even if 0)
+    .filter(s => {
+      // Must have price movement
+      if (!s.currentPrice || Math.abs(s.changePercent) < 0.5) return false;
+      
+      // Must have decent fundamental OR technical score
+      const fundScore = s.fundamentalScore || 0;
+      const techScore = s.technicalScore || 0;
+      if (fundScore < 70 && techScore < 70) return false;
+      
+      // Must have complete fundamental data (not N/A)
+      if (!s.calculatedTarget || !s.peRatio || !s.marketCap) return false;
+      
+      return true;
+    })
+    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)) // Highest movers first
     .slice(0, 10); // Top 10
   
   // Placeholder for other categories
