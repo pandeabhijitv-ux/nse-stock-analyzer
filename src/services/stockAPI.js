@@ -16,9 +16,9 @@ export const fetchPrecomputedAnalysis = async (category) => {
     console.log(`[PRECOMPUTED] Fetching ${category} from backend`);
     const startTime = Date.now();
     
-    // Check if we have cached trigger results (max 1 hour old)
+    // Check if we have cached trigger results (max 5 minutes old for faster updates)
     const cacheAge = analysisCacheTimestamp ? Date.now() - analysisCacheTimestamp : Infinity;
-    const MAX_CACHE_AGE = 60 * 60 * 1000; // 1 hour
+    const MAX_CACHE_AGE = 5 * 60 * 1000; // 5 minutes (was 1 hour)
     
     if (Object.keys(analysisCache).length > 0 && cacheAge < MAX_CACHE_AGE) {
       console.log(`[PRECOMPUTED] Using cached trigger data (${Math.round(cacheAge / 1000 / 60)}min old)`);
