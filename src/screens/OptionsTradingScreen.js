@@ -50,10 +50,27 @@ export default function OptionsTradingScreen({ onBack }) {
       const result = await response.json();
       
       if (result.success && result.data) {
-        // Transform backend data to match screen expectations
-        // Backend analyzes 30 stocks, returns top 10, we show best 4-5 per type
-        const calls = result.data.filter(opt => opt.optionType === 'CE').slice(0, 4);
-        const puts = result.data.filter(opt => opt.optionType === 'PE').slice(0, 5);
+        // Backend now includes target analysis - filter by recommendation
+        const allOptions = result.data;
+        
+        // Prioritize STRONG BUY options, then NEUTRAL, avoid AVOID
+        const calls = allOptions
+          .filter(opt => opt.optionType === 'CE' && opt.recommendation !== 'AVOID')
+          .sort((a, b) => {
+            if (a.recommendation === 'STRONG BUY' && b.recommendation !== 'STRONG BUY') return -1;
+            if (a.recommendation !== 'STRONG BUY' && b.recommendation === 'STRONG BUY') return 1;
+            return b.score - a.score;
+          })
+          .slice(0, 4);
+          
+        const puts = allOptions
+          .filter(opt => opt.optionType === 'PE' && opt.recommendation !== 'AVOID')
+          .sort((a, b) => {
+            if (a.recommendation === 'STRONG BUY' && b.recommendation !== 'STRONG BUY') return -1;
+            if (a.recommendation !== 'STRONG BUY' && b.recommendation === 'STRONG BUY') return 1;
+            return b.score - a.score;
+          })
+          .slice(0, 5);
         
         setOptionsData({
           calls: calls.map(opt => ({
@@ -64,7 +81,13 @@ export default function OptionsTradingScreen({ onBack }) {
             stopLoss: (opt.ltp * 0.90).toFixed(2),
             expiry: opt.expiryDate,
             potential: ((opt.ltp * 0.15 / opt.ltp) * 100).toFixed(1),
-            confidence: opt.score > 75 ? 'High' : opt.score > 60 ? 'Medium' : 'Low'
+            confidence: opt.score > 75 ? 'High' : opt.score > 60 ? 'Medium' : 'Low',
+            // NEW: Target analysis fields
+            underlyingTarget: opt.underlyingTarget,
+            underlyingUpside: opt.underlyingUpside,
+            marketSignal: opt.marketSignal,
+            recommendation: opt.recommendation,
+            targetMethod: opt.targetMethod
           })),
           puts: puts.map(opt => ({
             symbol: opt.underlyingSymbol,
@@ -74,7 +97,13 @@ export default function OptionsTradingScreen({ onBack }) {
             stopLoss: (opt.ltp * 0.90).toFixed(2),
             expiry: opt.expiryDate,
             potential: ((opt.ltp * 0.15 / opt.ltp) * 100).toFixed(1),
-            confidence: opt.score > 75 ? 'High' : opt.score > 60 ? 'Medium' : 'Low'
+            confidence: opt.score > 75 ? 'High' : opt.score > 60 ? 'Medium' : 'Low',
+            // NEW: Target analysis fields
+            underlyingTarget: opt.underlyingTarget,
+            underlyingUpside: opt.underlyingUpside,
+            marketSignal: opt.marketSignal,
+            recommendation: opt.recommendation,
+            targetMethod: opt.targetMethod
           }))
         });
       } else {
@@ -151,6 +180,55 @@ export default function OptionsTradingScreen({ onBack }) {
               <Text style={styles.potentialText}>
                 Potential: {option.potential}%
               </Text>
+            </View>
+          )}
+          
+          {/* NEW: Target Analysis Section */}
+          {option.underlyingTarget && (
+            <View style={styles.targetAnalysisBox}>
+              <View style={styles.targetHeader}>
+                <Text style={styles.targetAnalysisTitle}>📊 Underlying Target Analysis</Text>
+                {option.recommendation && (
+                  <View style={[styles.recommendationBadge, {
+                    backgroundColor: option.recommendation === 'STRONG BUY' ? '#10b981' : 
+                                   option.recommendation === 'AVOID' ? '#ef4444' : '#f59e0b'
+                  }]}>
+                    <Text style={styles.recommendationText}>{option.recommendation}</Text>
+                  </View>
+                )}
+              </View>
+              
+              <View style={styles.targetRow}>
+                <Text style={styles.targetLabel}>Stock Target:</Text>
+                <Text style={styles.targetValue}>₹{option.underlyingTarget.toFixed(2)}</Text>
+              </View>
+              
+              <View style={styles.targetRow}>
+                <Text style={styles.targetLabel}>Expected Move:</Text>
+                <Text style={[styles.targetValue, { 
+                  color: option.underlyingUpside > 0 ? '#10b981' : '#ef4444' 
+                }]}>
+                  {option.underlyingUpside > 0 ? '+' : ''}{option.underlyingUpside.toFixed(2)}%
+                </Text>
+              </View>
+              
+              {option.marketSignal && (
+                <View style={styles.targetRow}>
+                  <Text style={styles.targetLabel}>Signal:</Text>
+                  <Text style={[styles.signalBadge, {
+                    backgroundColor: option.marketSignal === 'BULLISH' ? '#d1fae5' : 
+                                   option.marketSignal === 'BEARISH' ? '#fee2e2' : '#fef3c7',
+                    color: option.marketSignal === 'BULLISH' ? '#065f46' : 
+                          option.marketSignal === 'BEARISH' ? '#991b1b' : '#92400e'
+                  }]}>
+                    {option.marketSignal}
+                  </Text>
+                </View>
+              )}
+              
+              {option.targetMethod && (
+                <Text style={styles.methodText}>Method: {option.targetMethod}</Text>
+              )}
             </View>
           )}
           
@@ -487,6 +565,64 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
     color: '#1e40af',
+  },
+  // NEW: Target Analysis Styles
+  targetAnalysisBox: {
+    backgroundColor: '#f0f9ff',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  targetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  targetAnalysisTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#1e40af',
+  },
+  recommendationBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  recommendationText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  targetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  targetLabel: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  targetValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  signalBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  methodText: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 6,
+    fontStyle: 'italic',
   },
   noDataContainer: {
     padding: 40,

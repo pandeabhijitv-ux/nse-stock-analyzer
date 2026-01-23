@@ -362,7 +362,7 @@ export default function StockDetailScreen({ route, navigation }) {
         {/* Analyst Target Prices */}
         {(stock.targetMeanPrice || stock.targetHighPrice || stock.targetLowPrice) && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Analyst Target Prices</Text>
+            <Text style={styles.cardTitle}>Analyst Target Prices (Yahoo Finance)</Text>
             {stock.targetHighPrice && renderMetric('High Target', `₹${stock.targetHighPrice.toFixed(2)}`)}
             {stock.targetMeanPrice && renderMetric('Mean Target', `₹${stock.targetMeanPrice.toFixed(2)}`)}
             {stock.targetLowPrice && renderMetric('Low Target', `₹${stock.targetLowPrice.toFixed(2)}`)}
@@ -371,6 +371,49 @@ export default function StockDetailScreen({ route, navigation }) {
               'Upside Potential', 
               `${(((stock.targetMeanPrice - stock.currentPrice) / stock.currentPrice) * 100).toFixed(2)}%`,
               (stock.targetMeanPrice > stock.currentPrice) ? 'Bullish' : 'Bearish'
+            )}
+          </View>
+        )}
+
+        {/* Our Calculated Target Price */}
+        {stock.calculatedTarget && (
+          <View style={[styles.card, { backgroundColor: '#f0f9ff', borderLeftWidth: 4, borderLeftColor: '#667eea' }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Ionicons name="calculator" size={20} color="#667eea" style={{ marginRight: 8 }} />
+              <Text style={styles.cardTitle}>Our Calculated Target</Text>
+              <View style={[styles.confidenceBadge, { 
+                backgroundColor: stock.calculatedConfidence === 'High' ? '#10b981' : 
+                               stock.calculatedConfidence === 'Medium' ? '#f59e0b' : '#6b7280' 
+              }]}>
+                <Text style={styles.confidenceBadgeText}>{stock.calculatedConfidence}</Text>
+              </View>
+            </View>
+            
+            {renderMetric('Target Price', `₹${stock.calculatedTarget.toFixed(2)}`, 'highlight')}
+            {renderMetric('Upside Potential', 
+              `${stock.calculatedUpside > 0 ? '+' : ''}${stock.calculatedUpside.toFixed(2)}%`,
+              stock.calculatedUpside > 0 ? 'Bullish' : 'Bearish'
+            )}
+            {stock.calculatedMethod && renderMetric('Method Used', stock.calculatedMethod)}
+            
+            {stock.calculatedExplanation && (
+              <View style={styles.explanationBox}>
+                <Text style={styles.explanationLabel}>How we calculated:</Text>
+                <Text style={styles.explanationText}>{stock.calculatedExplanation}</Text>
+              </View>
+            )}
+            
+            {stock.targetMeanPrice && (
+              <View style={styles.comparisonBox}>
+                <Text style={styles.comparisonLabel}>
+                  {Math.abs(stock.calculatedTarget - stock.targetMeanPrice) < (stock.currentPrice * 0.05) 
+                    ? '✓ Close to analyst consensus' 
+                    : stock.calculatedTarget > stock.targetMeanPrice
+                      ? '↑ More optimistic than analysts'
+                      : '↓ More conservative than analysts'
+                  }
+                </Text>
+              </View>
             )}
           </View>
         )}
@@ -1328,5 +1371,48 @@ const styles = StyleSheet.create({
   upsideText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Calculated Target Styles
+  confidenceBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  confidenceBadgeText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  explanationBox: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#667eea',
+  },
+  explanationLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#667eea',
+    marginBottom: 4,
+  },
+  explanationText: {
+    fontSize: 13,
+    color: '#374151',
+    lineHeight: 18,
+  },
+  comparisonBox: {
+    backgroundColor: '#e0e7ff',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  comparisonLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4338ca',
   },
 });
