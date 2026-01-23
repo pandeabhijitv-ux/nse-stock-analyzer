@@ -11,7 +11,22 @@ const redis = new Redis({
 });
 
 // Generate realistic options data based on current date (with seeded random)
-function generateRealisticOptions() {
+// Helper: Calculate NSE-compliant strike interval based on price
+function getStrikeInterval(price) {
+  if (price < 50) return 2.5;
+  if (price < 100) return 5;
+  if (price < 500) return 10;
+  if (price < 1000) return 20;
+  if (price < 2500) return 50;
+  return 100;
+}
+
+// Helper: Calculate ATM strike (round to nearest interval)
+function calculateATM(spotPrice, interval) {
+  return Math.round(spotPrice / interval) * interval;
+}
+
+async function generateRealisticOptions() {
   const today = new Date();
   const seed = today.getDate() + today.getMonth() * 31;
   
@@ -22,87 +37,101 @@ function generateRealisticOptions() {
     return randomSeed / 233280;
   };
   
-  // Top 30 liquid NSE stocks with NSE-compliant strike intervals (expanded from 8)
-  const stocks = [
+  // Top 30 liquid NSE stocks - symbols only (we'll fetch live prices)
+  const stockSymbols = [
     // Banking & Finance (High liquidity)
-    { symbol: 'HDFCBANK', spot: 1645, atm: 1640, interval: 20 },
-    { symbol: 'ICICIBANK', spot: 1095, atm: 1100, interval: 20 },
-    { symbol: 'KOTAKBANK', spot: 1850, atm: 1840, interval: 20 },
-    { symbol: 'AXISBANK', spot: 1125, atm: 1120, interval: 20 },
-    { symbol: 'SBIN', spot: 785, atm: 780, interval: 20 },
-    { symbol: 'INDUSINDBK', spot: 975, atm: 980, interval: 20 },
-    { symbol: 'BAJFINANCE', spot: 6850, atm: 6850, interval: 100 },
-    
+    'HDFCBANK', 'ICICIBANK', 'KOTAKBANK', 'AXISBANK', 'SBIN', 'INDUSINDBK', 'BAJFINANCE',
     // IT Sector
-    { symbol: 'TCS', spot: 3920, atm: 3900, interval: 100 },
-    { symbol: 'INFY', spot: 1780, atm: 1780, interval: 20 },
-    { symbol: 'WIPRO', spot: 565, atm: 560, interval: 20 },
-    { symbol: 'HCLTECH', spot: 1875, atm: 1880, interval: 20 },
-    { symbol: 'TECHM', spot: 1695, atm: 1700, interval: 20 },
-    
+    'TCS', 'INFY', 'WIPRO', 'HCLTECH', 'TECHM',
     // Auto & Pharma
-    { symbol: 'MARUTI', spot: 12850, atm: 12850, interval: 100 },
-    { symbol: 'TATAMOTORS', spot: 785, atm: 780, interval: 20 },
-    { symbol: 'M&M', spot: 2895, atm: 2900, interval: 50 },
-    { symbol: 'SUNPHARMA', spot: 1785, atm: 1780, interval: 20 },
-    { symbol: 'DRREDDY', spot: 1295, atm: 1300, interval: 20 },
-    
+    'MARUTI', 'TATAMOTORS', 'M&M', 'SUNPHARMA', 'DRREDDY',
     // Energy & Telecom
-    { symbol: 'RELIANCE', spot: 2850, atm: 2850, interval: 50 },
-    { symbol: 'BHARTIARTL', spot: 1545, atm: 1540, interval: 20 },
-    { symbol: 'ONGC', spot: 245, atm: 240, interval: 10 },
-    { symbol: 'POWERGRID', spot: 325, atm: 320, interval: 10 },
-    
+    'RELIANCE', 'BHARTIARTL', 'ONGC', 'POWERGRID',
     // FMCG & Consumer
-    { symbol: 'ITC', spot: 465, atm: 460, interval: 10 },
-    { symbol: 'HINDUNILVR', spot: 2685, atm: 2700, interval: 50 },
-    { symbol: 'NESTLEIND', spot: 2485, atm: 2500, interval: 50 },
-    { symbol: 'BRITANNIA', spot: 4895, atm: 4900, interval: 100 },
-    
+    'ITC', 'HINDUNILVR', 'NESTLEIND', 'BRITANNIA',
     // Metals & Infra
-    { symbol: 'LT', spot: 3625, atm: 3600, interval: 100 },
-    { symbol: 'TATASTEEL', spot: 165, atm: 160, interval: 5 },
-    { symbol: 'HINDALCO', spot: 645, atm: 640, interval: 20 },
-    { symbol: 'JSWSTEEL', spot: 985, atm: 980, interval: 20 },
-    { symbol: 'ADANIPORTS', spot: 1295, atm: 1300, interval: 20 },
+    'LT', 'TATASTEEL', 'HINDALCO', 'JSWSTEEL', 'ADANIPORTS'
   ];
+  
+  // Fetch LIVE prices from Yahoo Finance for all stocks
+  console.log('📈 Fetching live prices for options generation...');
+  const stocks = [];
+  await Promise.all(
+    stockSymbols.map(async (symbol) => {
+      try {
+        const quote = await yahooFinance.quote(`${symbol}.NS`);
+        const spot = quote.regularMarketPrice || 100;
+        const interval = getStrikeInterval(spot);
+        const atm = calculateATM(spot, interval);
+        
+        stocks.push({ symbol, spot, atm, interval });
+        console.log(`  ${symbol}: ₹${spot} (ATM: ${atm}, interval: ${interval})`);
+      } catch (err) {
+        console.log(`  ⚠️ ${symbol}: Failed to fetch price, skipping`);
+      }
+    })
+  );
+  
+  if (stocks.length === 0) {
+    console.log('❌ No stock prices fetched, cannot generate options');
+    return [];
+  }
+  
+  console.log(`✅ Fetched ${stocks.length} stock prices`);
   
   const options = [];
   
-  // Generate 25-30 quality options with NSE-compliant strike prices (expanded from 12)
-  for (let i = 0; i < 30; i++) {
+  // Generate 20-25 quality options with REALISTIC strikes near current price
+  // Strategy: For each stock, pick 1-2 best strikes (ATM or slightly OTM)
+  for (let i = 0; i < Math.min(25, stocks.length * 2); i++) {
     const stock = stocks[i % stocks.length];
     const isCall = (seed + i) % 2 === 0;
     
-    // Generate strikes using NSE-compliant intervals
-    // Strikes: ATM-2, ATM-1, ATM, ATM+1, ATM+2
-    const strikeOffset = ((seed + i * 7) % 5 - 2); // -2, -1, 0, 1, 2
-    const strike = stock.atm + (strikeOffset * stock.interval);
+    // PROPER LOGIC: Generate strikes ONLY near ATM (±1 strike max)
+    // For CALL: Prefer ATM or ATM+1 (slightly OTM for premium collection)
+    // For PUT: Prefer ATM or ATM-1 (slightly OTM for premium collection)
+    const strikeOffsets = [-1, 0, 1]; // ATM-1, ATM, ATM+1
+    const preferredOffset = isCall ? 
+      ((seed + i) % 2 === 0 ? 0 : 1) : // CALL: ATM or ATM+1
+      ((seed + i) % 2 === 0 ? 0 : -1); // PUT: ATM or ATM-1
     
-    // Premium calculation based on moneyness
-    const moneyness = isCall ? 
-      (stock.spot - strike) / strike : 
-      (strike - stock.spot) / strike;
+    const strike = stock.atm + (preferredOffset * stock.interval);
     
-    const basePremium = Math.abs(moneyness) * stock.spot * 0.02 + 
-      (seededRandom() * 0.01 + 0.02) * stock.spot;
+    // REALISTIC moneyness check (reject if too far OTM/ITM)
+    const moneynessPct = isCall ? 
+      ((strike - stock.spot) / stock.spot) * 100 : // CALL: +ve = OTM, -ve = ITM
+      ((stock.spot - strike) / stock.spot) * 100;  // PUT: +ve = OTM, -ve = ITM
     
-    const premium = Math.max(5, Math.min(200, basePremium));
+    // Skip if more than 5% OTM (won't be liquid/tradeable)
+    if (Math.abs(moneynessPct) > 5) {
+      continue;
+    }
     
-    // Greeks and metrics
+    // Premium calculation based on moneyness and time value
+    const intrinsicValue = isCall ? 
+      Math.max(0, stock.spot - strike) : 
+      Math.max(0, strike - stock.spot);
+    
+    const timeValue = stock.spot * (0.01 + seededRandom() * 0.02); // 1-3% of spot
+    const premium = intrinsicValue + timeValue;
+    
+    // Greeks based on moneyness
+    const absMoneyness = Math.abs(moneynessPct) / 100;
     const delta = isCall ?
-      0.35 + Math.abs(moneyness) * 0.3 :
-      -0.35 - Math.abs(moneyness) * 0.3;
+      (0.50 + (intrinsicValue > 0 ? 0.2 : -absMoneyness * 0.3)) :
+      (-0.50 - (intrinsicValue > 0 ? 0.2 : -absMoneyness * 0.3));
     
-    const iv = 18 + (seed + i * 3) % 15; // 18-33% IV
-    const volume = Math.floor((seed + i * 17) % 50000 + 10000);
-    const oi = Math.floor(volume * (1.5 + seededRandom() * 2));
+    const iv = 20 + (seed + i * 3) % 12; // 20-32% IV (realistic range)
+    const volume = Math.floor((seed + i * 17) % 80000 + 20000); // Higher volume for ATM
+    const oi = Math.floor(volume * (1.8 + seededRandom() * 1.5));
     
+    // Score based on liquidity + moneyness (favor ATM)
     const score = Math.floor(
-      (volume / 1000) * 0.2 +
-      (oi / 10000) * 0.3 +
-      (35 - Math.abs(iv - 25)) * 2 +
-      (Math.abs(delta) * 50)
+      (volume / 1000) * 0.25 +
+      (oi / 10000) * 0.35 +
+      (35 - Math.abs(iv - 26)) * 2 +
+      (Math.abs(delta) * 40) +
+      (5 - Math.abs(moneynessPct)) * 3 // Bonus for near-ATM
     );
     
     options.push({
@@ -117,12 +146,15 @@ function generateRealisticOptions() {
       iv: Number(iv.toFixed(2)),
       delta: Number(delta.toFixed(3)),
       theta: Number((-(premium * 0.05)).toFixed(3)),
-      gamma: Number((0.001 + seededRandom() * 0.002).toFixed(4)),
-      vega: Number((premium * 0.15).toFixed(2)),
-      score: Math.min(95, Math.max(45, score)),
-      expiryDate: getNextThursday().toISOString().split('T')[0]
+      gamma: Number((0.001 + seededRandom() * 0.003).toFixed(4)),
+      vega: Number((premium * 0.18).toFixed(2)),
+      score: Math.min(95, Math.max(50, score)),
+      expiryDate: getNextThursday().toISOString().split('T')[0],
+      moneyness: Number(moneynessPct.toFixed(2)) // Show how OTM/ITM
     });
   }
+  
+  console.log(`✅ Generated ${options.length} realistic options (ATM ±1 strike only)`);
   
   // Sort by score (best to worst)
   options.sort((a, b) => b.score - a.score);
@@ -284,7 +316,7 @@ module.exports = async (req, res) => {
     // If no cache, generate fresh data
     if (!cachedData) {
       console.log('📊 Generating fresh options data for today...');
-      const options = generateRealisticOptions();
+      const options = await generateRealisticOptions(); // NOW ASYNC
       const expiryDate = getNextThursday().toISOString().split('T')[0];
       
       // Add target calculations for unique underlying stocks
