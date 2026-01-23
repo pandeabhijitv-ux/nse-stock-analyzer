@@ -336,13 +336,18 @@ const parseStockData = (stockData) => {
   const financialData = fundamental?.financialData;
   const defaultKeyStats = fundamental?.defaultKeyStatistics;
 
+  // Convert market cap to Crores (divide by 10M for proper display)
+  const rawMarketCap = getValue(summaryDetail?.marketCap) || 0;
+  const marketCapCr = rawMarketCap > 0 ? Number((rawMarketCap / 10000000).toFixed(2)) : 0;
+
   return {
     symbol,
     name: getValue(meta?.longName) || symbol.replace('.NS', ''),
     currentPrice: getValue(price?.regularMarketPrice) || getValue(meta?.regularMarketPrice) || 0,
     changePercent: getValue(price?.regularMarketChangePercent) || 0,
     change: getValue(price?.regularMarketChange) || 0,
-    marketCap: getValue(summaryDetail?.marketCap) || 0,
+    marketCap: rawMarketCap, // Keep raw for calculations
+    marketCapCr: marketCapCr, // Display in Crores
     volume: getValue(meta?.regularMarketVolume) || 0,
     fiftyTwoWeekHigh: getValue(summaryDetail?.fiftyTwoWeekHigh) || 0,
     fiftyTwoWeekLow: getValue(summaryDetail?.fiftyTwoWeekLow) || 0,
@@ -478,14 +483,35 @@ const analyzeAllCategories = async (stocksData) => {
   });
   
   // Filter for each category and sort by BEST TO WORST (highest scores first)
-  // Analyze ALL stocks but return only TOP 5-10 for better user experience
+  // QUALITY FILTER: Only show stocks with 75+ scores and proper data
   const targetOriented = stocksWithTechnical
-    .filter(s => s.technical && s.fundamentalScore > 0) // Any fundamental score
+    .filter(s => {
+      // Must have technical data
+      if (!s.technical) return false;
+      // Must have HIGH fundamental score (75+)
+      if (!s.fundamentalScore || s.fundamentalScore < 75) return false;
+      // Must have calculated target (our proprietary calculation)
+      if (!s.calculatedTarget || s.calculatedUpside === null) return false;
+      // Must have key fundamentals for user to see
+      if (!s.peRatio || !s.marketCap) return false;
+      return true;
+    })
     .sort((a, b) => b.fundamentalScore - a.fundamentalScore) // Best fundamental score first
     .slice(0, 10); // Top 10 best fundamentals
   
   const swing = stocksWithTechnical
-    .filter(s => s.technical && s.technical.rsi?.current && Math.abs(s.changePercent || 0) > 0.1) // ANY movement > 0.1%
+    .filter(s => {
+      // Must have technical data and RSI
+      if (!s.technical || !s.technical.rsi?.current) return false;
+      // Must have SIGNIFICANT movement (>1% for tradeable swing)
+      if (Math.abs(s.changePercent || 0) < 1.0) return false;
+      // Technical score must be decent (70+)
+      if (!s.technicalScore || s.technicalScore < 70) return false;
+      // RSI should be in tradeable range (not neutral 45-55)
+      const rsi = s.technical.rsi.current;
+      if (rsi > 45 && rsi < 55) return false; // Skip neutral RSI
+      return true;
+    })
     .sort((a, b) => {
       // Sort by best swing potential: RSI momentum + price movement
       const aScore = Math.abs(a.technical.rsi.current - 50) + Math.abs(a.changePercent || 0) * 2;
@@ -495,7 +521,17 @@ const analyzeAllCategories = async (stocksData) => {
     .slice(0, 8); // Top 8 best swing opportunities
   
   const fundamentallyStrong = stocksWithTechnical
-    .filter(s => s.fundamentalScore > 0) // Any fundamental score
+    .filter(s => {
+      // Must have VERY HIGH fundamental score (80+)
+      if (!s.fundamentalScore || s.fundamentalScore < 80) return false;
+      // Must have calculated target
+      if (!s.calculatedTarget || s.calculatedUpside === null) return false;
+      // Must have PE ratio (valuation metric)
+      if (!s.peRatio || s.peRatio <= 0) return false;
+      // Must have market cap (size metric)
+      if (!s.marketCap) return false;
+      return true;
+    })
     .sort((a, b) => b.fundamentalScore - a.fundamentalScore) // Best fundamental score first
     .slice(0, 10); // Top 10 strongest fundamentals
   
@@ -504,8 +540,15 @@ const analyzeAllCategories = async (stocksData) => {
       // Must have proper technical chart data (50+ days for all indicators)
       if (!s.technical || s.prices.length < 50) return false;
       
-      // Must have RSI and MACD indicators
-      if (!s.technical.rsi?.current || !s.technical.macd?.histogram) return false;
+      // Must have HIGH technical score (75+)
+      if (!s.technicalScore || s.technicalScore < 75) return false;
+      
+      // Must have RSI in strong zone (>55 for bullish OR <45 for oversold)
+      const rsi = s.technical.rsi?.current;
+      if (!rsi || (rsi >= 45 && rsi <= 55)) return false; // Skip neutral
+      
+      // Must have MACD histogram (momentum indicator)
+      if (!s.technical.macd?.histogram) return false;
       
       // Must have moving averages for chart display
       if (!s.technical.movingAverages?.sma20 || !s.technical.movingAverages?.sma50) return false;
@@ -513,10 +556,10 @@ const analyzeAllCategories = async (stocksData) => {
       return true;
     })
     .sort((a, b) => {
-      // Sort by best technical strength: RSI + MACD combined
-      const aScore = (a.technical.rsi?.current || 50) + ((a.technical.macd?.histogram || 0) * 10);
-      const bScore = (b.technical.rsi?.current || 50) + ((b.technical.macd?.histogram || 0) * 10);
-      return bScore - aScore; // Best technical indicators first
+      // Sort by best technical strength: RSI deviation + MACD
+      const aScore = Math.abs((a.technical.rsi?.current || 50) - 50) * 2 + ((a.technical.macd?.histogram || 0) * 10);
+      const bScore = Math.abs((b.technical.rsi?.current || 50) - 50) * 2 + ((b.technical.macd?.histogram || 0) * 10);
+      return bScore - aScore; // Best technical strength first
     })
     .slice(0, 10); // Top 10 best technical indicators
   
