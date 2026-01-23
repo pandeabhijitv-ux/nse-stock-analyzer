@@ -497,14 +497,14 @@ const analyzeAllCategories = async (stocksData) => {
       return true;
     })
     .sort((a, b) => b.fundamentalScore - a.fundamentalScore) // Best fundamental score first
-    .slice(0, 10); // Top 10 best fundamentals
+    .slice(0, 5); // Top 5 BEST quality
   
   const swing = stocksWithTechnical
     .filter(s => {
       // Must have technical data and RSI
       if (!s.technical || !s.technical.rsi?.current) return false;
-      // Must have SIGNIFICANT movement (>1% for tradeable swing)
-      if (Math.abs(s.changePercent || 0) < 1.0) return false;
+      // Must have tradeable movement (>0.5%)
+      if (Math.abs(s.changePercent || 0) < 0.5) return false;
       // Technical score must be decent (70+)
       if (!s.technicalScore || s.technicalScore < 70) return false;
       // RSI should be in tradeable range (not neutral 45-55)
@@ -518,7 +518,7 @@ const analyzeAllCategories = async (stocksData) => {
       const bScore = Math.abs(b.technical.rsi.current - 50) + Math.abs(b.changePercent || 0) * 2;
       return bScore - aScore; // Best swing momentum first
     })
-    .slice(0, 8); // Top 8 best swing opportunities
+    .slice(0, 5); // Top 5 BEST quality
   
   const fundamentallyStrong = stocksWithTechnical
     .filter(s => {
@@ -533,7 +533,7 @@ const analyzeAllCategories = async (stocksData) => {
       return true;
     })
     .sort((a, b) => b.fundamentalScore - a.fundamentalScore) // Best fundamental score first
-    .slice(0, 10); // Top 10 strongest fundamentals
+    .slice(0, 5); // Top 5 BEST quality
   
   const technicallyStrong = stocksWithTechnical
     .filter(s => {
@@ -561,7 +561,7 @@ const analyzeAllCategories = async (stocksData) => {
       const bScore = Math.abs((b.technical.rsi?.current || 50) - 50) * 2 + ((b.technical.macd?.histogram || 0) * 10);
       return bScore - aScore; // Best technical strength first
     })
-    .slice(0, 10); // Top 10 best technical indicators
+    .slice(0, 5); // Top 5 BEST quality
   
   // Hot Stocks: High movers with QUALITY data (70+ score + complete fundamentals)
   const hotStocks = stocksWithTechnical
