@@ -555,10 +555,10 @@ const analyzeAllCategories = async (stocksData) => {
     .filter(s => {
       // Must have technical data and RSI
       if (!s.technical || !s.technical.rsi?.current) return false;
-      // Must have tradeable movement (>0.5%)
-      if (Math.abs(s.changePercent || 0) < 0.5) return false;
-      // Technical score must be decent (70+)
-      if (!s.technicalScore || s.technicalScore < 70) return false;
+      // Must have tradeable movement (>0.3% for calm markets)
+      if (Math.abs(s.changePercent || 0) < 0.3) return false;
+      // Technical score must be decent (60+)
+      if (!s.technicalScore || s.technicalScore < 60) return false;
       // RSI should be in tradeable range (not neutral 45-55)
       const rsi = s.technical.rsi.current;
       if (rsi > 45 && rsi < 55) return false; // Skip neutral RSI
@@ -589,11 +589,11 @@ const analyzeAllCategories = async (stocksData) => {
   
   const technicallyStrong = stocksWithTechnical
     .filter(s => {
-      // Must have proper technical chart data (50+ days for all indicators)
-      if (!s.technical || s.prices.length < 50) return false;
+      // Must have proper technical chart data (40+ days for all indicators)
+      if (!s.technical || s.prices.length < 40) return false;
       
-      // Must have HIGH technical score (75+)
-      if (!s.technicalScore || s.technicalScore < 75) return false;
+      // Must have good technical score (60+)
+      if (!s.technicalScore || s.technicalScore < 60) return false;
       
       // Must have RSI in strong zone (>55 for bullish OR <45 for oversold)
       const rsi = s.technical.rsi?.current;
@@ -618,13 +618,13 @@ const analyzeAllCategories = async (stocksData) => {
   // Hot Stocks: High movers with QUALITY data (70+ score + complete fundamentals)
   const hotStocks = stocksWithTechnical
     .filter(s => {
-      // Must have price movement
-      if (!s.currentPrice || Math.abs(s.changePercent) < 0.5) return false;
+      // Must have price movement (>0.3% for calm markets)
+      if (!s.currentPrice || Math.abs(s.changePercent) < 0.3) return false;
       
       // Must have decent fundamental OR technical score
       const fundScore = s.fundamentalScore || 0;
       const techScore = s.technicalScore || 0;
-      if (fundScore < 70 && techScore < 70) return false;
+      if (fundScore < 60 && techScore < 60) return false;
       
       // Must have complete fundamental data (not N/A)
       if (!s.calculatedTarget || !s.peRatio || !s.marketCap) return false;
