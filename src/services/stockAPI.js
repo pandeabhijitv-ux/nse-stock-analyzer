@@ -7,8 +7,9 @@ const BASE_URL = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.
 const BASE_URL_V10 = USE_PROXY ? `${PROXY_URL}/api` : 'https://query1.finance.yahoo.com/v10/finance';
 
 // Session-level cache for pre-computed analysis (persists during app session)
+// FIXED: Each category has its own cache AND timestamp
 let analysisCache = {};
-let analysisCacheTimestamp = null;
+let analysisCacheTimestamps = {}; // Changed from single timestamp to per-category timestamps
 
 // NEW: Fetch pre-computed analysis from backend (MUCH FASTER!)
 export const fetchPrecomputedAnalysis = async (category) => {
@@ -16,13 +17,14 @@ export const fetchPrecomputedAnalysis = async (category) => {
     console.log(`[PRECOMPUTED] Fetching ${category} from backend`);
     const startTime = Date.now();
     
-    // Check if we have cached trigger results (max 5 minutes old for faster updates)
-    const cacheAge = analysisCacheTimestamp ? Date.now() - analysisCacheTimestamp : Infinity;
+    // Check if we have cached data for THIS CATEGORY (max 5 minutes old for faster updates)
+    const categoryTimestamp = analysisCacheTimestamps[category];
+    const cacheAge = categoryTimestamp ? Date.now() - categoryTimestamp : Infinity;
     const MAX_CACHE_AGE = 5 * 60 * 1000; // 5 minutes (was 1 hour)
     
-    if (Object.keys(analysisCache).length > 0 && cacheAge < MAX_CACHE_AGE) {
-      console.log(`[PRECOMPUTED] Using cached trigger data (${Math.round(cacheAge / 1000 / 60)}min old)`);
-      const stocks = analysisCache[category] || [];
+    if (analysisCache[category] && cacheAge < MAX_CACHE_AGE) {
+      console.log(`[PRECOMPUTED] Using cached data for ${category} (${Math.round(cacheAge / 1000 / 60)}min old)`);
+      const stocks = analysisCache[category];
       return {
         stocks,
         metadata: { fromCache: true, cacheAge: Math.round(cacheAge / 1000) },
@@ -41,14 +43,12 @@ export const fetchPrecomputedAnalysis = async (category) => {
     console.log(`[PRECOMPUTED] Redis fetch completed in ${duration}ms`);
     
     if (response.data.success && response.data.data) {
-      // /api/analysis returns single category, store it in cache
+      // /api/analysis returns single category, store it in cache with its own timestamp
       const stocks = response.data.data;
       
-      // Update cache for this category only
-      if (!analysisCache[category] || cacheAge >= MAX_CACHE_AGE) {
-        analysisCache[category] = stocks;
-        analysisCacheTimestamp = Date.now();
-      }
+      // Update cache for this category with its own timestamp
+      analysisCache[category] = stocks;
+      analysisCacheTimestamps[category] = Date.now();
       
       console.log(`[PRECOMPUTED] Cached ${stocks.length} stocks for ${category}`);
       
