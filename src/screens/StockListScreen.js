@@ -48,16 +48,16 @@ export default function StockListScreen({ sector, onStockPress }) {
     // Use backend-calculated target prices if available, otherwise calculate category-specific scores
     filtered = filtered.map(stock => {
       const currentPrice = stock.currentPrice || 0;
-      // PREFER backend-calculated targetPrice (from analyzer.js) - it uses technical/fundamental analysis
-      let targetPrice = stock.targetPrice || currentPrice;
+      // FIXED: Backend sends calculatedTarget (not targetPrice) and calculatedUpside
+      let targetPrice = stock.calculatedTarget || stock.targetPrice || currentPrice;
       let stopLoss = stock.stopLoss || currentPrice * 0.95;
       let categoryScore = stock.categoryScore || stock.overallScore || 50;
-      let upsidePercent = stock.upsidePercent || 0;
+      let upsidePercent = stock.calculatedUpside || stock.upsidePercent || 0;
       
-      // If backend didn't calculate targetPrice, recalculate upside
-      if (!stock.targetPrice || stock.targetPrice === currentPrice) {
+      // If backend didn't provide target/upside, calculate them
+      if ((!stock.calculatedTarget && !stock.targetPrice) || targetPrice === currentPrice) {
         upsidePercent = 0;
-      } else {
+      } else if (!stock.calculatedUpside && !stock.upsidePercent) {
         upsidePercent = parseFloat((((targetPrice - currentPrice) / currentPrice) * 100).toFixed(2));
       }
       
