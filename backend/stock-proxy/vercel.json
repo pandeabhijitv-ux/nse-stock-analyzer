@@ -28,6 +28,13 @@
     {
       "path": "/api/cron/analyze-stocks",
       "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/cron/analyze-stocks",
+      "schedule": "0 10 * * *"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
