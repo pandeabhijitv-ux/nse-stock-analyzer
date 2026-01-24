@@ -50,11 +50,18 @@ export default function GoldSilverScreen({ onBack }) {
     return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
+  // Helper: GST calculation (3% for gold/silver)
+  const calcGST = (price) => {
+    if (typeof price !== 'number') return null;
+    return price * 1.03;
+  };
+
   const goldData = {
     metal: 'Gold',
     symbol: '🥇',
     color: ['#f59e0b', '#d97706'],
     price: liveData?.gold?.price || 'Loading...',
+    priceWithGST: typeof liveData?.gold?.price === 'number' ? calcGST(liveData.gold.price) : 'Loading...',
     unit: '₹/10g (24K)',
     change: liveData?.gold?.change || 'N/A',
     trend: liveData?.gold?.trend || 'NEUTRAL',
@@ -71,6 +78,7 @@ export default function GoldSilverScreen({ onBack }) {
     symbol: '🥈',
     color: ['#94a3b8', '#64748b'],
     price: liveData?.silver?.price || 'Loading...',
+    priceWithGST: typeof liveData?.silver?.price === 'number' ? calcGST(liveData.silver.price) : 'Loading...',
     unit: '₹/kg',
     change: liveData?.silver?.change || 'N/A',
     trend: liveData?.silver?.trend || 'NEUTRAL',
@@ -117,6 +125,7 @@ export default function GoldSilverScreen({ onBack }) {
               <Text style={styles.metalName}>{goldData.metal}</Text>
               <Text style={styles.metalPrice}>₹{goldData.price}</Text>
               <Text style={styles.metalUnit}>{goldData.unit}</Text>
+              <Text style={[styles.metalPrice, { fontSize: 16, color: '#b45309', marginTop: 2 }]}>Incl. GST: {typeof goldData.priceWithGST === 'number' ? `₹${goldData.priceWithGST.toFixed(0)}` : goldData.priceWithGST}</Text>
               <Text style={[styles.metalChange, { color: goldData.change.startsWith('+') ? '#10b981' : '#ef4444' }]}>
                 {goldData.change} {goldData.trend}
               </Text>
@@ -173,6 +182,7 @@ export default function GoldSilverScreen({ onBack }) {
               <Text style={styles.metalName}>{silverData.metal}</Text>
               <Text style={styles.metalPrice}>₹{silverData.price}</Text>
               <Text style={styles.metalUnit}>{silverData.unit}</Text>
+              <Text style={[styles.metalPrice, { fontSize: 16, color: '#64748b', marginTop: 2 }]}>Incl. GST: {typeof silverData.priceWithGST === 'number' ? `₹${silverData.priceWithGST.toFixed(0)}` : silverData.priceWithGST}</Text>
               <Text style={[styles.metalChange, { color: silverData.change.startsWith('+') ? '#10b981' : '#ef4444' }]}>
                 {silverData.change} {silverData.trend}
               </Text>

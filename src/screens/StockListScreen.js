@@ -161,66 +161,9 @@ export default function StockListScreen({ sector, onStockPress }) {
             console.log(`Excluding ${s.symbol}: No technical data or insufficient price history`);
             return false;
           }
-          
-          const rsi = s.technical?.rsi?.current || 50;
-          const macd = s.technical?.macd?.macd || 0;
-          const signal = s.technical?.macd?.signal || 0;
-          const trend = s.technical?.trend || '';
-          const technicalScore = s.technicalScore || 50;
-          const patterns = s.technical?.patterns || [];
-          
-          // Check for bullish patterns (now with object structure)
-          const hasBullishPattern = patterns.some(p => 
-            (p.signal === 'bullish' || p.name?.toLowerCase().includes('bull') || 
-             p.name?.includes('Golden') || p.name?.includes('Inverse') || 
-             p.name?.includes('Ascending') || p.name?.includes('Cup'))
-          );
-          
-          // Must have strong technical setup
-          const bullishMACD = macd > signal && macd > 0;
-          const goodRSI = rsi >= 50 && rsi <= 70;
-          const uptrend = trend === 'Uptrend' || trend.includes('Uptrend');
-          
-          // At least 2 of 4 conditions must be true, OR high technical score with bullish patterns
-          const conditions = [bullishMACD, goodRSI, uptrend, hasBullishPattern].filter(Boolean).length;
-          const strongTechnical = conditions >= 2 || (technicalScore >= 75 && patterns.length > 0);
-          
-          if (strongTechnical) {
-            const patternNames = patterns.map(p => p.name || p).join(', ');
-            console.log(`✓ ${s.symbol}: RSI=${rsi.toFixed(0)}, MACD=${bullishMACD?'✓':'✗'}, Trend=${trend}, Score=${technicalScore}, Patterns=${patternNames}`);
-          }
-          
-          return strongTechnical;
+          return true;
         });
-        // Sort by technical score, then by number of bullish patterns
-        filtered.sort((a, b) => {
-          const aScore = (a.technicalScore || 0);
-          const bScore = (b.technicalScore || 0);
-          const aBullishPatterns = (a.technical?.patterns || []).filter(p => p.signal === 'bullish').length;
-          const bBullishPatterns = (b.technical?.patterns || []).filter(p => p.signal === 'bullish').length;
-          
-          // First by pattern count, then by score
-          if (aBullishPatterns !== bBullishPatterns) {
-            return bBullishPatterns - aBullishPatterns;
-          }
-          return bScore - aScore;
-        });
-        console.log(`Technically-Strong: ${filtered.length} stocks with verified technical data and strong signals`);
-        break;
-        
-      case 'hot-stocks':
-        // Highest movers today - significant movement only
-        filtered = filtered.filter(s => {
-          const change = Math.abs(s.changePercent || 0);
-          return change > 0.3; // At least 0.3% movement
-        });
-        if (filtered.length < 5) {
-          // If too few movers, include all with any movement
-          filtered = allStocks.filter(s => (s.changePercent || 0) !== 0);
-        }
-        // Sort by absolute change percent - biggest movers first
-        filtered.sort((a, b) => Math.abs(b.changePercent || 0) - Math.abs(a.changePercent || 0));
-        console.log(`Hot-Stocks: ${filtered.length} stocks with significant movement`);
+        // ...existing code...
         break;
         
       case 'graha-gochar':
@@ -502,15 +445,15 @@ export default function StockListScreen({ sector, onStockPress }) {
       <View style={styles.rankBadge}>
         <Text style={styles.rankText}>#{index + 1}</Text>
       </View>
-      
+
       <View style={styles.stockHeader}>
         <View style={styles.stockInfo}>
-          <Text style={styles.stockSymbol}>{item.symbol || 'N/A'}</Text>
+          <Text style={styles.stockSymbol}>{item.symbol ? item.symbol.replace('.NS', '') : 'N/A'}</Text>
           <Text style={styles.stockName} numberOfLines={1}>
-            {item.companyName || item.symbol?.replace('.NS', '') || 'Unknown'}
+            {item.companyName ? item.companyName.replace('.NS', '') : (item.symbol ? item.symbol.replace('.NS', '') : 'Unknown')}
           </Text>
         </View>
-        
+
         <View style={styles.priceInfo}>
           <Text style={styles.stockPrice}>
             ₹{(item.currentPrice || 0).toFixed(2)}
@@ -582,23 +525,23 @@ export default function StockListScreen({ sector, onStockPress }) {
       {sector === 'target-oriented' && (
         <View style={styles.metricsRow}>
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>Target</Text>
-            <Text style={[styles.metricValue, { color: '#4CAF50' }]}>
-              ₹{item.targetPrice || 'N/A'}
-            </Text>
+              <Text style={styles.metricLabel}>Target</Text>
+              <Text style={[styles.metricValue, { color: '#4CAF50' }]}> 
+                {item.targetPrice !== undefined && item.targetPrice !== null ? `₹${item.targetPrice}` : 'N/A'}
+              </Text>
           </View>
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>Upside</Text>
-            <Text style={[styles.metricValue, { color: item.upsidePercent > 0 ? '#4CAF50' : '#F44336' }]}>
-              {item.upsidePercent ? item.upsidePercent.toFixed(1) + '%' : 'N/A'}
-            </Text>
+              <Text style={styles.metricLabel}>Upside</Text>
+              <Text style={[styles.metricValue, { color: item.upsidePercent > 0 ? '#4CAF50' : '#F44336' }]}> 
+                {item.upsidePercent !== undefined && item.upsidePercent !== null ? item.upsidePercent.toFixed(1) + '%' : 'N/A'}
+              </Text>
           </View>
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>Target By</Text>
-            <Text style={[styles.metricValue, { color: '#2196F3', fontSize: 11 }]}>
-              {item.targetDate ? new Date(item.targetDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 
-               item.daysToTarget ? `~${item.daysToTarget}d` : 'N/A'}
-            </Text>
+              <Text style={styles.metricLabel}>Target By</Text>
+              <Text style={[styles.metricValue, { color: '#2196F3', fontSize: 11 }]}> 
+                {item.targetDate ? new Date(item.targetDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) :
+                 (item.daysToTarget !== undefined && item.daysToTarget !== null ? `~${item.daysToTarget}d` : 'N/A')}
+              </Text>
           </View>
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>Score</Text>
@@ -612,30 +555,30 @@ export default function StockListScreen({ sector, onStockPress }) {
       {sector === 'swing' && (
         <View style={styles.metricsRow}>
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>Momentum</Text>
-            <Text style={[styles.metricValue, { color: Math.abs(item.changePercent || 0) > 1 ? '#4CAF50' : '#FFC107' }]}>
-              {item.changePercent ? Math.abs(item.changePercent).toFixed(2) + '%' : 'N/A'}
-            </Text>
+              <Text style={styles.metricLabel}>Momentum</Text>
+              <Text style={[styles.metricValue, { color: Math.abs(item.changePercent || 0) > 1 ? '#4CAF50' : '#FFC107' }]}> 
+                {item.changePercent !== undefined && item.changePercent !== null ? Math.abs(item.changePercent).toFixed(2) + '%' : 'N/A'}
+              </Text>
           </View>
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>RSI</Text>
-            <Text style={styles.metricValue}>
-              {item.technical?.rsi?.current ? item.technical.rsi.current.toFixed(0) : 'N/A'}
-            </Text>
+              <Text style={styles.metricLabel}>RSI</Text>
+              <Text style={styles.metricValue}> 
+                {item.technical?.rsi?.current !== undefined && item.technical?.rsi?.current !== null ? item.technical.rsi.current.toFixed(0) : 'N/A'}
+              </Text>
           </View>
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>MACD</Text>
-            <Text style={[styles.metricValue, { 
-              color: item.technical?.macdSignal === 'Bullish' ? '#4CAF50' : '#F44336'
-            }]}>
-              {item.technical?.macdSignal || 'N/A'}
-            </Text>
+              <Text style={styles.metricLabel}>MACD</Text>
+              <Text style={[styles.metricValue, { 
+                color: item.technical?.macdSignal === 'Bullish' ? '#4CAF50' : '#F44336'
+              }]}> 
+                {item.technical?.macdSignal !== undefined && item.technical?.macdSignal !== null ? item.technical.macdSignal : 'N/A'}
+              </Text>
           </View>
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>Volume</Text>
-            <Text style={styles.metricValue}>
-              {item.volume ? (item.volume / 1000000).toFixed(1) + 'M' : 'N/A'}
-            </Text>
+              <Text style={styles.metricLabel}>Volume</Text>
+              <Text style={styles.metricValue}> 
+                {item.volume !== undefined && item.volume !== null ? (item.volume / 1000000).toFixed(1) + 'M' : 'N/A'}
+              </Text>
           </View>
         </View>
       )}
@@ -673,9 +616,9 @@ export default function StockListScreen({ sector, onStockPress }) {
         <View style={styles.metricsRow}>
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>Target By</Text>
-            <Text style={[styles.metricValue, { color: '#2196F3', fontSize: 11 }]}>
-              {item.targetDate ? new Date(item.targetDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 
-               item.daysToTarget ? `~${item.daysToTarget}d` : 'N/A'}
+            <Text style={[styles.metricValue, { color: '#2196F3', fontSize: 11 }]}> 
+              {item.targetDate ? new Date(item.targetDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) :
+               (item.daysToTarget !== undefined && item.daysToTarget !== null ? `~${item.daysToTarget}d` : 'N/A')}
             </Text>
           </View>
           <View style={styles.metric}>
@@ -715,27 +658,33 @@ export default function StockListScreen({ sector, onStockPress }) {
             <Text style={styles.metricLabel}>Change</Text>
             <Text style={[styles.metricValue, { 
               color: (item.changePercent || 0) >= 0 ? '#4CAF50' : '#F44336'
-            }]}>
-              {(item.changePercent || 0) >= 0 ? '+' : ''}
-              {(item.changePercent || 0).toFixed(2)}%
+            }]}> 
+              {(item.changePercent !== undefined && item.changePercent !== null && item.changePercent >= 0) ? '+' : ''}
+              {item.changePercent !== undefined && item.changePercent !== null ? item.changePercent.toFixed(2) + '%' : 'N/A'}
             </Text>
           </View>
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>Volume</Text>
             <Text style={styles.metricValue}>
-              {item.volume ? (item.volume / 1000000).toFixed(1) + 'M' : 'N/A'}
+              {item.volume !== undefined && item.volume !== null ? (item.volume / 1000000).toFixed(1) + 'M' : 'N/A'}
             </Text>
           </View>
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>High</Text>
             <Text style={styles.metricValue}>
-              ₹{item.high?.[item.high.length - 1]?.toFixed(2) || 'N/A'}
+              {item.high && item.high.length > 0 && item.high[item.high.length - 1] !== undefined && item.high[item.high.length - 1] !== null ? `₹${item.high[item.high.length - 1].toFixed(2)}` : 'N/A'}
             </Text>
           </View>
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>Low</Text>
             <Text style={styles.metricValue}>
-              ₹{item.low?.[item.low.length - 1]?.toFixed(2) || 'N/A'}
+              {item.low && item.low.length > 0 && item.low[item.low.length - 1] !== undefined && item.low[item.low.length - 1] !== null ? `₹${item.low[item.low.length - 1].toFixed(2)}` : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.metric}>
+            <Text style={styles.metricLabel}>Market Cap</Text>
+            <Text style={styles.metricValue}>
+              {item.marketCapCr !== undefined && item.marketCapCr !== null ? `₹${item.marketCapCr} Cr` : 'N/A'}
             </Text>
           </View>
         </View>
