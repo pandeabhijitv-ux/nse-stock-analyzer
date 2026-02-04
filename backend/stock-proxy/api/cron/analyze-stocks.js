@@ -9,10 +9,13 @@ const path = require('path');
 
 module.exports = async (req, res) => {
   try {
-    // Verify this is a cron request
+    // Verify this is an authorized cron request
+    // Allow both Vercel Cron (via special header) and manual triggers (via Bearer token)
     const authHeader = req.headers.authorization;
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const isVercelCron = req.headers['x-vercel-cron'] || req.headers['user-agent']?.includes('vercel-cron');
+    
+    if (!isVercelCron && (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`)) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid or missing CRON_SECRET' });
     }
 
     console.log('[CRON] Starting daily stock analysis at', new Date().toISOString());
