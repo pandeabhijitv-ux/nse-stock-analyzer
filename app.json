@@ -2,7 +2,7 @@
   "expo": {
     "name": "NSE Stock Analyzer",
     "slug": "nse-stock-analyzer",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/SA.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,6 @@
       "bundleIdentifier": "com.nsestockanalyzer.mobile"
     },
     "android": {
-      "icon": "./assets/images/SA.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/SA.png",
         "backgroundColor": "#667eea"
@@ -30,8 +29,7 @@
         "INTERNET",
         "ACCESS_NETWORK_STATE"
       ],
-      "usesCleartextTraffic": true,
-      "versionCode": 10
+      "versionCode": 11
     },
     "extra": {
       "eas": {
