@@ -553,15 +553,9 @@ const analyzeAllCategories = async (stocksData) => {
   
   const swing = stocksWithTechnical
     .filter(s => {
-      // Must have technical data and RSI
-      if (!s.technical || !s.technical.rsi?.current) return false;
-      // Must have tradeable movement (>0.3% for calm markets)
-      if (Math.abs(s.changePercent || 0) < 0.3) return false;
-      // Technical score must be decent (60+)
-      if (!s.technicalScore || s.technicalScore < 60) return false;
-      // RSI should be in tradeable range (not neutral 45-55)
-      const rsi = s.technical.rsi.current;
-      if (rsi > 45 && rsi < 55) return false; // Skip neutral RSI
+      // Only require technical data and any price movement
+      if (!s.technical) return false;
+      if (Math.abs(s.changePercent || 0) < 0.01) return false;
       return true;
     })
     .sort((a, b) => {

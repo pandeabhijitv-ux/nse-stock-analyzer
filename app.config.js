@@ -2,6 +2,7 @@ module.exports = {
   expo: {
     ...require('./app.json').expo,
     plugins: [
+      'expo-font',
       [
         'expo-build-properties',
         {
