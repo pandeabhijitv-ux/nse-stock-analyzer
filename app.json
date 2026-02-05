@@ -29,7 +29,7 @@
         "INTERNET",
         "ACCESS_NETWORK_STATE"
       ],
-      "versionCode": 13,
+      "versionCode": 14,
       "targetSdkVersion": 35,
       "compileSdkVersion": 35
     },
