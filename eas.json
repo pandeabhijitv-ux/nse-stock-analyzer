@@ -15,9 +15,7 @@
     },
     "production": {
       "android": {
-        "buildType": "app-bundle",
-        "gradleCommand": ":app:bundleRelease",
-        "buildToolsVersion": "35.0.0"
+        "buildType": "app-bundle"
       }
     }
   },
