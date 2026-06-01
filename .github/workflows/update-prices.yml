@@ -1,8 +1,11 @@
 name: Update NSE Stock Prices
 
+permissions:
+  contents: write
+
 on:
   schedule:
-    # Run every day at 9:00 AM IST (3:30 AM UTC)
+    # Daily at 9:00 AM IST (3:30 AM UTC)
     - cron: '30 3 * * *'
   workflow_dispatch: # Allow manual trigger
 
